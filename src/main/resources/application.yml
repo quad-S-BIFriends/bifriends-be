@@ -36,3 +36,7 @@ jwt:
   secret: ${JWT_SECRET:defaultSecretKeyForDevelopmentOnlyMustBeAtLeast256Bits!!}
   access-token-expiration: 3600000    # 1시간
   refresh-token-expiration: 604800000 # 7일
+
+firebase:
+  config:
+    path: classpath:firebase-service-account.json

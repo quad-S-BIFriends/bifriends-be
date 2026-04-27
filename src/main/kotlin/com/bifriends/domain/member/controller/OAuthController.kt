@@ -1,7 +1,7 @@
 package com.bifriends.domain.member.controller
 
 import com.bifriends.domain.member.service.MemberService
-import com.bifriends.infrastructure.security.GoogleTokenVerifier
+import com.bifriends.infrastructure.security.FirebaseTokenVerifier
 import com.bifriends.infrastructure.security.JwtProvider
 import com.bifriends.infrastructure.security.PrincipalDetails
 import jakarta.validation.Valid
@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.RestController
 @RequestMapping("/api/v1/members")
 class OAuthController(
     private val jwtProvider: JwtProvider,
-    private val googleTokenVerifier: GoogleTokenVerifier,
+    private val firebaseTokenVerifier: FirebaseTokenVerifier,
     private val memberService: MemberService
 ) {
 
@@ -29,12 +29,12 @@ class OAuthController(
      */
     @PostMapping("/auth/google")
     fun googleLogin(@Valid @RequestBody request: GoogleLoginRequest): ResponseEntity<LoginResponse> {
-        val payload = googleTokenVerifier.verify(request.idToken)
+        val firebaseToken = firebaseTokenVerifier.verifyIdToken(request.idToken)
 
-        val providerId = payload.subject
-        val email = payload.email
-        val name = payload["name"] as? String ?: email
-        val profileImageUrl = payload["picture"] as? String
+        val providerId = firebaseToken.uid
+        val email = firebaseToken.email ?: throw IllegalArgumentException("이메일 정보가 없습니다.")
+        val name = firebaseToken.name ?: email
+        val profileImageUrl = firebaseToken.picture
 
         val member = memberService.findOrCreateMember(
             email = email,

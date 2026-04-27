@@ -1,3 +1,7 @@
+# Firebase 서비스 계정 키 파일
+src/main/resources/firebase-service-account.json
+# Firebase Secrets
+firebase-service-account.json
 HELP.md
 .gradle
 build/
@@ -35,3 +39,7 @@ Thumbs.db
 
 ### Env ###
 .env
+
+bifriends-5df72-firebase-adminsdk-fbsvc-67276a83cd.json
+
+src/main/resources/firebase-service-account.json
