@@ -40,6 +40,10 @@ Thumbs.db
 ### Env ###
 .env
 
+### Claude ###
+.claude/
+.claudeignore
+
 bifriends-5df72-firebase-adminsdk-fbsvc-67276a83cd.json
 
 src/main/resources/firebase-service-account.json
