@@ -117,10 +117,57 @@ object LevelPolicy {
 }
 ```
 
-**이렇게 분리한 이유:**  
-레벨 계산은 DB나 Spring Context 없이도 테스트할 수 있어야 한다.  
-`object`로 만들면 단위 테스트에서 `LevelPolicy.calculateLevel(25)`처럼 바로 호출 가능하다.  
-나중에 레벨 공식이 바뀌더라도 이 파일 하나만 수정하면 전체에 반영된다.
+**이렇게 분리한 세 가지 이유:**
+
+**① DB나 Spring Context 없이도 테스트할 수 있어야 한다**
+
+레벨 계산 로직이 `UserStatsService` 안에 섞여 있으면, "25풀이면 Lv3이 맞나?" 라는 단순한 수식 검증을 위해서도 Spring 서버를 띄우고 DB 연결까지 해야 테스트할 수 있다. 레벨 계산은 DB와 아무 상관 없는 순수한 수식인데 그 무게를 떠안는 건 낭비다.
+
+`LevelPolicy`를 독립 `object`로 분리하면 Spring/DB 없이 바로 테스트할 수 있다.
+
+```kotlin
+// Spring 없이 그냥 실행되는 단위 테스트
+class LevelPolicyTest {
+    @Test
+    fun `25풀이면 Lv3이다`() {
+        assertThat(LevelPolicy.calculateLevel(25)).isEqualTo(3)
+    }
+
+    @Test
+    fun `24풀은 아직 Lv2다`() {
+        assertThat(LevelPolicy.calculateLevel(24)).isEqualTo(2)
+    }
+}
+```
+
+**② `object`로 만들면 인스턴스 생성 없이 바로 호출할 수 있다**
+
+Kotlin의 `object`는 Java의 `static`과 비슷하다. 인스턴스를 따로 만들 필요 없이 이름으로 바로 접근할 수 있다.
+
+```kotlin
+// object → 인스턴스 생성 없이 바로 호출
+LevelPolicy.calculateLevel(25)
+
+// class였다면 → 쓸 때마다 인스턴스를 만들어야 함
+val policy = LevelPolicy()
+policy.calculateLevel(25)
+```
+
+레벨 계산 함수들은 내부 상태(데이터)를 가질 필요가 없는 순수 함수들의 모음이므로 `object`가 딱 맞는 형태다.
+
+**③ 레벨 공식이 바뀌어도 이 파일 하나만 수정하면 전체에 반영된다**
+
+기획이 바뀌어서 "레벨업 요구 풀을 선형이 아니라 지수로 바꿔주세요" 라는 요청이 오면, `LevelPolicy.kt` 한 파일의 한 줄만 고치면 된다.
+
+```kotlin
+// LevelPolicy.kt 한 파일만 수정
+fun poolRequiredForLevelUp(fromLevel: Int): Int {
+    // 기존: return 10 + (fromLevel - 1) * 5  (선형)
+    return 10 * fromLevel                       // 변경: 지수로
+}
+```
+
+이 파일 하나를 고치면 `UserStats.earnPool()`, `UserStatsService`, `TodoService` 등 이 함수를 쓰는 모든 곳에 자동으로 반영된다. 반대로 레벨 계산 로직이 각 서비스에 복붙되어 흩어져 있었다면, 모든 서비스 파일을 다 찾아서 고쳐야 하고 한 군데라도 빠뜨리면 버그가 된다.
 
 ---
 
