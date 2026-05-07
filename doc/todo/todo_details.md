@@ -174,6 +174,45 @@ members.forEach { member ->
 확장 시:     Spring Batch Chunk 처리 (페이징, 실패 청크 재시도)
 ```
 
+### 4.5 신규 가입 시 즉시 생성 (크로스 도메인 이벤트)
+
+스케줄러는 매일 00:00 KST에 실행된다. 그 이후에 가입한 신규 회원은 다음 날 자정까지 오늘의 할 일이 없다. 이를 보완하기 위해 회원 가입 시점에 즉시 오늘의 할 일을 생성한다.
+
+**문제**
+
+```
+00:00  스케줄러 실행 → 기존 회원 전체 할 일 생성
+09:30  신규 회원 가입 → 오늘 할 일 없음 (다음날 00:00까지 대기)
+```
+
+**해결: Spring ApplicationEvent**
+
+`MemberService`는 신규 회원 저장 후 `MemberRegisteredEvent`를 발행한다.  
+`MemberRegistrationEventListener`(home 도메인)가 이벤트를 수신해 `generateDailyTodos()`를 호출한다.
+
+```
+[트랜잭션 1] MemberService.findOrCreateMember()
+  → memberRepository.save(member)
+  → eventPublisher.publishEvent(MemberRegisteredEvent(member))
+  → 트랜잭션 1 COMMIT
+
+[트랜잭션 2] MemberRegistrationEventListener.onMemberRegistered()  ← AFTER_COMMIT
+  → todoService.generateDailyTodos(member, today)
+```
+
+`AFTER_COMMIT` 페이즈를 사용하는 이유는 todo 생성 실패가 회원가입 롤백으로 이어지는 것을 막기 위해서다.  
+`generateDailyTodos()`는 멱등 처리가 되어 있으므로 이벤트 중복 발행에도 안전하다.
+
+**관련 파일**
+
+```
+domain/member/event/MemberRegisteredEvent.kt         # 이벤트 클래스
+domain/member/service/MemberService.kt               # 이벤트 발행
+domain/home/service/MemberRegistrationEventListener.kt # 이벤트 수신 및 할 일 생성
+```
+
+> 크로스 도메인 이벤트 전체 목록 → [doc/events/README.md](../events/README.md)
+
 ---
 
 ## 5. 소프트웨어 설계 고려 사항
@@ -289,19 +328,24 @@ val today = LocalDate.now(KST)   // UTC가 아닌 KST 기준 오늘 날짜
 ```
 domain/home/
 ├── model/
-│   ├── Todo.kt               # 핵심 엔티티 (도메인 메서드 포함)
-│   ├── TodoType.kt           # CHAT / LEARNING / EMOTION / CUSTOM
-│   ├── TodoStatus.kt         # PENDING / COMPLETED
-│   ├── TodoSource.kt         # SYSTEM / AGENT
-│   ├── LearningType.kt       # MATH / LANGUAGE
-│   └── LearningTypePolicy.kt # 요일별 과목 분기 정책 (순수 object)
+│   ├── Todo.kt                          # 핵심 엔티티 (도메인 메서드 포함)
+│   ├── TodoType.kt                      # CHAT / LEARNING / EMOTION / CUSTOM
+│   ├── TodoStatus.kt                    # PENDING / COMPLETED
+│   ├── TodoSource.kt                    # SYSTEM / AGENT
+│   ├── LearningType.kt                  # MATH / LANGUAGE
+│   └── LearningTypePolicy.kt           # 요일별 과목 분기 정책 (순수 object)
 ├── repository/
-│   └── TodoRepository.kt     # 날짜·상태 기반 조회 메서드
+│   └── TodoRepository.kt               # 날짜·상태 기반 조회 메서드
 ├── service/
-│   ├── TodoService.kt        # 생성·완료·Agent CRUD 비즈니스 로직
-│   └── TodoScheduler.kt      # 매일 00:00 KST 자동 실행
+│   ├── TodoService.kt                  # 생성·완료·Agent CRUD 비즈니스 로직
+│   ├── TodoScheduler.kt                # 매일 00:00 KST 자동 실행
+│   └── MemberRegistrationEventListener.kt  # 신규 가입 시 즉시 할 일 생성
 └── dto/
-    └── TodoDtos.kt           # TodoResponse, TodoCompleteResult 등
+    └── TodoDtos.kt                     # TodoResponse, TodoCompleteResult 등
+
+domain/member/
+└── event/
+    └── MemberRegisteredEvent.kt        # 신규 가입 이벤트 (home 도메인이 수신)
 ```
 
 ### 6.1 Todo를 `domain/home/`에 둔 이유

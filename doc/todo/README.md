@@ -18,6 +18,7 @@
 | 저장소 | `repository/TodoRepository.kt` | 날짜·상태 기반 조회 메서드 포함 |
 | 서비스 | `service/TodoService.kt` | 생성·완료·Agent CRUD |
 | 스케줄러 | `service/TodoScheduler.kt` | 매일 00:00 KST 자동 실행 |
+| 가입 즉시 생성 | `service/MemberRegistrationEventListener.kt` | 신규 가입 시 당일 할 일 즉시 생성 ([이벤트 상세](../events/README.md)) |
 | 스케줄링 설정 | `global/config/SchedulingConfig.kt` | @EnableScheduling 활성화 |
 
 ---
