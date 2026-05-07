@@ -19,7 +19,7 @@ import java.time.LocalDateTime
     ]
 )
 class RewardHistory(
-
+     
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long = 0,
