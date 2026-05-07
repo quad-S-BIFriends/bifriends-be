@@ -50,7 +50,8 @@ class UserStats(
 
     /** 마지막 출석 날짜 (KST 기준 LocalDate) */
     @Column
-    var lastLoginDate: LocalDate? = null,
+    /** 마지막 홈 방문(출석) 날짜 (KST 기준) */
+    var lastAttendanceDate: LocalDate? = null,
 
     @Column(nullable = false, updatable = false)
     val createdAt: LocalDateTime = LocalDateTime.now(),
@@ -107,19 +108,19 @@ class UserStats(
      * - 연속 출석(어제 접속) → streakDays += 1
      * - 컴백(2일 이상 공백) / 첫 로그인 → streakDays = 1
      *
-     * ⚠️  이 메서드는 streak 및 lastLoginDate 만 변경한다.
+     * ⚠️  이 메서드는 streak 및 lastAttendanceDate 만 변경한다.
      *     실제 풀 지급은 서비스에서 earnPool() 을 별도로 호출해야 한다.
      *
      * @return 지급할 출석 보상 풀 양, 이미 처리된 경우 null
      */
     fun recordAttendance(today: LocalDate): Int? {
-        if (lastLoginDate == today) return null  // 오늘 이미 출석했으면 출석 보상 없음
+        if (lastAttendanceDate == today) return null  // 오늘 이미 출석했으면 출석 보상 없음
 
         val yesterday = today.minusDays(1)
         //어제 출석했으면 streak 유지, 아니면 1로 초기화
-        streakDays = if (lastLoginDate == yesterday) streakDays + 1 else 1
+        streakDays = if (lastAttendanceDate == yesterday) streakDays + 1 else 1
         //마지막 출석일 갱신
-        lastLoginDate = today
+        lastAttendanceDate = today
         updatedAt = LocalDateTime.now()
 
         return RewardPolicy.attendancePool(streakDays)
