@@ -39,4 +39,4 @@ jwt:
 
 firebase:
   config:
-    path: classpath:firebase-service-account.json
+    path: ${FIREBASE_CONFIG_PATH:classpath:firebase-service-account.json}

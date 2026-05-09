@@ -1,5 +1,5 @@
 package com.bifriends.domain.member.model
-
+import com.bifriends.domain.onboarding.model.ItemType
 import jakarta.persistence.*
 import java.time.LocalDateTime
 
@@ -46,6 +46,11 @@ class Member(
 
     @Column(nullable = false)
     var onboardingCompleted: Boolean = false,
+
+    @Enumerated(EnumType.STRING)
+    @Column
+    var representativeItemType: ItemType? = null,
+
 
     @Column(nullable = false, updatable = false)
     val createdAt: LocalDateTime = LocalDateTime.now(),
