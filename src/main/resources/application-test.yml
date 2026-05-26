@@ -7,4 +7,10 @@ spring:
   jpa:
     hibernate:
       ddl-auto: create-drop
+    defer-datasource-initialization: true
     show-sql: false
+
+  sql:
+    init:
+      mode: always
+      data-locations: classpath:db/math_seed.sql,classpath:db/korean_seed.sql
