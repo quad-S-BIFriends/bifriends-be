@@ -1,0 +1,1662 @@
+{
+  "subject": "math",
+  "step_id": "step_3",
+  "step_title": "재료 나눠 담기 (3)",
+  "grade": 6,
+  "semester": 1,
+  "unit": 1,
+  "concept": "분수 ÷ 자연수를 분수의 곱셈으로 나타내기",
+  "cycles": [
+    {
+      "cycle_number": 1,
+      "cycle_type": "concept",
+      "slides": [
+        {
+          "image": "g6_step3_concept_01.png",
+          "text": [
+            {
+              "type": "text",
+              "value": "밀가루 "
+            },
+            {
+              "type": "fraction",
+              "numerator": 3,
+              "denominator": 5
+            },
+            {
+              "type": "text",
+              "value": "kg을 3봉지에 똑같이 나눠 담으려고 해요. 아까처럼 분자를 3으로 나누면 "
+            },
+            {
+              "type": "fraction",
+              "numerator": 1,
+              "denominator": 5
+            },
+            {
+              "type": "text",
+              "value": "kg이에요. 근데 다른 방법도 있어요!"
+            }
+          ],
+          "confirm_button_text": "확인"
+        },
+        {
+          "image": "g6_step3_concept_02.png",
+          "text": [
+            {
+              "type": "text",
+              "value": "나누기는 곱하기로 바꿀 수 있어요! "
+            },
+            {
+              "type": "fraction",
+              "numerator": 3,
+              "denominator": 5
+            },
+            {
+              "type": "text",
+              "value": " ÷ 3은 "
+            },
+            {
+              "type": "fraction",
+              "numerator": 3,
+              "denominator": 5
+            },
+            {
+              "type": "text",
+              "value": " × "
+            },
+            {
+              "type": "fraction",
+              "numerator": 1,
+              "denominator": 3
+            },
+            {
+              "type": "text",
+              "value": "으로 바꿀 수 있어요. 나누는 수 3을 "
+            },
+            {
+              "type": "fraction",
+              "numerator": 1,
+              "denominator": 3
+            },
+            {
+              "type": "text",
+              "value": "으로 바꿔서 곱하면 돼요!"
+            }
+          ],
+          "confirm_button_text": "확인"
+        },
+        {
+          "image": "g6_step3_concept_03.png",
+          "text": [
+            {
+              "type": "fraction",
+              "numerator": 3,
+              "denominator": 5
+            },
+            {
+              "type": "text",
+              "value": " × "
+            },
+            {
+              "type": "fraction",
+              "numerator": 1,
+              "denominator": 3
+            },
+            {
+              "type": "text",
+              "value": " = "
+            },
+            {
+              "type": "fraction",
+              "numerator": 1,
+              "denominator": 5
+            },
+            {
+              "type": "text",
+              "value": "kg! 아까랑 답이 똑같죠? 나누기를 곱하기로 바꿔도 답은 같아요. 같이 해봐요!"
+            }
+          ],
+          "confirm_button_text": "시작해볼까요?"
+        }
+      ]
+    },
+    {
+      "cycle_number": 2,
+      "cycle_type": "choice",
+      "difficulty": 1,
+      "questions": [
+        {
+          "image": "g6_step3_c2_q1.png",
+          "text": [
+            {
+              "type": "fraction",
+              "numerator": 2,
+              "denominator": 5
+            },
+            {
+              "type": "text",
+              "value": " ÷ 2를 곱셈으로 바르게 나타낸 것은 무엇일까요?"
+            }
+          ],
+          "options": [
+            {
+              "display": "fraction",
+              "numerator": 2,
+              "denominator": 5,
+              "unit": "× 2"
+            },
+            {
+              "display": "fraction",
+              "numerator": 2,
+              "denominator": 5,
+              "unit": "× 1/2"
+            },
+            {
+              "display": "fraction",
+              "numerator": 2,
+              "denominator": 5,
+              "unit": "× 1/3"
+            }
+          ],
+          "answer": {
+            "numerator": 2,
+            "denominator": 5,
+            "unit": "× 1/2"
+          },
+          "hint": [
+            [
+              {
+                "type": "text",
+                "value": "나누는 수 2를 분수로 바꿔봐요!"
+              }
+            ],
+            [
+              {
+                "type": "text",
+                "value": "2를 뒤집으면 "
+              },
+              {
+                "type": "fraction",
+                "numerator": 1,
+                "denominator": 2
+              },
+              {
+                "type": "text",
+                "value": "이에요. 나누기를 곱하기로 바꾸고 2를 "
+              },
+              {
+                "type": "fraction",
+                "numerator": 1,
+                "denominator": 2
+              },
+              {
+                "type": "text",
+                "value": "으로 바꿔요."
+              }
+            ],
+            [
+              {
+                "type": "text",
+                "value": "거의 다 왔어요! "
+              },
+              {
+                "type": "fraction",
+                "numerator": 2,
+                "denominator": 5
+              },
+              {
+                "type": "text",
+                "value": " ÷ 2 = "
+              },
+              {
+                "type": "fraction",
+                "numerator": 2,
+                "denominator": 5
+              },
+              {
+                "type": "text",
+                "value": " × "
+              },
+              {
+                "type": "fraction",
+                "numerator": 1,
+                "denominator": 2
+              }
+            ]
+          ],
+          "explanation": [
+            {
+              "type": "text",
+              "value": "잘했어요! "
+            },
+            {
+              "type": "fraction",
+              "numerator": 2,
+              "denominator": 5
+            },
+            {
+              "type": "text",
+              "value": " ÷ 2 = "
+            },
+            {
+              "type": "fraction",
+              "numerator": 2,
+              "denominator": 5
+            },
+            {
+              "type": "text",
+              "value": " × "
+            },
+            {
+              "type": "fraction",
+              "numerator": 1,
+              "denominator": 2
+            },
+            {
+              "type": "text",
+              "value": " = "
+            },
+            {
+              "type": "fraction",
+              "numerator": 1,
+              "denominator": 5
+            },
+            {
+              "type": "text",
+              "value": "이에요."
+            }
+          ]
+        },
+        {
+          "image": "g6_step3_c2_q2.png",
+          "text": [
+            {
+              "type": "fraction",
+              "numerator": 4,
+              "denominator": 7
+            },
+            {
+              "type": "text",
+              "value": " ÷ 4를 곱셈으로 바꾸면 얼마일까요?"
+            }
+          ],
+          "options": [
+            {
+              "display": "fraction",
+              "numerator": 1,
+              "denominator": 7
+            },
+            {
+              "display": "fraction",
+              "numerator": 4,
+              "denominator": 28
+            },
+            {
+              "display": "fraction",
+              "numerator": 4,
+              "denominator": 7
+            }
+          ],
+          "answer": {
+            "numerator": 1,
+            "denominator": 7
+          },
+          "hint": [
+            [
+              {
+                "type": "text",
+                "value": "나누는 수 4를 분수로 바꿔봐요!"
+              }
+            ],
+            [
+              {
+                "type": "text",
+                "value": "4를 뒤집으면 "
+              },
+              {
+                "type": "fraction",
+                "numerator": 1,
+                "denominator": 4
+              },
+              {
+                "type": "text",
+                "value": "이에요."
+              }
+            ],
+            [
+              {
+                "type": "text",
+                "value": "거의 다 왔어요! "
+              },
+              {
+                "type": "fraction",
+                "numerator": 4,
+                "denominator": 7
+              },
+              {
+                "type": "text",
+                "value": " × "
+              },
+              {
+                "type": "fraction",
+                "numerator": 1,
+                "denominator": 4
+              },
+              {
+                "type": "text",
+                "value": " = "
+              },
+              {
+                "type": "fraction",
+                "numerator": 1,
+                "denominator": 7
+              }
+            ]
+          ],
+          "explanation": [
+            {
+              "type": "text",
+              "value": "잘했어요! "
+            },
+            {
+              "type": "fraction",
+              "numerator": 4,
+              "denominator": 7
+            },
+            {
+              "type": "text",
+              "value": " ÷ 4 = "
+            },
+            {
+              "type": "fraction",
+              "numerator": 4,
+              "denominator": 7
+            },
+            {
+              "type": "text",
+              "value": " × "
+            },
+            {
+              "type": "fraction",
+              "numerator": 1,
+              "denominator": 4
+            },
+            {
+              "type": "text",
+              "value": " = "
+            },
+            {
+              "type": "fraction",
+              "numerator": 1,
+              "denominator": 7
+            },
+            {
+              "type": "text",
+              "value": "이에요."
+            }
+          ]
+        },
+        {
+          "image": "g6_step3_c2_q3.png",
+          "text": [
+            {
+              "type": "fraction",
+              "numerator": 6,
+              "denominator": 11
+            },
+            {
+              "type": "text",
+              "value": " ÷ 3을 곱셈으로 바꾸면 얼마일까요?"
+            }
+          ],
+          "options": [
+            {
+              "display": "fraction",
+              "numerator": 6,
+              "denominator": 33
+            },
+            {
+              "display": "fraction",
+              "numerator": 2,
+              "denominator": 11
+            },
+            {
+              "display": "fraction",
+              "numerator": 3,
+              "denominator": 11
+            }
+          ],
+          "answer": {
+            "numerator": 2,
+            "denominator": 11
+          },
+          "hint": [
+            [
+              {
+                "type": "text",
+                "value": "나누는 수 3을 분수로 바꿔봐요!"
+              }
+            ],
+            [
+              {
+                "type": "text",
+                "value": "3을 뒤집으면 "
+              },
+              {
+                "type": "fraction",
+                "numerator": 1,
+                "denominator": 3
+              },
+              {
+                "type": "text",
+                "value": "이에요."
+              }
+            ],
+            [
+              {
+                "type": "text",
+                "value": "거의 다 왔어요! "
+              },
+              {
+                "type": "fraction",
+                "numerator": 6,
+                "denominator": 11
+              },
+              {
+                "type": "text",
+                "value": " × "
+              },
+              {
+                "type": "fraction",
+                "numerator": 1,
+                "denominator": 3
+              },
+              {
+                "type": "text",
+                "value": " = "
+              },
+              {
+                "type": "fraction",
+                "numerator": 2,
+                "denominator": 11
+              }
+            ]
+          ],
+          "explanation": [
+            {
+              "type": "text",
+              "value": "잘했어요! "
+            },
+            {
+              "type": "fraction",
+              "numerator": 6,
+              "denominator": 11
+            },
+            {
+              "type": "text",
+              "value": " ÷ 3 = "
+            },
+            {
+              "type": "fraction",
+              "numerator": 6,
+              "denominator": 11
+            },
+            {
+              "type": "text",
+              "value": " × "
+            },
+            {
+              "type": "fraction",
+              "numerator": 1,
+              "denominator": 3
+            },
+            {
+              "type": "text",
+              "value": " = "
+            },
+            {
+              "type": "fraction",
+              "numerator": 2,
+              "denominator": 11
+            },
+            {
+              "type": "text",
+              "value": "이에요."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cycle_number": 3,
+      "cycle_type": "choice",
+      "difficulty": 2,
+      "questions": [
+        {
+          "image": "g6_step3_c3_q1.png",
+          "text": [
+            {
+              "type": "fraction",
+              "numerator": 5,
+              "denominator": 9
+            },
+            {
+              "type": "text",
+              "value": " ÷ 5를 곱셈으로 바꾸면 얼마일까요?"
+            }
+          ],
+          "options": [
+            {
+              "display": "fraction",
+              "numerator": 1,
+              "denominator": 9
+            },
+            {
+              "display": "fraction",
+              "numerator": 5,
+              "denominator": 45
+            },
+            {
+              "display": "fraction",
+              "numerator": 4,
+              "denominator": 9
+            }
+          ],
+          "answer": {
+            "numerator": 1,
+            "denominator": 9
+          },
+          "hint": [
+            [
+              {
+                "type": "text",
+                "value": "나누는 수 5를 분수로 바꿔봐요!"
+              }
+            ],
+            [
+              {
+                "type": "text",
+                "value": "5를 뒤집으면 "
+              },
+              {
+                "type": "fraction",
+                "numerator": 1,
+                "denominator": 5
+              },
+              {
+                "type": "text",
+                "value": "이에요."
+              }
+            ],
+            [
+              {
+                "type": "text",
+                "value": "거의 다 왔어요! "
+              },
+              {
+                "type": "fraction",
+                "numerator": 5,
+                "denominator": 9
+              },
+              {
+                "type": "text",
+                "value": " × "
+              },
+              {
+                "type": "fraction",
+                "numerator": 1,
+                "denominator": 5
+              },
+              {
+                "type": "text",
+                "value": " = "
+              },
+              {
+                "type": "fraction",
+                "numerator": 1,
+                "denominator": 9
+              }
+            ]
+          ],
+          "explanation": [
+            {
+              "type": "text",
+              "value": "잘했어요! "
+            },
+            {
+              "type": "fraction",
+              "numerator": 5,
+              "denominator": 9
+            },
+            {
+              "type": "text",
+              "value": " ÷ 5 = "
+            },
+            {
+              "type": "fraction",
+              "numerator": 5,
+              "denominator": 9
+            },
+            {
+              "type": "text",
+              "value": " × "
+            },
+            {
+              "type": "fraction",
+              "numerator": 1,
+              "denominator": 5
+            },
+            {
+              "type": "text",
+              "value": " = "
+            },
+            {
+              "type": "fraction",
+              "numerator": 1,
+              "denominator": 9
+            },
+            {
+              "type": "text",
+              "value": "이에요."
+            }
+          ]
+        },
+        {
+          "image": "g6_step3_c3_q2.png",
+          "text": [
+            {
+              "type": "fraction",
+              "numerator": 8,
+              "denominator": 13
+            },
+            {
+              "type": "text",
+              "value": " ÷ 4를 곱셈으로 바꾸면 얼마일까요?"
+            }
+          ],
+          "options": [
+            {
+              "display": "fraction",
+              "numerator": 4,
+              "denominator": 13
+            },
+            {
+              "display": "fraction",
+              "numerator": 2,
+              "denominator": 13
+            },
+            {
+              "display": "fraction",
+              "numerator": 8,
+              "denominator": 52
+            }
+          ],
+          "answer": {
+            "numerator": 2,
+            "denominator": 13
+          },
+          "hint": [
+            [
+              {
+                "type": "text",
+                "value": "나누는 수 4를 분수로 바꿔봐요!"
+              }
+            ],
+            [
+              {
+                "type": "text",
+                "value": "4를 뒤집으면 "
+              },
+              {
+                "type": "fraction",
+                "numerator": 1,
+                "denominator": 4
+              },
+              {
+                "type": "text",
+                "value": "이에요."
+              }
+            ],
+            [
+              {
+                "type": "text",
+                "value": "거의 다 왔어요! "
+              },
+              {
+                "type": "fraction",
+                "numerator": 8,
+                "denominator": 13
+              },
+              {
+                "type": "text",
+                "value": " × "
+              },
+              {
+                "type": "fraction",
+                "numerator": 1,
+                "denominator": 4
+              },
+              {
+                "type": "text",
+                "value": " = "
+              },
+              {
+                "type": "fraction",
+                "numerator": 2,
+                "denominator": 13
+              }
+            ]
+          ],
+          "explanation": [
+            {
+              "type": "text",
+              "value": "잘했어요! "
+            },
+            {
+              "type": "fraction",
+              "numerator": 8,
+              "denominator": 13
+            },
+            {
+              "type": "text",
+              "value": " ÷ 4 = "
+            },
+            {
+              "type": "fraction",
+              "numerator": 8,
+              "denominator": 13
+            },
+            {
+              "type": "text",
+              "value": " × "
+            },
+            {
+              "type": "fraction",
+              "numerator": 1,
+              "denominator": 4
+            },
+            {
+              "type": "text",
+              "value": " = "
+            },
+            {
+              "type": "fraction",
+              "numerator": 2,
+              "denominator": 13
+            },
+            {
+              "type": "text",
+              "value": "이에요."
+            }
+          ]
+        },
+        {
+          "image": "g6_step3_c3_q3.png",
+          "text": [
+            {
+              "type": "fraction",
+              "numerator": 9,
+              "denominator": 14
+            },
+            {
+              "type": "text",
+              "value": " ÷ 3을 곱셈으로 바꾸면 얼마일까요?"
+            }
+          ],
+          "options": [
+            {
+              "display": "fraction",
+              "numerator": 3,
+              "denominator": 14
+            },
+            {
+              "display": "fraction",
+              "numerator": 9,
+              "denominator": 42
+            },
+            {
+              "display": "fraction",
+              "numerator": 6,
+              "denominator": 14
+            }
+          ],
+          "answer": {
+            "numerator": 3,
+            "denominator": 14
+          },
+          "hint": [
+            [
+              {
+                "type": "text",
+                "value": "나누는 수 3을 분수로 바꿔봐요!"
+              }
+            ],
+            [
+              {
+                "type": "text",
+                "value": "3을 뒤집으면 "
+              },
+              {
+                "type": "fraction",
+                "numerator": 1,
+                "denominator": 3
+              },
+              {
+                "type": "text",
+                "value": "이에요."
+              }
+            ],
+            [
+              {
+                "type": "text",
+                "value": "거의 다 왔어요! "
+              },
+              {
+                "type": "fraction",
+                "numerator": 9,
+                "denominator": 14
+              },
+              {
+                "type": "text",
+                "value": " × "
+              },
+              {
+                "type": "fraction",
+                "numerator": 1,
+                "denominator": 3
+              },
+              {
+                "type": "text",
+                "value": " = "
+              },
+              {
+                "type": "fraction",
+                "numerator": 3,
+                "denominator": 14
+              }
+            ]
+          ],
+          "explanation": [
+            {
+              "type": "text",
+              "value": "잘했어요! "
+            },
+            {
+              "type": "fraction",
+              "numerator": 9,
+              "denominator": 14
+            },
+            {
+              "type": "text",
+              "value": " ÷ 3 = "
+            },
+            {
+              "type": "fraction",
+              "numerator": 9,
+              "denominator": 14
+            },
+            {
+              "type": "text",
+              "value": " × "
+            },
+            {
+              "type": "fraction",
+              "numerator": 1,
+              "denominator": 3
+            },
+            {
+              "type": "text",
+              "value": " = "
+            },
+            {
+              "type": "fraction",
+              "numerator": 3,
+              "denominator": 14
+            },
+            {
+              "type": "text",
+              "value": "이에요."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cycle_number": 4,
+      "cycle_type": "choice",
+      "difficulty": 3,
+      "questions": [
+        {
+          "image": "g6_step3_c4_q1.png",
+          "text": [
+            {
+              "type": "fraction",
+              "numerator": 10,
+              "denominator": 11
+            },
+            {
+              "type": "text",
+              "value": " ÷ 5를 곱셈으로 바꾸면 얼마일까요?"
+            }
+          ],
+          "options": [
+            {
+              "display": "fraction",
+              "numerator": 5,
+              "denominator": 11
+            },
+            {
+              "display": "fraction",
+              "numerator": 2,
+              "denominator": 11
+            },
+            {
+              "display": "fraction",
+              "numerator": 10,
+              "denominator": 55
+            }
+          ],
+          "answer": {
+            "numerator": 2,
+            "denominator": 11
+          },
+          "hint": [
+            [
+              {
+                "type": "text",
+                "value": "나누는 수 5를 분수로 바꿔봐요!"
+              }
+            ],
+            [
+              {
+                "type": "text",
+                "value": "5를 뒤집으면 "
+              },
+              {
+                "type": "fraction",
+                "numerator": 1,
+                "denominator": 5
+              },
+              {
+                "type": "text",
+                "value": "이에요."
+              }
+            ],
+            [
+              {
+                "type": "text",
+                "value": "거의 다 왔어요! "
+              },
+              {
+                "type": "fraction",
+                "numerator": 10,
+                "denominator": 11
+              },
+              {
+                "type": "text",
+                "value": " × "
+              },
+              {
+                "type": "fraction",
+                "numerator": 1,
+                "denominator": 5
+              },
+              {
+                "type": "text",
+                "value": " = "
+              },
+              {
+                "type": "fraction",
+                "numerator": 2,
+                "denominator": 11
+              }
+            ]
+          ],
+          "explanation": [
+            {
+              "type": "text",
+              "value": "잘했어요! "
+            },
+            {
+              "type": "fraction",
+              "numerator": 10,
+              "denominator": 11
+            },
+            {
+              "type": "text",
+              "value": " ÷ 5 = "
+            },
+            {
+              "type": "fraction",
+              "numerator": 10,
+              "denominator": 11
+            },
+            {
+              "type": "text",
+              "value": " × "
+            },
+            {
+              "type": "fraction",
+              "numerator": 1,
+              "denominator": 5
+            },
+            {
+              "type": "text",
+              "value": " = "
+            },
+            {
+              "type": "fraction",
+              "numerator": 2,
+              "denominator": 11
+            },
+            {
+              "type": "text",
+              "value": "이에요."
+            }
+          ]
+        },
+        {
+          "image": "g6_step3_c4_q2.png",
+          "text": [
+            {
+              "type": "fraction",
+              "numerator": 12,
+              "denominator": 17
+            },
+            {
+              "type": "text",
+              "value": " ÷ 6을 곱셈으로 바꾸면 얼마일까요?"
+            }
+          ],
+          "options": [
+            {
+              "display": "fraction",
+              "numerator": 6,
+              "denominator": 17
+            },
+            {
+              "display": "fraction",
+              "numerator": 2,
+              "denominator": 17
+            },
+            {
+              "display": "fraction",
+              "numerator": 12,
+              "denominator": 102
+            }
+          ],
+          "answer": {
+            "numerator": 2,
+            "denominator": 17
+          },
+          "hint": [
+            [
+              {
+                "type": "text",
+                "value": "나누는 수 6을 분수로 바꿔봐요!"
+              }
+            ],
+            [
+              {
+                "type": "text",
+                "value": "6을 뒤집으면 "
+              },
+              {
+                "type": "fraction",
+                "numerator": 1,
+                "denominator": 6
+              },
+              {
+                "type": "text",
+                "value": "이에요."
+              }
+            ],
+            [
+              {
+                "type": "text",
+                "value": "거의 다 왔어요! "
+              },
+              {
+                "type": "fraction",
+                "numerator": 12,
+                "denominator": 17
+              },
+              {
+                "type": "text",
+                "value": " × "
+              },
+              {
+                "type": "fraction",
+                "numerator": 1,
+                "denominator": 6
+              },
+              {
+                "type": "text",
+                "value": " = "
+              },
+              {
+                "type": "fraction",
+                "numerator": 2,
+                "denominator": 17
+              }
+            ]
+          ],
+          "explanation": [
+            {
+              "type": "text",
+              "value": "잘했어요! "
+            },
+            {
+              "type": "fraction",
+              "numerator": 12,
+              "denominator": 17
+            },
+            {
+              "type": "text",
+              "value": " ÷ 6 = "
+            },
+            {
+              "type": "fraction",
+              "numerator": 12,
+              "denominator": 17
+            },
+            {
+              "type": "text",
+              "value": " × "
+            },
+            {
+              "type": "fraction",
+              "numerator": 1,
+              "denominator": 6
+            },
+            {
+              "type": "text",
+              "value": " = "
+            },
+            {
+              "type": "fraction",
+              "numerator": 2,
+              "denominator": 17
+            },
+            {
+              "type": "text",
+              "value": "이에요."
+            }
+          ]
+        },
+        {
+          "image": "g6_step3_c4_q3.png",
+          "text": [
+            {
+              "type": "fraction",
+              "numerator": 14,
+              "denominator": 15
+            },
+            {
+              "type": "text",
+              "value": " ÷ 7을 곱셈으로 바꾸면 얼마일까요?"
+            }
+          ],
+          "options": [
+            {
+              "display": "fraction",
+              "numerator": 7,
+              "denominator": 15
+            },
+            {
+              "display": "fraction",
+              "numerator": 14,
+              "denominator": 105
+            },
+            {
+              "display": "fraction",
+              "numerator": 2,
+              "denominator": 15
+            }
+          ],
+          "answer": {
+            "numerator": 2,
+            "denominator": 15
+          },
+          "hint": [
+            [
+              {
+                "type": "text",
+                "value": "나누는 수 7을 분수로 바꿔봐요!"
+              }
+            ],
+            [
+              {
+                "type": "text",
+                "value": "7을 뒤집으면 "
+              },
+              {
+                "type": "fraction",
+                "numerator": 1,
+                "denominator": 7
+              },
+              {
+                "type": "text",
+                "value": "이에요."
+              }
+            ],
+            [
+              {
+                "type": "text",
+                "value": "거의 다 왔어요! "
+              },
+              {
+                "type": "fraction",
+                "numerator": 14,
+                "denominator": 15
+              },
+              {
+                "type": "text",
+                "value": " × "
+              },
+              {
+                "type": "fraction",
+                "numerator": 1,
+                "denominator": 7
+              },
+              {
+                "type": "text",
+                "value": " = "
+              },
+              {
+                "type": "fraction",
+                "numerator": 2,
+                "denominator": 15
+              }
+            ]
+          ],
+          "explanation": [
+            {
+              "type": "text",
+              "value": "잘했어요! "
+            },
+            {
+              "type": "fraction",
+              "numerator": 14,
+              "denominator": 15
+            },
+            {
+              "type": "text",
+              "value": " ÷ 7 = "
+            },
+            {
+              "type": "fraction",
+              "numerator": 14,
+              "denominator": 15
+            },
+            {
+              "type": "text",
+              "value": " × "
+            },
+            {
+              "type": "fraction",
+              "numerator": 1,
+              "denominator": 7
+            },
+            {
+              "type": "text",
+              "value": " = "
+            },
+            {
+              "type": "fraction",
+              "numerator": 2,
+              "denominator": 15
+            },
+            {
+              "type": "text",
+              "value": "이에요."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cycle_number": 5,
+      "cycle_type": "short_answer",
+      "difficulty": 4,
+      "questions": [
+        {
+          "image": "g6_step3_c5_q1.png",
+          "text": [
+            {
+              "type": "fraction",
+              "numerator": 9,
+              "denominator": 13
+            },
+            {
+              "type": "text",
+              "value": " ÷ 3을 곱셈으로 바꿔서 계산해봐요!"
+            }
+          ],
+          "answer": {
+            "numerator": 3,
+            "denominator": 13
+          },
+          "hint": [
+            [
+              {
+                "type": "text",
+                "value": "나누는 수 3을 분수로 바꿔봐요!"
+              }
+            ],
+            [
+              {
+                "type": "text",
+                "value": "3을 뒤집으면 "
+              },
+              {
+                "type": "fraction",
+                "numerator": 1,
+                "denominator": 3
+              },
+              {
+                "type": "text",
+                "value": "이에요."
+              }
+            ],
+            [
+              {
+                "type": "text",
+                "value": "거의 다 왔어요! "
+              },
+              {
+                "type": "fraction",
+                "numerator": 9,
+                "denominator": 13
+              },
+              {
+                "type": "text",
+                "value": " × "
+              },
+              {
+                "type": "fraction",
+                "numerator": 1,
+                "denominator": 3
+              },
+              {
+                "type": "text",
+                "value": " = "
+              },
+              {
+                "type": "fraction",
+                "numerator": 3,
+                "denominator": 13
+              }
+            ]
+          ],
+          "explanation": [
+            {
+              "type": "text",
+              "value": "잘했어요! "
+            },
+            {
+              "type": "fraction",
+              "numerator": 9,
+              "denominator": 13
+            },
+            {
+              "type": "text",
+              "value": " ÷ 3 = "
+            },
+            {
+              "type": "fraction",
+              "numerator": 9,
+              "denominator": 13
+            },
+            {
+              "type": "text",
+              "value": " × "
+            },
+            {
+              "type": "fraction",
+              "numerator": 1,
+              "denominator": 3
+            },
+            {
+              "type": "text",
+              "value": " = "
+            },
+            {
+              "type": "fraction",
+              "numerator": 3,
+              "denominator": 13
+            },
+            {
+              "type": "text",
+              "value": "이에요."
+            }
+          ]
+        },
+        {
+          "image": "g6_step3_c5_q2.png",
+          "text": [
+            {
+              "type": "fraction",
+              "numerator": 10,
+              "denominator": 17
+            },
+            {
+              "type": "text",
+              "value": " ÷ 5를 곱셈으로 바꿔서 계산해봐요!"
+            }
+          ],
+          "answer": {
+            "numerator": 2,
+            "denominator": 17
+          },
+          "hint": [
+            [
+              {
+                "type": "text",
+                "value": "나누는 수 5를 분수로 바꿔봐요!"
+              }
+            ],
+            [
+              {
+                "type": "text",
+                "value": "5를 뒤집으면 "
+              },
+              {
+                "type": "fraction",
+                "numerator": 1,
+                "denominator": 5
+              },
+              {
+                "type": "text",
+                "value": "이에요."
+              }
+            ],
+            [
+              {
+                "type": "text",
+                "value": "거의 다 왔어요! "
+              },
+              {
+                "type": "fraction",
+                "numerator": 10,
+                "denominator": 17
+              },
+              {
+                "type": "text",
+                "value": " × "
+              },
+              {
+                "type": "fraction",
+                "numerator": 1,
+                "denominator": 5
+              },
+              {
+                "type": "text",
+                "value": " = "
+              },
+              {
+                "type": "fraction",
+                "numerator": 2,
+                "denominator": 17
+              }
+            ]
+          ],
+          "explanation": [
+            {
+              "type": "text",
+              "value": "잘했어요! "
+            },
+            {
+              "type": "fraction",
+              "numerator": 10,
+              "denominator": 17
+            },
+            {
+              "type": "text",
+              "value": " ÷ 5 = "
+            },
+            {
+              "type": "fraction",
+              "numerator": 10,
+              "denominator": 17
+            },
+            {
+              "type": "text",
+              "value": " × "
+            },
+            {
+              "type": "fraction",
+              "numerator": 1,
+              "denominator": 5
+            },
+            {
+              "type": "text",
+              "value": " = "
+            },
+            {
+              "type": "fraction",
+              "numerator": 2,
+              "denominator": 17
+            },
+            {
+              "type": "text",
+              "value": "이에요."
+            }
+          ]
+        },
+        {
+          "image": "g6_step3_c5_q3.png",
+          "text": [
+            {
+              "type": "fraction",
+              "numerator": 12,
+              "denominator": 19
+            },
+            {
+              "type": "text",
+              "value": " ÷ 4를 곱셈으로 바꿔서 계산해봐요!"
+            }
+          ],
+          "answer": {
+            "numerator": 3,
+            "denominator": 19
+          },
+          "hint": [
+            [
+              {
+                "type": "text",
+                "value": "나누는 수 4를 분수로 바꿔봐요!"
+              }
+            ],
+            [
+              {
+                "type": "text",
+                "value": "4를 뒤집으면 "
+              },
+              {
+                "type": "fraction",
+                "numerator": 1,
+                "denominator": 4
+              },
+              {
+                "type": "text",
+                "value": "이에요."
+              }
+            ],
+            [
+              {
+                "type": "text",
+                "value": "거의 다 왔어요! "
+              },
+              {
+                "type": "fraction",
+                "numerator": 12,
+                "denominator": 19
+              },
+              {
+                "type": "text",
+                "value": " × "
+              },
+              {
+                "type": "fraction",
+                "numerator": 1,
+                "denominator": 4
+              },
+              {
+                "type": "text",
+                "value": " = "
+              },
+              {
+                "type": "fraction",
+                "numerator": 3,
+                "denominator": 19
+              }
+            ]
+          ],
+          "explanation": [
+            {
+              "type": "text",
+              "value": "잘했어요! "
+            },
+            {
+              "type": "fraction",
+              "numerator": 12,
+              "denominator": 19
+            },
+            {
+              "type": "text",
+              "value": " ÷ 4 = "
+            },
+            {
+              "type": "fraction",
+              "numerator": 12,
+              "denominator": 19
+            },
+            {
+              "type": "text",
+              "value": " × "
+            },
+            {
+              "type": "fraction",
+              "numerator": 1,
+              "denominator": 4
+            },
+            {
+              "type": "text",
+              "value": " = "
+            },
+            {
+              "type": "fraction",
+              "numerator": 3,
+              "denominator": 19
+            },
+            {
+              "type": "text",
+              "value": "이에요."
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

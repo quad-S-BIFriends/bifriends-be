@@ -1,0 +1,1202 @@
+{
+  "subject": "math",
+  "step_id": "step_2",
+  "step_title": "재료 나눠 담기 (2)",
+  "grade": 6,
+  "semester": 1,
+  "unit": 1,
+  "concept": "분수 ÷ 자연수",
+  "cycles": [
+    {
+      "cycle_number": 1,
+      "cycle_type": "concept",
+      "slides": [
+        {
+          "image": "g6_step2_concept_01.png",
+          "text": [
+            {
+              "type": "text",
+              "value": "밀가루 "
+            },
+            {
+              "type": "fraction",
+              "numerator": 3,
+              "denominator": 4
+            },
+            {
+              "type": "text",
+              "value": "kg을 3봉지에 똑같이 나눠 담으려고 해요. 한 봉지에 몇 kg씩 담으면 될까요?"
+            }
+          ],
+          "confirm_button_text": "확인"
+        },
+        {
+          "image": "g6_step2_concept_02.png",
+          "text": [
+            {
+              "type": "fraction",
+              "numerator": 3,
+              "denominator": 4
+            },
+            {
+              "type": "text",
+              "value": " ÷ 3은 분자 3을 3으로 나누면 돼요! 분모는 그대로 4로 두고, 분자 3 ÷ 3 = 1. 답은 "
+            },
+            {
+              "type": "fraction",
+              "numerator": 1,
+              "denominator": 4
+            },
+            {
+              "type": "text",
+              "value": "kg이에요!"
+            }
+          ],
+          "confirm_button_text": "확인"
+        },
+        {
+          "image": "g6_step2_concept_03.png",
+          "text": [
+            {
+              "type": "text",
+              "value": "분수 ÷ 자연수는 분모는 그대로, 분자만 자연수로 나눠요! 같이 해봐요!"
+            }
+          ],
+          "confirm_button_text": "시작해볼까요?"
+        }
+      ]
+    },
+    {
+      "cycle_number": 2,
+      "cycle_type": "choice",
+      "difficulty": 1,
+      "questions": [
+        {
+          "image": "g6_step2_c2_q1.png",
+          "text": [
+            {
+              "type": "fraction",
+              "numerator": 4,
+              "denominator": 5
+            },
+            {
+              "type": "text",
+              "value": "kg의 설탕을 2봉지에 똑같이 나눠 담으면 한 봉지에 몇 kg씩 담을 수 있을까요?"
+            }
+          ],
+          "options": [
+            {
+              "display": "fraction",
+              "numerator": 4,
+              "denominator": 10,
+              "unit": "kg"
+            },
+            {
+              "display": "fraction",
+              "numerator": 2,
+              "denominator": 5,
+              "unit": "kg"
+            },
+            {
+              "display": "fraction",
+              "numerator": 4,
+              "denominator": 7,
+              "unit": "kg"
+            }
+          ],
+          "answer": {
+            "numerator": 2,
+            "denominator": 5,
+            "unit": "kg"
+          },
+          "hint": [
+            [
+              {
+                "type": "text",
+                "value": "분모는 그대로, 분자만 나눠봐요!"
+              }
+            ],
+            [
+              {
+                "type": "text",
+                "value": "분자 4 ÷ 2 = 2, 분모는 그대로 5예요."
+              }
+            ],
+            [
+              {
+                "type": "text",
+                "value": "거의 다 왔어요! "
+              },
+              {
+                "type": "fraction",
+                "numerator": 4,
+                "denominator": 5
+              },
+              {
+                "type": "text",
+                "value": " ÷ 2 = "
+              },
+              {
+                "type": "fraction",
+                "numerator": 2,
+                "denominator": 5
+              }
+            ]
+          ],
+          "explanation": [
+            {
+              "type": "text",
+              "value": "잘했어요! "
+            },
+            {
+              "type": "fraction",
+              "numerator": 4,
+              "denominator": 5
+            },
+            {
+              "type": "text",
+              "value": " ÷ 2 = "
+            },
+            {
+              "type": "fraction",
+              "numerator": 2,
+              "denominator": 5
+            },
+            {
+              "type": "text",
+              "value": "kg이에요."
+            }
+          ]
+        },
+        {
+          "image": "g6_step2_c2_q2.png",
+          "text": [
+            {
+              "type": "fraction",
+              "numerator": 6,
+              "denominator": 7
+            },
+            {
+              "type": "text",
+              "value": "kg의 쌀을 3봉지에 똑같이 나눠 담으면 한 봉지에 몇 kg씩 담을 수 있을까요?"
+            }
+          ],
+          "options": [
+            {
+              "display": "fraction",
+              "numerator": 6,
+              "denominator": 21,
+              "unit": "kg"
+            },
+            {
+              "display": "fraction",
+              "numerator": 3,
+              "denominator": 7,
+              "unit": "kg"
+            },
+            {
+              "display": "fraction",
+              "numerator": 2,
+              "denominator": 7,
+              "unit": "kg"
+            }
+          ],
+          "answer": {
+            "numerator": 2,
+            "denominator": 7,
+            "unit": "kg"
+          },
+          "hint": [
+            [
+              {
+                "type": "text",
+                "value": "분모는 그대로, 분자만 나눠봐요!"
+              }
+            ],
+            [
+              {
+                "type": "text",
+                "value": "분자 6 ÷ 3 = 2, 분모는 그대로 7이에요."
+              }
+            ],
+            [
+              {
+                "type": "text",
+                "value": "거의 다 왔어요! "
+              },
+              {
+                "type": "fraction",
+                "numerator": 6,
+                "denominator": 7
+              },
+              {
+                "type": "text",
+                "value": " ÷ 3 = "
+              },
+              {
+                "type": "fraction",
+                "numerator": 2,
+                "denominator": 7
+              }
+            ]
+          ],
+          "explanation": [
+            {
+              "type": "text",
+              "value": "잘했어요! "
+            },
+            {
+              "type": "fraction",
+              "numerator": 6,
+              "denominator": 7
+            },
+            {
+              "type": "text",
+              "value": " ÷ 3 = "
+            },
+            {
+              "type": "fraction",
+              "numerator": 2,
+              "denominator": 7
+            },
+            {
+              "type": "text",
+              "value": "kg이에요."
+            }
+          ]
+        },
+        {
+          "image": "g6_step2_c2_q3.png",
+          "text": [
+            {
+              "type": "fraction",
+              "numerator": 8,
+              "denominator": 9
+            },
+            {
+              "type": "text",
+              "value": "kg의 소금을 4봉지에 똑같이 나눠 담으면 한 봉지에 몇 kg씩 담을 수 있을까요?"
+            }
+          ],
+          "options": [
+            {
+              "display": "fraction",
+              "numerator": 2,
+              "denominator": 9,
+              "unit": "kg"
+            },
+            {
+              "display": "fraction",
+              "numerator": 4,
+              "denominator": 9,
+              "unit": "kg"
+            },
+            {
+              "display": "fraction",
+              "numerator": 8,
+              "denominator": 36,
+              "unit": "kg"
+            }
+          ],
+          "answer": {
+            "numerator": 2,
+            "denominator": 9,
+            "unit": "kg"
+          },
+          "hint": [
+            [
+              {
+                "type": "text",
+                "value": "분모는 그대로, 분자만 나눠봐요!"
+              }
+            ],
+            [
+              {
+                "type": "text",
+                "value": "분자 8 ÷ 4 = 2, 분모는 그대로 9예요."
+              }
+            ],
+            [
+              {
+                "type": "text",
+                "value": "거의 다 왔어요! "
+              },
+              {
+                "type": "fraction",
+                "numerator": 8,
+                "denominator": 9
+              },
+              {
+                "type": "text",
+                "value": " ÷ 4 = "
+              },
+              {
+                "type": "fraction",
+                "numerator": 2,
+                "denominator": 9
+              }
+            ]
+          ],
+          "explanation": [
+            {
+              "type": "text",
+              "value": "잘했어요! "
+            },
+            {
+              "type": "fraction",
+              "numerator": 8,
+              "denominator": 9
+            },
+            {
+              "type": "text",
+              "value": " ÷ 4 = "
+            },
+            {
+              "type": "fraction",
+              "numerator": 2,
+              "denominator": 9
+            },
+            {
+              "type": "text",
+              "value": "kg이에요."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cycle_number": 3,
+      "cycle_type": "choice",
+      "difficulty": 2,
+      "questions": [
+        {
+          "image": "g6_step2_c3_q1.png",
+          "text": [
+            {
+              "type": "fraction",
+              "numerator": 5,
+              "denominator": 12
+            },
+            {
+              "type": "text",
+              "value": "kg의 밀가루를 5봉지에 똑같이 나눠 담으면 한 봉지에 몇 kg씩 담을 수 있을까요?"
+            }
+          ],
+          "options": [
+            {
+              "display": "fraction",
+              "numerator": 1,
+              "denominator": 12,
+              "unit": "kg"
+            },
+            {
+              "display": "fraction",
+              "numerator": 5,
+              "denominator": 60,
+              "unit": "kg"
+            },
+            {
+              "display": "fraction",
+              "numerator": 1,
+              "denominator": 7,
+              "unit": "kg"
+            }
+          ],
+          "answer": {
+            "numerator": 1,
+            "denominator": 12,
+            "unit": "kg"
+          },
+          "hint": [
+            [
+              {
+                "type": "text",
+                "value": "분모는 그대로, 분자만 나눠봐요!"
+              }
+            ],
+            [
+              {
+                "type": "text",
+                "value": "분자 5 ÷ 5 = 1, 분모는 그대로 12예요."
+              }
+            ],
+            [
+              {
+                "type": "text",
+                "value": "거의 다 왔어요! "
+              },
+              {
+                "type": "fraction",
+                "numerator": 5,
+                "denominator": 12
+              },
+              {
+                "type": "text",
+                "value": " ÷ 5 = "
+              },
+              {
+                "type": "fraction",
+                "numerator": 1,
+                "denominator": 12
+              }
+            ]
+          ],
+          "explanation": [
+            {
+              "type": "text",
+              "value": "잘했어요! "
+            },
+            {
+              "type": "fraction",
+              "numerator": 5,
+              "denominator": 12
+            },
+            {
+              "type": "text",
+              "value": " ÷ 5 = "
+            },
+            {
+              "type": "fraction",
+              "numerator": 1,
+              "denominator": 12
+            },
+            {
+              "type": "text",
+              "value": "kg이에요."
+            }
+          ]
+        },
+        {
+          "image": "g6_step2_c3_q2.png",
+          "text": [
+            {
+              "type": "fraction",
+              "numerator": 9,
+              "denominator": 11
+            },
+            {
+              "type": "text",
+              "value": "kg의 설탕을 3봉지에 똑같이 나눠 담으면 한 봉지에 몇 kg씩 담을 수 있을까요?"
+            }
+          ],
+          "options": [
+            {
+              "display": "fraction",
+              "numerator": 3,
+              "denominator": 11,
+              "unit": "kg"
+            },
+            {
+              "display": "fraction",
+              "numerator": 9,
+              "denominator": 33,
+              "unit": "kg"
+            },
+            {
+              "display": "fraction",
+              "numerator": 6,
+              "denominator": 11,
+              "unit": "kg"
+            }
+          ],
+          "answer": {
+            "numerator": 3,
+            "denominator": 11,
+            "unit": "kg"
+          },
+          "hint": [
+            [
+              {
+                "type": "text",
+                "value": "분모는 그대로, 분자만 나눠봐요!"
+              }
+            ],
+            [
+              {
+                "type": "text",
+                "value": "분자 9 ÷ 3 = 3, 분모는 그대로 11이에요."
+              }
+            ],
+            [
+              {
+                "type": "text",
+                "value": "거의 다 왔어요! "
+              },
+              {
+                "type": "fraction",
+                "numerator": 9,
+                "denominator": 11
+              },
+              {
+                "type": "text",
+                "value": " ÷ 3 = "
+              },
+              {
+                "type": "fraction",
+                "numerator": 3,
+                "denominator": 11
+              }
+            ]
+          ],
+          "explanation": [
+            {
+              "type": "text",
+              "value": "잘했어요! "
+            },
+            {
+              "type": "fraction",
+              "numerator": 9,
+              "denominator": 11
+            },
+            {
+              "type": "text",
+              "value": " ÷ 3 = "
+            },
+            {
+              "type": "fraction",
+              "numerator": 3,
+              "denominator": 11
+            },
+            {
+              "type": "text",
+              "value": "kg이에요."
+            }
+          ]
+        },
+        {
+          "image": "g6_step2_c3_q3.png",
+          "text": [
+            {
+              "type": "fraction",
+              "numerator": 10,
+              "denominator": 13
+            },
+            {
+              "type": "text",
+              "value": "kg의 쌀을 5봉지에 똑같이 나눠 담으면 한 봉지에 몇 kg씩 담을 수 있을까요?"
+            }
+          ],
+          "options": [
+            {
+              "display": "fraction",
+              "numerator": 5,
+              "denominator": 13,
+              "unit": "kg"
+            },
+            {
+              "display": "fraction",
+              "numerator": 2,
+              "denominator": 13,
+              "unit": "kg"
+            },
+            {
+              "display": "fraction",
+              "numerator": 10,
+              "denominator": 65,
+              "unit": "kg"
+            }
+          ],
+          "answer": {
+            "numerator": 2,
+            "denominator": 13,
+            "unit": "kg"
+          },
+          "hint": [
+            [
+              {
+                "type": "text",
+                "value": "분모는 그대로, 분자만 나눠봐요!"
+              }
+            ],
+            [
+              {
+                "type": "text",
+                "value": "분자 10 ÷ 5 = 2, 분모는 그대로 13이에요."
+              }
+            ],
+            [
+              {
+                "type": "text",
+                "value": "거의 다 왔어요! "
+              },
+              {
+                "type": "fraction",
+                "numerator": 10,
+                "denominator": 13
+              },
+              {
+                "type": "text",
+                "value": " ÷ 5 = "
+              },
+              {
+                "type": "fraction",
+                "numerator": 2,
+                "denominator": 13
+              }
+            ]
+          ],
+          "explanation": [
+            {
+              "type": "text",
+              "value": "잘했어요! "
+            },
+            {
+              "type": "fraction",
+              "numerator": 10,
+              "denominator": 13
+            },
+            {
+              "type": "text",
+              "value": " ÷ 5 = "
+            },
+            {
+              "type": "fraction",
+              "numerator": 2,
+              "denominator": 13
+            },
+            {
+              "type": "text",
+              "value": "kg이에요."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cycle_number": 4,
+      "cycle_type": "choice",
+      "difficulty": 3,
+      "questions": [
+        {
+          "image": "g6_step2_c4_q1.png",
+          "text": [
+            {
+              "type": "fraction",
+              "numerator": 7,
+              "denominator": 8
+            },
+            {
+              "type": "text",
+              "value": "kg의 소금을 7봉지에 똑같이 나눠 담으면 한 봉지에 몇 kg씩 담을 수 있을까요?"
+            }
+          ],
+          "options": [
+            {
+              "display": "fraction",
+              "numerator": 1,
+              "denominator": 8,
+              "unit": "kg"
+            },
+            {
+              "display": "fraction",
+              "numerator": 7,
+              "denominator": 56,
+              "unit": "kg"
+            },
+            {
+              "display": "fraction",
+              "numerator": 1,
+              "denominator": 1,
+              "unit": "kg"
+            }
+          ],
+          "answer": {
+            "numerator": 1,
+            "denominator": 8,
+            "unit": "kg"
+          },
+          "hint": [
+            [
+              {
+                "type": "text",
+                "value": "분모는 그대로, 분자만 나눠봐요!"
+              }
+            ],
+            [
+              {
+                "type": "text",
+                "value": "분자 7 ÷ 7 = 1, 분모는 그대로 8이에요."
+              }
+            ],
+            [
+              {
+                "type": "text",
+                "value": "거의 다 왔어요! "
+              },
+              {
+                "type": "fraction",
+                "numerator": 7,
+                "denominator": 8
+              },
+              {
+                "type": "text",
+                "value": " ÷ 7 = "
+              },
+              {
+                "type": "fraction",
+                "numerator": 1,
+                "denominator": 8
+              }
+            ]
+          ],
+          "explanation": [
+            {
+              "type": "text",
+              "value": "잘했어요! "
+            },
+            {
+              "type": "fraction",
+              "numerator": 7,
+              "denominator": 8
+            },
+            {
+              "type": "text",
+              "value": " ÷ 7 = "
+            },
+            {
+              "type": "fraction",
+              "numerator": 1,
+              "denominator": 8
+            },
+            {
+              "type": "text",
+              "value": "kg이에요."
+            }
+          ]
+        },
+        {
+          "image": "g6_step2_c4_q2.png",
+          "text": [
+            {
+              "type": "fraction",
+              "numerator": 12,
+              "denominator": 13
+            },
+            {
+              "type": "text",
+              "value": "kg의 밀가루를 4봉지에 똑같이 나눠 담으면 한 봉지에 몇 kg씩 담을 수 있을까요?"
+            }
+          ],
+          "options": [
+            {
+              "display": "fraction",
+              "numerator": 3,
+              "denominator": 13,
+              "unit": "kg"
+            },
+            {
+              "display": "fraction",
+              "numerator": 12,
+              "denominator": 52,
+              "unit": "kg"
+            },
+            {
+              "display": "fraction",
+              "numerator": 8,
+              "denominator": 13,
+              "unit": "kg"
+            }
+          ],
+          "answer": {
+            "numerator": 3,
+            "denominator": 13,
+            "unit": "kg"
+          },
+          "hint": [
+            [
+              {
+                "type": "text",
+                "value": "분모는 그대로, 분자만 나눠봐요!"
+              }
+            ],
+            [
+              {
+                "type": "text",
+                "value": "분자 12 ÷ 4 = 3, 분모는 그대로 13이에요."
+              }
+            ],
+            [
+              {
+                "type": "text",
+                "value": "거의 다 왔어요! "
+              },
+              {
+                "type": "fraction",
+                "numerator": 12,
+                "denominator": 13
+              },
+              {
+                "type": "text",
+                "value": " ÷ 4 = "
+              },
+              {
+                "type": "fraction",
+                "numerator": 3,
+                "denominator": 13
+              }
+            ]
+          ],
+          "explanation": [
+            {
+              "type": "text",
+              "value": "잘했어요! "
+            },
+            {
+              "type": "fraction",
+              "numerator": 12,
+              "denominator": 13
+            },
+            {
+              "type": "text",
+              "value": " ÷ 4 = "
+            },
+            {
+              "type": "fraction",
+              "numerator": 3,
+              "denominator": 13
+            },
+            {
+              "type": "text",
+              "value": "kg이에요."
+            }
+          ]
+        },
+        {
+          "image": "g6_step2_c4_q3.png",
+          "text": [
+            {
+              "type": "fraction",
+              "numerator": 14,
+              "denominator": 15
+            },
+            {
+              "type": "text",
+              "value": "kg의 설탕을 7봉지에 똑같이 나눠 담으면 한 봉지에 몇 kg씩 담을 수 있을까요?"
+            }
+          ],
+          "options": [
+            {
+              "display": "fraction",
+              "numerator": 7,
+              "denominator": 15,
+              "unit": "kg"
+            },
+            {
+              "display": "fraction",
+              "numerator": 2,
+              "denominator": 15,
+              "unit": "kg"
+            },
+            {
+              "display": "fraction",
+              "numerator": 14,
+              "denominator": 105,
+              "unit": "kg"
+            }
+          ],
+          "answer": {
+            "numerator": 2,
+            "denominator": 15,
+            "unit": "kg"
+          },
+          "hint": [
+            [
+              {
+                "type": "text",
+                "value": "분모는 그대로, 분자만 나눠봐요!"
+              }
+            ],
+            [
+              {
+                "type": "text",
+                "value": "분자 14 ÷ 7 = 2, 분모는 그대로 15예요."
+              }
+            ],
+            [
+              {
+                "type": "text",
+                "value": "거의 다 왔어요! "
+              },
+              {
+                "type": "fraction",
+                "numerator": 14,
+                "denominator": 15
+              },
+              {
+                "type": "text",
+                "value": " ÷ 7 = "
+              },
+              {
+                "type": "fraction",
+                "numerator": 2,
+                "denominator": 15
+              }
+            ]
+          ],
+          "explanation": [
+            {
+              "type": "text",
+              "value": "잘했어요! "
+            },
+            {
+              "type": "fraction",
+              "numerator": 14,
+              "denominator": 15
+            },
+            {
+              "type": "text",
+              "value": " ÷ 7 = "
+            },
+            {
+              "type": "fraction",
+              "numerator": 2,
+              "denominator": 15
+            },
+            {
+              "type": "text",
+              "value": "kg이에요."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "cycle_number": 5,
+      "cycle_type": "short_answer",
+      "difficulty": 4,
+      "questions": [
+        {
+          "image": "g6_step2_c5_q1.png",
+          "text": [
+            {
+              "type": "fraction",
+              "numerator": 8,
+              "denominator": 11
+            },
+            {
+              "type": "text",
+              "value": "kg의 쌀을 4봉지에 똑같이 나눠 담으면 한 봉지에 몇 kg씩 담을 수 있을까요? 분수로 써봐요!"
+            }
+          ],
+          "answer": {
+            "numerator": 2,
+            "denominator": 11,
+            "unit": "kg"
+          },
+          "hint": [
+            [
+              {
+                "type": "text",
+                "value": "분모는 그대로, 분자만 나눠봐요!"
+              }
+            ],
+            [
+              {
+                "type": "text",
+                "value": "분자 8 ÷ 4 = 2, 분모는 그대로 11이에요."
+              }
+            ],
+            [
+              {
+                "type": "text",
+                "value": "거의 다 왔어요! "
+              },
+              {
+                "type": "fraction",
+                "numerator": 8,
+                "denominator": 11
+              },
+              {
+                "type": "text",
+                "value": " ÷ 4 = "
+              },
+              {
+                "type": "fraction",
+                "numerator": 2,
+                "denominator": 11
+              }
+            ]
+          ],
+          "explanation": [
+            {
+              "type": "text",
+              "value": "잘했어요! "
+            },
+            {
+              "type": "fraction",
+              "numerator": 8,
+              "denominator": 11
+            },
+            {
+              "type": "text",
+              "value": " ÷ 4 = "
+            },
+            {
+              "type": "fraction",
+              "numerator": 2,
+              "denominator": 11
+            },
+            {
+              "type": "text",
+              "value": "kg이에요."
+            }
+          ]
+        },
+        {
+          "image": "g6_step2_c5_q2.png",
+          "text": [
+            {
+              "type": "fraction",
+              "numerator": 9,
+              "denominator": 13
+            },
+            {
+              "type": "text",
+              "value": "kg의 소금을 3봉지에 똑같이 나눠 담으면 한 봉지에 몇 kg씩 담을 수 있을까요? 분수로 써봐요!"
+            }
+          ],
+          "answer": {
+            "numerator": 3,
+            "denominator": 13,
+            "unit": "kg"
+          },
+          "hint": [
+            [
+              {
+                "type": "text",
+                "value": "분모는 그대로, 분자만 나눠봐요!"
+              }
+            ],
+            [
+              {
+                "type": "text",
+                "value": "분자 9 ÷ 3 = 3, 분모는 그대로 13이에요."
+              }
+            ],
+            [
+              {
+                "type": "text",
+                "value": "거의 다 왔어요! "
+              },
+              {
+                "type": "fraction",
+                "numerator": 9,
+                "denominator": 13
+              },
+              {
+                "type": "text",
+                "value": " ÷ 3 = "
+              },
+              {
+                "type": "fraction",
+                "numerator": 3,
+                "denominator": 13
+              }
+            ]
+          ],
+          "explanation": [
+            {
+              "type": "text",
+              "value": "잘했어요! "
+            },
+            {
+              "type": "fraction",
+              "numerator": 9,
+              "denominator": 13
+            },
+            {
+              "type": "text",
+              "value": " ÷ 3 = "
+            },
+            {
+              "type": "fraction",
+              "numerator": 3,
+              "denominator": 13
+            },
+            {
+              "type": "text",
+              "value": "kg이에요."
+            }
+          ]
+        },
+        {
+          "image": "g6_step2_c5_q3.png",
+          "text": [
+            {
+              "type": "fraction",
+              "numerator": 10,
+              "denominator": 11
+            },
+            {
+              "type": "text",
+              "value": "kg의 밀가루를 5봉지에 똑같이 나눠 담으면 한 봉지에 몇 kg씩 담을 수 있을까요? 분수로 써봐요!"
+            }
+          ],
+          "answer": {
+            "numerator": 2,
+            "denominator": 11,
+            "unit": "kg"
+          },
+          "hint": [
+            [
+              {
+                "type": "text",
+                "value": "분모는 그대로, 분자만 나눠봐요!"
+              }
+            ],
+            [
+              {
+                "type": "text",
+                "value": "분자 10 ÷ 5 = 2, 분모는 그대로 11이에요."
+              }
+            ],
+            [
+              {
+                "type": "text",
+                "value": "거의 다 왔어요! "
+              },
+              {
+                "type": "fraction",
+                "numerator": 10,
+                "denominator": 11
+              },
+              {
+                "type": "text",
+                "value": " ÷ 5 = "
+              },
+              {
+                "type": "fraction",
+                "numerator": 2,
+                "denominator": 11
+              }
+            ]
+          ],
+          "explanation": [
+            {
+              "type": "text",
+              "value": "잘했어요! "
+            },
+            {
+              "type": "fraction",
+              "numerator": 10,
+              "denominator": 11
+            },
+            {
+              "type": "text",
+              "value": " ÷ 5 = "
+            },
+            {
+              "type": "fraction",
+              "numerator": 2,
+              "denominator": 11
+            },
+            {
+              "type": "text",
+              "value": "kg이에요."
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
