@@ -1,25 +1,30 @@
 package com.bifriends.global.config
 
 import com.bifriends.domain.member.service.CustomOAuth2UserService
+import com.bifriends.infrastructure.security.JwtAuthenticationFilter
 import com.bifriends.infrastructure.security.JwtProvider
 import com.bifriends.infrastructure.security.PrincipalDetails
 import com.fasterxml.jackson.databind.ObjectMapper
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
+import org.springframework.boot.web.servlet.FilterRegistrationBean
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.http.HttpStatus
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
 import org.springframework.security.config.http.SessionCreationPolicy
 import org.springframework.security.core.Authentication
 import org.springframework.security.web.SecurityFilterChain
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter
 
 @Configuration
 @EnableWebSecurity
 class SecurityConfig(
     private val customOAuth2UserService: CustomOAuth2UserService,
     private val jwtProvider: JwtProvider,
+    private val jwtAuthenticationFilter: JwtAuthenticationFilter,
     private val objectMapper: ObjectMapper
 ) {
 
@@ -36,6 +41,13 @@ class SecurityConfig(
             .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.STATELESS) }
             .formLogin { it.disable() }
             .httpBasic { it.disable() }
+            .exceptionHandling { ex ->
+                ex.authenticationEntryPoint { _, response, _ ->
+                    response.status = HttpStatus.UNAUTHORIZED.value()
+                    response.contentType = "application/json;charset=UTF-8"
+                    response.writer.write("{\"error\":\"Unauthorized\"}")
+                }
+            }
             .authorizeHttpRequests { auth ->
                 auth
                     .requestMatchers("/health", "/api/v1/members/auth/**", "/oauth2/**", "/login/**").permitAll()
@@ -43,6 +55,7 @@ class SecurityConfig(
                     .requestMatchers("/api/v1/onboarding/**").authenticated()
                     .anyRequest().authenticated()
             }
+            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter::class.java)
             .oauth2Login { oauth2 ->
                 oauth2
                     .userInfoEndpoint { it.userService(customOAuth2UserService) }
@@ -57,6 +70,11 @@ class SecurityConfig(
      * OAuth2 로그인 성공 시 호출되어 accessToken + refreshToken을 JSON으로 응답.
      * 클라이언트(Flutter)는 이 토큰을 저장하고 이후 API 요청에 사용.
      */
+    @Bean
+    fun jwtFilterRegistration(filter: JwtAuthenticationFilter): FilterRegistrationBean<JwtAuthenticationFilter> {
+        return FilterRegistrationBean(filter).apply { isEnabled = false }
+    }
+
     @Bean
     fun oAuth2AuthenticationSuccessHandler(): AuthenticationSuccessHandler {
         return AuthenticationSuccessHandler { _: HttpServletRequest, response: HttpServletResponse, authentication: Authentication ->
@@ -78,7 +96,7 @@ class SecurityConfig(
                 "accessToken" to accessToken,
                 "refreshToken" to refreshToken,
                 "email" to member.email,
-                "name" to member.name,
+                "nickname" to member.nickname,
                 "profileImageUrl" to member.profileImageUrl,
                 "onboardingCompleted" to member.onboardingCompleted
             )

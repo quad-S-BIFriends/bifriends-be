@@ -23,7 +23,7 @@ class MemberService(
 ) {
 
     @Transactional
-    fun findOrCreateMember(email: String, name: String, profileImageUrl: String?, providerId: String): Member {
+    fun findOrCreateMember(email: String, profileImageUrl: String?, providerId: String): Member {
         return memberRepository.findByProviderId(providerId)
             .map { existingMember ->
                 existingMember.updateLastLogin()
@@ -33,7 +33,6 @@ class MemberService(
                 val member = memberRepository.save(
                     Member(
                         email = email,
-                        name = name,
                         profileImageUrl = profileImageUrl,
                         providerId = providerId
                     )
@@ -57,7 +56,6 @@ class MemberService(
         return MemberProfileResponse(
             id = member.id,
             email = member.email,
-            name = member.name,
             nickname = member.nickname,
             profileImageUrl = member.profileImageUrl,
             grade = member.grade,

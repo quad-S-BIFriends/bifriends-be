@@ -65,7 +65,7 @@ class HomeService(
         val greetingType = GreetingPolicy.determineType(lastAttendanceBefore, today)
 
         // ── 4. 메시지 선택 (post-attendance streakDays 기준) ────────────────
-        val nickname = member.nickname ?: member.name
+        val nickname = member.nickname ?: "친구"
         val message = GreetingPolicy.selectMessage(
             type = greetingType,
             streakDays = attendanceResult.streakDays,

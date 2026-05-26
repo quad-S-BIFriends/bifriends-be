@@ -13,9 +13,6 @@ class Member(
     @Column(nullable = false, unique = true)
     val email: String,
 
-    @Column(nullable = false)
-    val name: String,
-
     @Column
     val profileImageUrl: String? = null,
 

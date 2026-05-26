@@ -33,12 +33,10 @@ class OAuthController(
 
         val providerId = firebaseToken.uid
         val email = firebaseToken.email ?: throw IllegalArgumentException("이메일 정보가 없습니다.")
-        val name = firebaseToken.name ?: email
         val profileImageUrl = firebaseToken.picture
 
         val member = memberService.findOrCreateMember(
             email = email,
-            name = name,
             profileImageUrl = profileImageUrl,
             providerId = providerId
         )
@@ -59,7 +57,7 @@ class OAuthController(
                 accessToken = accessToken,
                 refreshToken = refreshToken,
                 email = member.email,
-                name = member.name,
+                nickname = member.nickname,
                 profileImageUrl = member.profileImageUrl,
                 onboardingCompleted = member.onboardingCompleted
             )
@@ -86,7 +84,7 @@ class OAuthController(
                 accessToken = accessToken,
                 refreshToken = refreshToken,
                 email = member.email,
-                name = member.name,
+                nickname = member.nickname,
                 profileImageUrl = member.profileImageUrl,
                 onboardingCompleted = member.onboardingCompleted
             )
@@ -102,7 +100,7 @@ class OAuthController(
         val accessToken: String,
         val refreshToken: String,
         val email: String,
-        val name: String,
+        val nickname: String?,
         val profileImageUrl: String?,
         val onboardingCompleted: Boolean
     )

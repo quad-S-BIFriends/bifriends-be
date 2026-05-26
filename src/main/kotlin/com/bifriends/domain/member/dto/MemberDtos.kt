@@ -7,7 +7,6 @@ import jakarta.validation.constraints.NotNull
 data class MemberProfileResponse(
     val id: Long,
     val email: String,
-    val name: String,
     val nickname: String?,
     val profileImageUrl: String?,
     val grade: Int?,
