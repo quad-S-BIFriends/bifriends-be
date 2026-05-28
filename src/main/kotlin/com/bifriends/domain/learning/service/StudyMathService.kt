@@ -275,7 +275,6 @@ class StudyMathService(
                 UserMathProgress(member = member, mathStep = step)
             )
     }
-}
 
     // ───────────────────────────────────────────────────────────
     // Leo 연동 — 수학 concept 목록 (LRN_13)
