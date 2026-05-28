@@ -46,3 +46,17 @@ jwt:
 firebase:
   config:
     path: ${FIREBASE_CONFIG_PATH:classpath:firebase-service-account.json}
+
+# AI 서비스 → BE 내부 호출 (Docker 내부망). JWT 대신 X-Internal-Service 헤더.
+internal:
+  service:
+    enabled: ${INTERNAL_SERVICE_AUTH_ENABLED:true}
+    header-name: X-Internal-Service
+    expected-value: ${INTERNAL_SERVICE_TOKEN:bifriends-ai}
+
+# BE → AI 채팅 (Docker: http://bifriends-ai:8000 등)
+ai:
+  service:
+    enabled: ${AI_SERVICE_ENABLED:false}
+    base-url: ${AI_SERVICE_BASE_URL:http://bifriends-ai:8000}
+    chat-path: ${AI_CHAT_PATH:/v1/chat}

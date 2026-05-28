@@ -1,4 +1,4 @@
-package com.bifriends.domain.study.model
+package com.bifriends.domain.learning.model
 
 enum class StepStatus {
     COMPLETED,    // 완료한 스텝

@@ -1,13 +1,14 @@
-package com.bifriends.domain.study.service
+package com.bifriends.domain.learning.service
 
+import com.bifriends.domain.member.model.Member
 import com.bifriends.domain.member.repository.MemberRepository
-import com.bifriends.domain.study.dto.*
-import com.bifriends.domain.study.model.StepStatus
-import com.bifriends.domain.study.model.UserMathProgress
-import com.bifriends.domain.study.repository.MathStepRepository
-import com.bifriends.domain.study.repository.UserMathProgressRepository
+import com.bifriends.domain.learning.dto.*
+import com.bifriends.domain.learning.model.KoreanStep
+import com.bifriends.domain.learning.model.StepStatus
+import com.bifriends.domain.learning.model.UserKoreanProgress
+import com.bifriends.domain.learning.repository.KoreanStepRepository
+import com.bifriends.domain.learning.repository.UserKoreanProgressRepository
 import com.fasterxml.jackson.databind.JsonNode
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.node.ArrayNode
 import com.fasterxml.jackson.databind.node.ObjectNode
 import org.springframework.stereotype.Service
@@ -17,36 +18,34 @@ import java.time.ZoneId
 
 @Service
 @Transactional(readOnly = true)
-class StudyMathService(
+class StudyKoreanService(
     private val memberRepository: MemberRepository,
-    private val mathStepRepository: MathStepRepository,
-    private val userMathProgressRepository: UserMathProgressRepository,
-    private val objectMapper: ObjectMapper,
+    private val koreanStepRepository: KoreanStepRepository,
+    private val userKoreanProgressRepository: UserKoreanProgressRepository,
 ) {
 
     // ───────────────────────────────────────────────────────────
     // 4-1. 로드맵 조회
     // ───────────────────────────────────────────────────────────
 
-    fun getRoadmap(memberId: Long): RoadmapResponse {
+    fun getRoadmap(memberId: Long): KoreanRoadmapResponse {
         val member = memberRepository.findById(memberId)
             .orElseThrow { IllegalArgumentException("회원을 찾을 수 없습니다. id=$memberId") }
 
         val grade = member.grade
             ?: throw IllegalStateException("학년 정보가 없습니다. 온보딩을 먼저 완료해 주세요.")
 
-        val steps = mathStepRepository.findByGradeOrderByStepNumber(grade)
-        val progressMap = userMathProgressRepository
+        val steps = koreanStepRepository.findByGradeOrderByStepNumber(grade)
+        val progressMap = userKoreanProgressRepository
             .findAllByMemberIdAndGrade(memberId, grade)
-            .associateBy { it.mathStep.id }
+            .associateBy { it.koreanStep.id }
 
-        // lastStepId: last_accessed_at 최신 미완료 → 없으면 마지막 완료 스텝 → 없으면 첫 스텝
         val lastStepId = progressMap.values
             .filter { !it.isStepCompleted && it.lastAccessedAt != null }
-            .maxByOrNull { it.lastAccessedAt!! }?.mathStep?.id
+            .maxByOrNull { it.lastAccessedAt!! }?.koreanStep?.id
             ?: progressMap.values
                 .filter { it.isStepCompleted }
-                .maxByOrNull { it.lastAccessedAt ?: LocalDateTime.MIN }?.mathStep?.id
+                .maxByOrNull { it.lastAccessedAt ?: LocalDateTime.MIN }?.koreanStep?.id
             ?: steps.firstOrNull()?.id
 
         val stepResponses = steps.mapIndexed { index, step ->
@@ -61,7 +60,7 @@ class StudyMathService(
                 else -> StepStatus.LOCKED
             }
 
-            StepSummaryResponse(
+            KoreanStepSummaryResponse(
                 stepId = step.id,
                 stepNumber = step.stepNumber,
                 stepTitle = step.stepTitle,
@@ -71,20 +70,27 @@ class StudyMathService(
             )
         }
 
-        return RoadmapResponse(grade = grade, lastStepId = lastStepId, steps = stepResponses)
+        return KoreanRoadmapResponse(grade = grade, lastStepId = lastStepId, steps = stepResponses)
     }
 
     // ───────────────────────────────────────────────────────────
-    // 4-2. 스텝 콘텐츠 조회 (answer/explanation 제거)
+    // 4-2. 스텝 콘텐츠 조회
     // ───────────────────────────────────────────────────────────
 
-    fun getStepContent(memberId: Long, stepId: Long): StepContentResponse {
-        // 회원 존재 확인
-        memberRepository.findById(memberId)
+    @Transactional
+    fun getStepContent(memberId: Long, stepId: Long): KoreanStepContentResponse {
+        val member = memberRepository.findById(memberId)
             .orElseThrow { IllegalArgumentException("회원을 찾을 수 없습니다. id=$memberId") }
 
-        val step = mathStepRepository.findById(stepId)
+        val step = koreanStepRepository.findById(stepId)
             .orElseThrow { IllegalArgumentException("스텝을 찾을 수 없습니다. id=$stepId") }
+
+        // LRN_KOR_05: 스텝 진입 시점에 lastAccessedAt 갱신
+        val progress = findOrCreateProgress(member, step)
+        progress.lastAccessedAt = LocalDateTime.now(ZoneId.of("Asia/Seoul"))
+
+        val passage = step.contentJson.get("passage")
+            ?: throw IllegalStateException("content_json에 passage 필드가 없습니다. stepId=$stepId")
 
         val cyclesNode = step.contentJson.get("cycles")
             ?: throw IllegalStateException("content_json에 cycles 필드가 없습니다. stepId=$stepId")
@@ -93,16 +99,21 @@ class StudyMathService(
             sanitizeCycleNode(cycle)
         }
 
-        return StepContentResponse(
+        return KoreanStepContentResponse(
             stepId = step.id,
             stepTitle = step.stepTitle,
             concept = step.concept,
             grade = step.grade,
+            passage = passage,
             cycles = sanitizedCycles,
         )
     }
 
-    /** 사이클 노드에서 각 question의 answer, explanation 제거 + questionIndex 부여 */
+    /**
+     * 사이클 노드에서 각 question의 answer만 제거.
+     * related_sentence, hints 등은 클라이언트에 그대로 노출.
+     * Cycle 1 (word_card)은 questions 없으므로 그대로 반환.
+     */
     private fun sanitizeCycleNode(cycle: JsonNode): JsonNode {
         val copy = cycle.deepCopy<ObjectNode>()
         val questions = copy.get("questions") as? ArrayNode ?: return copy
@@ -110,7 +121,6 @@ class StudyMathService(
             if (q is ObjectNode) {
                 q.put("questionIndex", index)
                 q.remove("answer")
-                q.remove("explanation")
             }
         }
         return copy
@@ -120,28 +130,27 @@ class StudyMathService(
     // 4-3. 진도 조회
     // ───────────────────────────────────────────────────────────
 
-    fun getProgress(memberId: Long): ProgressResponse {
+    fun getProgress(memberId: Long): KoreanProgressResponse {
         val member = memberRepository.findById(memberId)
             .orElseThrow { IllegalArgumentException("회원을 찾을 수 없습니다. id=$memberId") }
 
         val grade = member.grade
             ?: throw IllegalStateException("학년 정보가 없습니다.")
 
-        val steps = mathStepRepository.findByGradeOrderByStepNumber(grade)
-        val progressList = userMathProgressRepository.findAllByMemberIdAndGrade(memberId, grade)
-        val progressMap = progressList.associateBy { it.mathStep.id }
+        val steps = koreanStepRepository.findByGradeOrderByStepNumber(grade)
+        val progressList = userKoreanProgressRepository.findAllByMemberIdAndGrade(memberId, grade)
 
         val lastStepId = progressList
             .filter { it.lastAccessedAt != null }
-            .maxByOrNull { it.lastAccessedAt!! }?.mathStep?.id
+            .maxByOrNull { it.lastAccessedAt!! }?.koreanStep?.id
 
-        return ProgressResponse(
+        return KoreanProgressResponse(
             lastStepId = lastStepId,
             totalSteps = steps.size,
             completedSteps = progressList.count { it.isStepCompleted },
             progress = progressList.map { p ->
-                StepProgressItem(
-                    stepId = p.mathStep.id,
+                KoreanStepProgressItem(
+                    stepId = p.koreanStep.id,
                     isStepCompleted = p.isStepCompleted,
                     completedCycles = p.completedCycles.sorted(),
                     lastAccessedAt = p.lastAccessedAt,
@@ -151,7 +160,7 @@ class StudyMathService(
     }
 
     // ───────────────────────────────────────────────────────────
-    // 4-4. 답안 검증
+    // 4-4. 답안 검증 (Cycle 2~5)
     // ───────────────────────────────────────────────────────────
 
     fun validateAnswer(
@@ -159,26 +168,22 @@ class StudyMathService(
         stepId: Long,
         cycleNumber: Int,
         questionIndex: Int,
-        request: ValidateAnswerRequest,
-    ): ValidateAnswerResponse {
+        request: KoreanValidateAnswerRequest,
+    ): KoreanValidateAnswerResponse {
         memberRepository.findById(memberId)
             .orElseThrow { IllegalArgumentException("회원을 찾을 수 없습니다. id=$memberId") }
 
-        val step = mathStepRepository.findById(stepId)
+        val step = koreanStepRepository.findById(stepId)
             .orElseThrow { IllegalArgumentException("스텝을 찾을 수 없습니다. id=$stepId") }
 
         val question = extractQuestion(step.contentJson, cycleNumber, questionIndex)
 
-        val correctAnswer = question.get("answer")
+        val correctAnswer = question.get("answer")?.asText()
             ?: throw IllegalStateException("answer 필드가 없습니다. stepId=$stepId, cycle=$cycleNumber, q=$questionIndex")
 
-        val isCorrect = compareAnswers(correctAnswer, request.answer)
+        val isCorrect = correctAnswer.trim() == request.answer.trim()
 
-        return if (isCorrect) {
-            ValidateAnswerResponse(correct = true, explanation = question.get("explanation"))
-        } else {
-            ValidateAnswerResponse(correct = false)
-        }
+        return KoreanValidateAnswerResponse(correct = isCorrect)
     }
 
     private fun extractQuestion(contentJson: JsonNode, cycleNumber: Int, questionIndex: Int): JsonNode {
@@ -187,25 +192,9 @@ class StudyMathService(
         val cycle = cycles.get(cycleNumber - 1)
             ?: throw IllegalArgumentException("cycleNumber=$cycleNumber 범위 초과")
         val questions = cycle.get("questions")
-            ?: throw IllegalStateException("questions 필드 없음 (cycleNumber=$cycleNumber)")
+            ?: throw IllegalStateException("questions 필드 없음 (cycleNumber=$cycleNumber — word_card 사이클에는 validate 불필요)")
         return questions.get(questionIndex)
             ?: throw IllegalArgumentException("questionIndex=$questionIndex 범위 초과")
-    }
-
-    /**
-     * 정답 비교:
-     * - 텍스트(choice/short_answer): 문자열 동등 비교 (trim)
-     * - 분수(grade 6): numerator, denominator 각각 비교
-     */
-    private fun compareAnswers(correct: JsonNode, submitted: JsonNode): Boolean {
-        return if (correct.isObject && correct.has("numerator")) {
-            // 분수 타입
-            correct.get("numerator")?.asInt() == submitted.get("numerator")?.asInt() &&
-                correct.get("denominator")?.asInt() == submitted.get("denominator")?.asInt()
-        } else {
-            // 텍스트 타입
-            correct.asText().trim() == submitted.asText().trim()
-        }
     }
 
     // ───────────────────────────────────────────────────────────
@@ -213,20 +202,17 @@ class StudyMathService(
     // ───────────────────────────────────────────────────────────
 
     @Transactional
-    fun completeCycle(memberId: Long, stepId: Long, cycleNumber: Int): CompleteCycleResponse {
+    fun completeCycle(memberId: Long, stepId: Long, cycleNumber: Int): KoreanCompleteCycleResponse {
         val member = memberRepository.findById(memberId)
             .orElseThrow { IllegalArgumentException("회원을 찾을 수 없습니다. id=$memberId") }
-        val step = mathStepRepository.findById(stepId)
+        val step = koreanStepRepository.findById(stepId)
             .orElseThrow { IllegalArgumentException("스텝을 찾을 수 없습니다. id=$stepId") }
 
-        val progress = findOrCreateProgress(member.id, step.id, memberId, stepId)
-
-        if (!progress.completedCycles.contains(cycleNumber)) {
-            progress.completedCycles.add(cycleNumber)
-        }
+        val progress = findOrCreateProgress(member, step)
+        progress.completedCycles.add(cycleNumber) // MutableSet → 중복 무시 (멱등)
         progress.lastAccessedAt = LocalDateTime.now(ZoneId.of("Asia/Seoul"))
 
-        return CompleteCycleResponse(
+        return KoreanCompleteCycleResponse(
             stepId = stepId,
             cycleNumber = cycleNumber,
             completedCycles = progress.completedCycles.sorted(),
@@ -239,25 +225,23 @@ class StudyMathService(
     // ───────────────────────────────────────────────────────────
 
     @Transactional
-    fun completeStep(memberId: Long, stepId: Long): CompleteStepResponse {
+    fun completeStep(memberId: Long, stepId: Long): KoreanCompleteStepResponse {
         val member = memberRepository.findById(memberId)
             .orElseThrow { IllegalArgumentException("회원을 찾을 수 없습니다. id=$memberId") }
-        val step = mathStepRepository.findById(stepId)
+        val step = koreanStepRepository.findById(stepId)
             .orElseThrow { IllegalArgumentException("스텝을 찾을 수 없습니다. id=$stepId") }
 
-        val progress = findOrCreateProgress(member.id, step.id, memberId, stepId)
+        val progress = findOrCreateProgress(member, step)
         progress.isStepCompleted = true
         progress.lastAccessedAt = LocalDateTime.now(ZoneId.of("Asia/Seoul"))
 
-        // 다음 스텝 조회 (같은 학년 내 step_number + 1)
-        val nextStep = mathStepRepository.findByGradeAndStepNumber(step.grade, step.stepNumber + 1)
-        val nextStepStatus = nextStep?.let { StepStatus.AVAILABLE }
+        val nextStep = koreanStepRepository.findByGradeAndStepNumber(step.grade, step.stepNumber + 1)
 
-        return CompleteStepResponse(
+        return KoreanCompleteStepResponse(
             stepId = stepId,
             isStepCompleted = true,
             nextStepId = nextStep?.id,
-            nextStepStatus = nextStepStatus,
+            nextStepStatus = nextStep?.let { StepStatus.AVAILABLE },
         )
     }
 
@@ -265,19 +249,58 @@ class StudyMathService(
     // 내부 헬퍼
     // ───────────────────────────────────────────────────────────
 
-    private fun findOrCreateProgress(
-        memberId: Long,
-        stepId: Long,
-        rawMemberId: Long,
-        rawStepId: Long,
-    ): UserMathProgress {
-        return userMathProgressRepository.findByMemberIdAndMathStepId(memberId, stepId)
-            ?: run {
-                val member = memberRepository.findById(rawMemberId).get()
-                val step = mathStepRepository.findById(rawStepId).get()
-                userMathProgressRepository.save(
-                    UserMathProgress(member = member, mathStep = step)
-                )
+    private fun findOrCreateProgress(member: Member, step: KoreanStep): UserKoreanProgress {
+        return userKoreanProgressRepository.findByMemberIdAndKoreanStepId(member.id, step.id)
+            ?: userKoreanProgressRepository.save(
+                UserKoreanProgress(member = member, koreanStep = step)
+            )
+    }
+
+    // ───────────────────────────────────────────────────────────
+    // Leo 연동 — 현재 진입 가능한 국어 lesson (LRN_33)
+    // 우선순위: IN_PROGRESS → AVAILABLE → 첫 스텝(AVAILABLE)
+    // ───────────────────────────────────────────────────────────
+
+    fun getCurrentKoreanLesson(memberId: Long): KoreanCurrentLessonResponse {
+        val member = memberRepository.findById(memberId)
+            .orElseThrow { IllegalArgumentException("회원을 찾을 수 없습니다. id=$memberId") }
+
+        val grade = member.grade
+            ?: throw IllegalStateException("학년 정보가 없습니다.")
+
+        val steps = koreanStepRepository.findByGradeOrderByStepNumber(grade)
+        if (steps.isEmpty()) throw IllegalStateException("해당 학년의 국어 콘텐츠가 없습니다. grade=$grade")
+
+        val progressMap = userKoreanProgressRepository
+            .findAllByMemberIdAndGrade(memberId, grade)
+            .associateBy { it.koreanStep.id }
+
+        // 스텝별 상태 계산
+        val stepWithStatus = steps.mapIndexed { index, step ->
+            val progress = progressMap[step.id]
+            val prev = if (index == 0) null else steps[index - 1]
+            val prevCompleted = prev == null || progressMap[prev.id]?.isStepCompleted == true
+
+            val status = when {
+                progress?.isStepCompleted == true -> StepStatus.COMPLETED
+                progress != null -> StepStatus.IN_PROGRESS
+                prevCompleted -> StepStatus.AVAILABLE
+                else -> StepStatus.LOCKED
             }
+            step to status
+        }
+
+        // 우선순위: IN_PROGRESS → AVAILABLE → 첫 스텝
+        val (targetStep, targetStatus) = stepWithStatus
+            .firstOrNull { (_, s) -> s == StepStatus.IN_PROGRESS }
+            ?: stepWithStatus.firstOrNull { (_, s) -> s == StepStatus.AVAILABLE }
+            ?: (steps.first() to StepStatus.AVAILABLE)
+
+        return KoreanCurrentLessonResponse(
+            stepId = targetStep.id,
+            stepTitle = targetStep.stepTitle,
+            concept = targetStep.concept,
+            lessonStatus = targetStatus,
+        )
     }
 }

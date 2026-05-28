@@ -4,6 +4,14 @@ import com.bifriends.domain.onboarding.model.Interest
 import com.bifriends.domain.onboarding.model.ItemType
 import jakarta.validation.constraints.NotNull
 
+/** AI 내부 호출용 — nickname / grade / interests 만 반환 */
+data class MemberProfileSummaryResponse(
+    val memberId: Long,
+    val nickname: String?,
+    val grade: Int?,
+    val interests: List<Interest>,
+)
+
 data class MemberProfileResponse(
     val id: Long,
     val email: String,

@@ -1,6 +1,6 @@
-package com.bifriends.domain.study.repository
+package com.bifriends.domain.learning.repository
 
-import com.bifriends.domain.study.model.MathStep
+import com.bifriends.domain.learning.model.MathStep
 import org.springframework.data.jpa.repository.JpaRepository
 
 interface MathStepRepository : JpaRepository<MathStep, Long> {

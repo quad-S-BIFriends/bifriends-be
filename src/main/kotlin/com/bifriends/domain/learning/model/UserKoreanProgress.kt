@@ -1,4 +1,4 @@
-package com.bifriends.domain.study.model
+package com.bifriends.domain.learning.model
 
 import com.bifriends.domain.member.model.Member
 import jakarta.persistence.*
@@ -6,10 +6,10 @@ import java.time.LocalDateTime
 
 @Entity
 @Table(
-    name = "user_math_progress",
-    uniqueConstraints = [UniqueConstraint(name = "uq_user_math_progress", columnNames = ["member_id", "math_step_id"])]
+    name = "user_korean_progress",
+    uniqueConstraints = [UniqueConstraint(name = "uq_user_korean_progress", columnNames = ["member_id", "korean_step_id"])]
 )
-class UserMathProgress(
+class UserKoreanProgress(
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -20,12 +20,12 @@ class UserMathProgress(
     val member: Member,
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "math_step_id", nullable = false)
-    val mathStep: MathStep,
+    @JoinColumn(name = "korean_step_id", nullable = false)
+    val koreanStep: KoreanStep,
 
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(
-        name = "user_math_progress_cycles",
+        name = "user_korean_progress_cycles",
         joinColumns = [JoinColumn(name = "progress_id")]
     )
     @Column(name = "cycle_number")

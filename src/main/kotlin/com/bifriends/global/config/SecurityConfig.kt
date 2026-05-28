@@ -1,6 +1,8 @@
 package com.bifriends.global.config
 
 import com.bifriends.domain.member.service.CustomOAuth2UserService
+import com.bifriends.infrastructure.security.InternalServiceAuthenticationFilter
+import com.bifriends.infrastructure.security.InternalServicePaths
 import com.bifriends.infrastructure.security.JwtAuthenticationFilter
 import com.bifriends.infrastructure.security.JwtProvider
 import com.bifriends.infrastructure.security.PrincipalDetails
@@ -8,6 +10,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import org.springframework.boot.web.servlet.FilterRegistrationBean
+import org.springframework.http.HttpMethod
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.http.HttpStatus
@@ -25,6 +28,7 @@ class SecurityConfig(
     private val customOAuth2UserService: CustomOAuth2UserService,
     private val jwtProvider: JwtProvider,
     private val jwtAuthenticationFilter: JwtAuthenticationFilter,
+    private val internalServiceAuthenticationFilter: InternalServiceAuthenticationFilter,
     private val objectMapper: ObjectMapper
 ) {
 
@@ -49,13 +53,21 @@ class SecurityConfig(
                 }
             }
             .authorizeHttpRequests { auth ->
-                auth
+                val internal = auth
+                InternalServicePaths.securityRules().forEach { (methods, pattern) ->
+                    methods.forEach { method ->
+                        internal.requestMatchers(method, pattern).hasRole(InternalServicePaths.ROLE)
+                    }
+                }
+                internal
                     .requestMatchers("/health", "/api/v1/members/auth/**", "/oauth2/**", "/login/**").permitAll()
                     .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
                     .requestMatchers("/api/v1/onboarding/**").authenticated()
-                    .requestMatchers("/api/v1/study/**").authenticated()
+                    .requestMatchers("/api/v1/learning/**").authenticated()
+                    .requestMatchers(HttpMethod.POST, "/api/v1/chat/messages").authenticated()
                     .anyRequest().authenticated()
             }
+            .addFilterBefore(internalServiceAuthenticationFilter, JwtAuthenticationFilter::class.java)
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter::class.java)
             .oauth2Login { oauth2 ->
                 oauth2
@@ -73,6 +85,13 @@ class SecurityConfig(
      */
     @Bean
     fun jwtFilterRegistration(filter: JwtAuthenticationFilter): FilterRegistrationBean<JwtAuthenticationFilter> {
+        return FilterRegistrationBean(filter).apply { isEnabled = false }
+    }
+
+    @Bean
+    fun internalServiceFilterRegistration(
+        filter: InternalServiceAuthenticationFilter,
+    ): FilterRegistrationBean<InternalServiceAuthenticationFilter> {
         return FilterRegistrationBean(filter).apply { isEnabled = false }
     }
 

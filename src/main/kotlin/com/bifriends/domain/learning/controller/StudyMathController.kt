@@ -1,13 +1,13 @@
-package com.bifriends.domain.study.controller
+package com.bifriends.domain.learning.controller
 
-import com.bifriends.domain.study.dto.*
-import com.bifriends.domain.study.service.StudyMathService
+import com.bifriends.domain.learning.dto.*
+import com.bifriends.domain.learning.service.StudyMathService
 import com.bifriends.infrastructure.security.JwtProvider
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 
 @RestController
-@RequestMapping("/api/v1/study/math")
+@RequestMapping("/api/v1/learning/math")
 class StudyMathController(
     private val studyMathService: StudyMathService,
     private val jwtProvider: JwtProvider,
@@ -75,6 +75,29 @@ class StudyMathController(
     ): ResponseEntity<CompleteStepResponse> {
         val memberId = extractMemberId(token)
         return ResponseEntity.ok(studyMathService.completeStep(memberId, stepId))
+    }
+
+    // ───────────────────────────────────────────────────────────────
+    // Leo 연동 API (LRN_13 / LRN_14·15·16)
+    // ───────────────────────────────────────────────────────────────
+
+    /** LRN_13 — 학년별 수학 concept 목록 */
+    @GetMapping("/concepts")
+    fun getMathConcepts(
+        @RequestHeader("Authorization") token: String,
+    ): ResponseEntity<MathConceptListResponse> {
+        val memberId = extractMemberId(token)
+        return ResponseEntity.ok(studyMathService.getMathConcepts(memberId))
+    }
+
+    /** LRN_14/15/16 — concept별 lesson 상태 조회 */
+    @GetMapping("/concepts/lesson-status")
+    fun getMathLessonStatus(
+        @RequestHeader("Authorization") token: String,
+        @RequestParam concept: String,
+    ): ResponseEntity<MathLessonStatusResponse> {
+        val memberId = extractMemberId(token)
+        return ResponseEntity.ok(studyMathService.getMathLessonStatus(memberId, concept))
     }
 
     private fun extractMemberId(token: String): Long {
