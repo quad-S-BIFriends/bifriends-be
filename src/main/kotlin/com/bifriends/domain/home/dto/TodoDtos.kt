@@ -47,13 +47,17 @@ data class TodoCompleteResult(
         get() = singleReward.leveledUp || (allCompleteBonus?.leveledUp == true)
 }
 
-// ── Agent CRUD 요청 ───────────────────────────────────────────────────────
+// ── Agent CRUD 요청 (Leo 내부 API용 — X-Internal-Service 헤더) ──────────────
 
 data class AgentTodoCreateRequest(
+    /** 할 일을 생성할 회원 ID (Leo가 채팅 세션에서 알고 있는 값) */
+    val memberId: Long,
     val title: String,
     val estimatedTimeSec: Int? = null,
 )
 
 data class AgentTodoUpdateRequest(
+    /** 수정 대상 회원 ID (소유권 검증용) */
+    val memberId: Long,
     val title: String,
 )

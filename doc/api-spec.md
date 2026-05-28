@@ -713,6 +713,62 @@ Base path: `/api/v1/learning/korean` · **JWT 필수**
 }
 ```
 
+### 8-2. Agent 할 일 추가 (Leo 전용)
+
+**POST** `/api/v1/todos` · **X-Internal-Service 인증**
+
+Leo가 회원에게 할 일을 추가합니다. 하루 최대 5개(시스템 3 + Agent 2) 제한.
+
+**Request Body**
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `memberId` | long | O | 할 일을 생성할 회원 ID |
+| `title` | string | O | 할 일 제목 |
+| `estimatedTimeSec` | int | X | 예상 소요 시간(초), 기본값 0 |
+
+```json
+{ "memberId": 1, "title": "수학 문제 한 문제 더 풀기", "estimatedTimeSec": 60 }
+```
+
+**Response** `200 OK` — `TodoResponse` (위 8-1 참조)
+
+---
+
+### 8-3. Agent 할 일 수정 (Leo 전용)
+
+**PATCH** `/api/v1/todos/{todoId}` · **X-Internal-Service 인증**
+
+> SYSTEM 할 일(스케줄러 생성)은 수정 불가 — `400` 반환
+
+**Path Parameter**: `todoId` (long)
+
+**Request Body**
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `memberId` | long | O | 소유권 검증용 회원 ID |
+| `title` | string | O | 변경할 제목 |
+
+```json
+{ "memberId": 1, "title": "수정된 할 일 제목" }
+```
+
+**Response** `200 OK` — `TodoResponse`
+
+---
+
+### 8-4. Agent 할 일 삭제 (Leo 전용)
+
+**DELETE** `/api/v1/todos/{todoId}?memberId={memberId}` · **X-Internal-Service 인증**
+
+> SYSTEM 할 일은 삭제 불가 — `400` 반환
+
+**Path Parameter**: `todoId` (long)  
+**Query Parameter**: `memberId` (long) — 소유권 검증용
+
+**Response** `204 No Content`
+
 ---
 
 ## 9. 채팅 (Chat)

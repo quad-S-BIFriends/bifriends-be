@@ -132,7 +132,8 @@ class TodoService(
      * 하루 최대 5개(SYSTEM 3 + AGENT 2) 제한.
      */
     @Transactional
-    fun createAgentTodo(memberId: Long, request: AgentTodoCreateRequest): TodoResponse {
+    fun createAgentTodo(request: AgentTodoCreateRequest): TodoResponse {
+        val memberId = request.memberId
         val member = memberRepository.findById(memberId)
             .orElseThrow { IllegalArgumentException("회원을 찾을 수 없습니다. id=$memberId") }
 
@@ -160,8 +161,8 @@ class TodoService(
      * SYSTEM 할 일에 호출하면 예외 발생.
      */
     @Transactional
-    fun updateAgentTodo(memberId: Long, todoId: Long, request: AgentTodoUpdateRequest): TodoResponse {
-        val todo = findTodoOfMember(memberId, todoId)
+    fun updateAgentTodo(todoId: Long, request: AgentTodoUpdateRequest): TodoResponse {
+        val todo = findTodoOfMember(request.memberId, todoId)
         todo.updateTitle(request.title)  // 엔티티에서 SYSTEM 여부 검증
         return TodoResponse.from(todo)
     }

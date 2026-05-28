@@ -22,7 +22,10 @@ object InternalServicePaths {
         arrayOf(HttpMethod.GET) to "/api/v1/learning/math/concepts/lesson-status",
         // Leo 연동 — 국어 현재 lesson 조회 (LRN_32·33)
         arrayOf(HttpMethod.GET) to "/api/v1/learning/korean/lessons/current",
+        // Leo 연동 — Agent 할 일 CRUD
         arrayOf(HttpMethod.POST) to "/api/v1/todos",
+        arrayOf(HttpMethod.PATCH) to "/api/v1/todos/*",
+        arrayOf(HttpMethod.DELETE) to "/api/v1/todos/*",
         arrayOf(HttpMethod.POST) to "/api/v1/weekly-safety-report",
         arrayOf(HttpMethod.PATCH) to "/api/v1/chat/sessions/*",
     )
