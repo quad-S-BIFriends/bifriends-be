@@ -131,3 +131,23 @@ enum class LessonStatus {
     LOCKED,         // 잠김 (이전 스텝 미완료)
     NOT_FOUND,      // concept이 현재 학년 커리큘럼에 없음
 }
+
+// ───────────────────────────────────────────────────────────────
+// Leo 연동 — 수학 스텝 전체 목록 + 상태 (InternalServicePaths)
+// ───────────────────────────────────────────────────────────────
+
+data class MathStepsResponse(
+    val grade: Int,
+    val totalSteps: Int,
+    val completedSteps: Int,
+    val steps: List<MathStepStatusItem>,
+)
+
+data class MathStepStatusItem(
+    val stepId: Long,
+    val stepNumber: Int,
+    val stepTitle: String,
+    val concept: String,
+    val status: StepStatus,
+    val completedCycles: List<Int>,
+)

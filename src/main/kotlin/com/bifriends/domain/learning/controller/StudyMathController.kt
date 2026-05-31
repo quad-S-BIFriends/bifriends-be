@@ -81,22 +81,28 @@ class StudyMathController(
     // Leo 연동 API (LRN_13 / LRN_14·15·16)
     // ───────────────────────────────────────────────────────────────
 
-    /** LRN_13 — 학년별 수학 concept 목록 */
+    /** Leo 연동 — 수학 스텝 전체 목록 + 상태 (Leo 전용, JWT 없음) */
+    @GetMapping("/steps")
+    fun getMathSteps(
+        @RequestParam memberId: Long,
+    ): ResponseEntity<MathStepsResponse> {
+        return ResponseEntity.ok(studyMathService.getMathSteps(memberId))
+    }
+
+    /** LRN_13 — 학년별 수학 concept 목록 (Leo 전용, JWT 없음) */
     @GetMapping("/concepts")
     fun getMathConcepts(
-        @RequestHeader("Authorization") token: String,
+        @RequestParam memberId: Long,
     ): ResponseEntity<MathConceptListResponse> {
-        val memberId = extractMemberId(token)
         return ResponseEntity.ok(studyMathService.getMathConcepts(memberId))
     }
 
-    /** LRN_14/15/16 — concept별 lesson 상태 조회 */
+    /** LRN_14/15/16 — concept별 lesson 상태 조회 (Leo 전용, JWT 없음) */
     @GetMapping("/concepts/lesson-status")
     fun getMathLessonStatus(
-        @RequestHeader("Authorization") token: String,
+        @RequestParam memberId: Long,
         @RequestParam concept: String,
     ): ResponseEntity<MathLessonStatusResponse> {
-        val memberId = extractMemberId(token)
         return ResponseEntity.ok(studyMathService.getMathLessonStatus(memberId, concept))
     }
 

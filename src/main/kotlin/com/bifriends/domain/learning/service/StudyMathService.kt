@@ -303,6 +303,51 @@ class StudyMathService(
     }
 
     // ───────────────────────────────────────────────────────────
+    // Leo 연동 — 수학 스텝 전체 목록 + 상태
+    // ───────────────────────────────────────────────────────────
+
+    fun getMathSteps(memberId: Long): MathStepsResponse {
+        val member = memberRepository.findById(memberId)
+            .orElseThrow { IllegalArgumentException("회원을 찾을 수 없습니다. id=$memberId") }
+
+        val grade = member.grade
+            ?: throw IllegalStateException("학년 정보가 없습니다.")
+
+        val steps = mathStepRepository.findByGradeOrderByStepNumber(grade)
+        val progressMap = userMathProgressRepository
+            .findAllByMemberIdAndGrade(memberId, grade)
+            .associateBy { it.mathStep.id }
+
+        val stepItems = steps.mapIndexed { index, step ->
+            val progress = progressMap[step.id]
+            val prevStep = if (index == 0) null else steps[index - 1]
+            val prevCompleted = prevStep == null || progressMap[prevStep.id]?.isStepCompleted == true
+
+            val status = when {
+                progress?.isStepCompleted == true -> StepStatus.COMPLETED
+                progress != null -> StepStatus.IN_PROGRESS
+                prevCompleted -> StepStatus.AVAILABLE
+                else -> StepStatus.LOCKED
+            }
+            MathStepStatusItem(
+                stepId = step.id,
+                stepNumber = step.stepNumber,
+                stepTitle = step.stepTitle,
+                concept = step.concept,
+                status = status,
+                completedCycles = progress?.completedCycles?.sorted() ?: emptyList(),
+            )
+        }
+
+        return MathStepsResponse(
+            grade = grade,
+            totalSteps = steps.size,
+            completedSteps = stepItems.count { it.status == StepStatus.COMPLETED },
+            steps = stepItems,
+        )
+    }
+
+    // ───────────────────────────────────────────────────────────
     // Leo 연동 — concept별 lesson 상태 (LRN_14 / 15 / 16)
     // ───────────────────────────────────────────────────────────
 

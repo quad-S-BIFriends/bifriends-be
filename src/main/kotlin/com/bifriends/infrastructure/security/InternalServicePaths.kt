@@ -26,6 +26,7 @@ object InternalServicePaths {
         arrayOf(HttpMethod.POST) to "/api/v1/todos",
         arrayOf(HttpMethod.PATCH) to "/api/v1/todos/*",
         arrayOf(HttpMethod.DELETE) to "/api/v1/todos/*",
+        // AI → BE 주간 안전 보고서 콜백
         arrayOf(HttpMethod.POST) to "/api/v1/weekly-safety-report",
         arrayOf(HttpMethod.PATCH) to "/api/v1/chat/sessions/*",
     )

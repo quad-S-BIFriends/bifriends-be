@@ -1,5 +1,7 @@
 package com.bifriends.domain.member.dto
 
+import com.bifriends.domain.learning.dto.KoreanStepsResponse
+import com.bifriends.domain.learning.dto.MathStepsResponse
 import com.bifriends.domain.onboarding.model.Interest
 import com.bifriends.domain.onboarding.model.ItemType
 import jakarta.validation.constraints.NotNull
@@ -36,4 +38,14 @@ data class RepresentativeItemRequest(
 
 data class RepresentativeItemResponse(
     val representativeItemType: ItemType
+)
+
+// ───────────────────────────────────────────────────────────────
+// Leo 연동 — 통합 학습 진도 (InternalServicePaths)
+// ───────────────────────────────────────────────────────────────
+
+data class LearningProgressResponse(
+    val memberId: Long,
+    val math: MathStepsResponse,
+    val korean: KoreanStepsResponse,
 )

@@ -84,12 +84,19 @@ class StudyKoreanController(
     // Leo 연동 API (LRN_32 / LRN_33)
     // ───────────────────────────────────────────────────────────────
 
-    /** LRN_32/33 — 현재 진행 중이거나 진입 가능한 국어 lesson 조회 */
+    /** Leo 연동 — 국어 스텝 전체 목록 + 상태 (Leo 전용, JWT 없음) */
+    @GetMapping("/steps")
+    fun getKoreanSteps(
+        @RequestParam memberId: Long,
+    ): ResponseEntity<KoreanStepsResponse> {
+        return ResponseEntity.ok(studyKoreanService.getKoreanSteps(memberId))
+    }
+
+    /** LRN_32/33 — 현재 진행 중이거나 진입 가능한 국어 lesson 조회 (Leo 전용, JWT 없음) */
     @GetMapping("/lessons/current")
     fun getCurrentKoreanLesson(
-        @RequestHeader("Authorization") token: String,
+        @RequestParam memberId: Long,
     ): ResponseEntity<KoreanCurrentLessonResponse> {
-        val memberId = extractMemberId(token)
         return ResponseEntity.ok(studyKoreanService.getCurrentKoreanLesson(memberId))
     }
 

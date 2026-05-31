@@ -869,9 +869,15 @@ BE가 AI 서버로 보내는 실제 payload입니다. AI 팀 스펙에 맞게 **
 
 ### 9-2. 수학 concept 목록 조회 (LRN_13)
 
-**GET** `/api/v1/learning/math/concepts`
+**GET** `/api/v1/learning/math/concepts?memberId={memberId}`
 
 회원 학년의 전체 수학 concept 목록을 반환합니다. Leo가 학습 주제 안내에 사용합니다.
+
+**Query Parameter**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `memberId` | long | O | 조회할 회원 ID (Leo가 채팅 세션에서 보유한 값) |
 
 **Response** `200 OK`
 
@@ -897,10 +903,11 @@ BE가 AI 서버로 보내는 실제 payload입니다. AI 팀 스펙에 맞게 **
 
 ### 9-3. 수학 concept별 lesson 상태 조회 (LRN_14/15/16)
 
-**GET** `/api/v1/learning/math/concepts/lesson-status?concept={concept}`
+**GET** `/api/v1/learning/math/concepts/lesson-status?memberId={memberId}&concept={concept}`
 
 | Query Param | Type | Required | Description |
 |-------------|------|----------|-------------|
+| `memberId` | long | O | 조회할 회원 ID |
 | `concept` | string | O | 조회할 학습 개념 |
 
 **Response** `200 OK`
@@ -950,9 +957,16 @@ BE가 AI 서버로 보내는 실제 payload입니다. AI 팀 스펙에 맞게 **
 
 ### 9-4. 현재 국어 lesson 조회 (LRN_32/33)
 
-**GET** `/api/v1/learning/korean/lessons/current`
+**GET** `/api/v1/learning/korean/lessons/current?memberId={memberId}`
 
-Leo가 "국어 공부 도움" 의도를 분류한 뒤 진입할 스텝을 조회합니다.  
+Leo가 "국어 공부 도움" 의도를 분류한 뒤 진입할 스텝을 조회합니다.
+
+**Query Parameter**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `memberId` | long | O | 조회할 회원 ID |
+
 우선순위: `IN_PROGRESS` → `AVAILABLE` → 첫 번째 스텝
 
 **Response** `200 OK`
@@ -971,6 +985,43 @@ Leo가 "국어 공부 도움" 의도를 분류한 뒤 진입할 스텝을 조회
   "concept": "어휘",
   "lessonStatus": "IN_PROGRESS"
 }
+```
+
+---
+
+### 9-5. 주간 안전 보고서 수신 (AI → BE 콜백)
+
+**POST** `/api/v1/weekly-safety-report` · **X-Internal-Service 인증**
+
+AI가 주간 채팅 분석을 완료한 뒤 결과를 BE로 전송합니다.  
+BE 스케줄러가 매주 금요일 18:00 KST에 AI 배치를 트리거하고, AI가 분석 완료 후 이 엔드포인트로 콜백합니다.
+
+> **필드 구조는 AI 팀과 최종 명세 확정 필요**
+
+**Request Body**
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `member_id` | long | O | 보고서 대상 회원 ID |
+| `report_date` | string | O | 분석 기준 날짜 (`yyyy-MM-dd`, 해당 주 금요일) |
+| `safety_level` | SafetyLevel | O | `SAFE` \| `CONCERN` \| `DANGER` |
+| `summary` | string | O | 주간 대화 요약 |
+| `keywords` | array\<string\> | X | 주요 감지 키워드 |
+
+```json
+{
+  "member_id": 1,
+  "report_date": "2026-05-29",
+  "safety_level": "CONCERN",
+  "summary": "이번 주 대화에서 학교 친구 관계에 대한 부정적 감정이 감지되었습니다.",
+  "keywords": ["외로움", "친구"]
+}
+```
+
+**Response** `200 OK`
+
+```json
+{ "received": true }
 ```
 
 ---

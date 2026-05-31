@@ -1,5 +1,8 @@
 package com.bifriends.domain.member.controller
 
+import com.bifriends.domain.learning.service.StudyKoreanService
+import com.bifriends.domain.learning.service.StudyMathService
+import com.bifriends.domain.member.dto.LearningProgressResponse
 import com.bifriends.domain.member.dto.MemberProfileSummaryResponse
 import com.bifriends.domain.member.service.MemberService
 import org.springframework.http.ResponseEntity
@@ -17,6 +20,8 @@ import org.springframework.web.bind.annotation.RestController
 @RequestMapping("/api/v1/members")
 class InternalMemberController(
     private val memberService: MemberService,
+    private val studyMathService: StudyMathService,
+    private val studyKoreanService: StudyKoreanService,
 ) {
 
     @GetMapping("/{memberId}/profile")
@@ -30,6 +35,22 @@ class InternalMemberController(
                 nickname = profile.nickname,
                 grade = profile.grade,
                 interests = profile.interests,
+            )
+        )
+    }
+
+    /** Leo 연동 — 수학 + 국어 통합 학습 진도 조회 (Leo 전용, JWT 없음) */
+    @GetMapping("/{memberId}/learning-progress")
+    fun getLearningProgress(
+        @PathVariable memberId: Long,
+    ): ResponseEntity<LearningProgressResponse> {
+        val math = studyMathService.getMathSteps(memberId)
+        val korean = studyKoreanService.getKoreanSteps(memberId)
+        return ResponseEntity.ok(
+            LearningProgressResponse(
+                memberId = memberId,
+                math = math,
+                korean = korean,
             )
         )
     }

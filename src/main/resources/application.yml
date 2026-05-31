@@ -54,9 +54,10 @@ internal:
     header-name: X-Internal-Service
     expected-value: ${INTERNAL_SERVICE_TOKEN:bifriends-ai}
 
-# BE → AI 채팅 (Docker: http://bifriends-ai:8000 등)
+# BE → AI (Docker: http://bifriends-ai:8000 등)
 ai:
   service:
     enabled: ${AI_SERVICE_ENABLED:false}
     base-url: ${AI_SERVICE_BASE_URL:http://bifriends-ai:8000}
     chat-path: ${AI_CHAT_PATH:/v1/chat}
+    batch-weekly-safety-path: ${AI_BATCH_WEEKLY_SAFETY_PATH:/api/v1/ai/batch/weekly-safety}

@@ -103,3 +103,23 @@ data class KoreanCurrentLessonResponse(
     val concept: String,
     val lessonStatus: StepStatus,
 )
+
+// ───────────────────────────────────────────────────────────────
+// Leo 연동 — 국어 스텝 전체 목록 + 상태 (InternalServicePaths)
+// ───────────────────────────────────────────────────────────────
+
+data class KoreanStepsResponse(
+    val grade: Int,
+    val totalSteps: Int,
+    val completedSteps: Int,
+    val steps: List<KoreanStepStatusItem>,
+)
+
+data class KoreanStepStatusItem(
+    val stepId: Long,
+    val stepNumber: Int,
+    val stepTitle: String,
+    val concept: String,
+    val status: StepStatus,
+    val completedCycles: List<Int>,
+)
