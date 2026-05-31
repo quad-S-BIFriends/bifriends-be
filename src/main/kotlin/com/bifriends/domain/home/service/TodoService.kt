@@ -30,13 +30,12 @@ class TodoService(
         private data class DefaultTodo(
             val type: TodoType,
             val title: String,
-            val estimatedTimeSec: Int,
         )
 
         private val DEFAULT_TODOS = listOf(
-            DefaultTodo(TodoType.CHAT,     "레오랑 이야기하기 🗣️",  60),
-            DefaultTodo(TodoType.LEARNING, "오늘의 문제 3개 풀기 📚", 180),
-            DefaultTodo(TodoType.EMOTION,  "친구 기분 알아보기 💌",  120),
+            DefaultTodo(TodoType.CHAT,     "레오랑 이야기하기 🗣️"),
+            DefaultTodo(TodoType.LEARNING, "오늘의 문제 3개 풀기 📚"),
+            DefaultTodo(TodoType.EMOTION,  "친구 기분 알아보기 💌"),
         )
     }
 
@@ -67,7 +66,6 @@ class TodoService(
                 member = member,
                 type = default.type,
                 title = default.title,
-                estimatedTimeSec = default.estimatedTimeSec,
                 source = TodoSource.SYSTEM,
                 learningType = if (default.type == TodoType.LEARNING) learningType else null,
                 assignedDate = today,
@@ -148,7 +146,6 @@ class TodoService(
                 member = member,
                 type = TodoType.CUSTOM,
                 title = request.title,
-                estimatedTimeSec = request.estimatedTimeSec ?: 0,
                 source = TodoSource.AGENT,
                 assignedDate = today,
             )

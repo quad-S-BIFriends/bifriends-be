@@ -989,12 +989,44 @@ Leo가 "국어 공부 도움" 의도를 분류한 뒤 진입할 스텝을 조회
 
 ---
 
-### 9-5. 주간 안전 보고서 수신 (AI → BE 콜백)
+### 9-5. 주간 안전 보고서 배치 트리거 (BE → AI)
+
+> **BE 내부 동작 — 외부 노출 엔드포인트 없음**
+
+BE 스케줄러가 매주 **금요일 18:00 KST**에 온보딩 완료 회원 각각에 대해 아래 AI 엔드포인트를 1인당 1건씩 호출합니다.
+
+**대상 AI 엔드포인트:** `POST /api/v1/ai/batch/weekly-safety` (AI 서버 내부)
+
+**Request Body (BE → AI)**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `member_id` | long | 분석 대상 회원 ID |
+| `week_start` | string | 해당 주 월요일 (`yyyy-MM-dd`) |
+| `week_end` | string | 해당 주 금요일 (`yyyy-MM-dd`) |
+
+```json
+{
+  "member_id": 1,
+  "week_start": "2026-05-25",
+  "week_end": "2026-05-29"
+}
+```
+
+**Response (AI → BE)**
+
+```json
+{ "accepted": true }
+```
+
+---
+
+### 9-6. 주간 안전 보고서 수신 (AI → BE 콜백)
 
 **POST** `/api/v1/weekly-safety-report` · **X-Internal-Service 인증**
 
 AI가 주간 채팅 분석을 완료한 뒤 결과를 BE로 전송합니다.  
-BE 스케줄러가 매주 금요일 18:00 KST에 AI 배치를 트리거하고, AI가 분석 완료 후 이 엔드포인트로 콜백합니다.
+`9-5` 트리거를 받은 AI가 분석 완료 후 이 엔드포인트로 회원별 1건씩 콜백합니다.
 
 > **필드 구조는 AI 팀과 최종 명세 확정 필요**
 

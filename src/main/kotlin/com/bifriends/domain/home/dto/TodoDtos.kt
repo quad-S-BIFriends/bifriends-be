@@ -14,7 +14,6 @@ data class TodoResponse(
     val type: TodoType,
     val title: String,
     val status: TodoStatus,
-    val estimatedTimeSec: Int,
     val source: TodoSource,
     val learningType: LearningType?,
     val assignedDate: LocalDate,
@@ -25,7 +24,6 @@ data class TodoResponse(
             type = todo.type,
             title = todo.title,
             status = todo.status,
-            estimatedTimeSec = todo.estimatedTimeSec,
             source = todo.source,
             learningType = todo.learningType,
             assignedDate = todo.assignedDate,
@@ -53,7 +51,6 @@ data class AgentTodoCreateRequest(
     /** 할 일을 생성할 회원 ID (Leo가 채팅 세션에서 알고 있는 값) */
     val memberId: Long,
     val title: String,
-    val estimatedTimeSec: Int? = null,
 )
 
 data class AgentTodoUpdateRequest(

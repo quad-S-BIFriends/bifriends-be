@@ -19,14 +19,17 @@ class AiBatchClient(
     private val log = LoggerFactory.getLogger(javaClass)
 
     /**
-     * AI 주간 안전 보고서 배치를 트리거한다.
+     * 특정 회원의 주간 안전 보고서 배치를 AI에 트리거한다.
      * [properties.enabled]가 false이면 호출하지 않는다 (로컬 개발 환경).
      *
      * @return 성공 여부
      */
     fun triggerWeeklySafety(request: AiBatchWeeklySafetyRequest): Boolean {
         if (!properties.enabled) {
-            log.info("[AiBatchClient] AI 연동 비활성화 — 배치 트리거 스킵 (targetDate={})", request.targetDate)
+            log.info(
+                "[AiBatchClient] AI 연동 비활성화 — 배치 트리거 스킵 (memberId={}, weekStart={})",
+                request.memberId, request.weekStart
+            )
             return false
         }
 
@@ -36,10 +39,16 @@ class AiBatchClient(
                 .body(request)
                 .retrieve()
                 .body(AiBatchWeeklySafetyResponse::class.java)
-            log.info("[AiBatchClient] 주간 안전 보고서 배치 트리거 성공 (targetDate={})", request.targetDate)
+            log.info(
+                "[AiBatchClient] 배치 트리거 성공 (memberId={}, weekStart={})",
+                request.memberId, request.weekStart
+            )
             true
         } catch (e: Exception) {
-            log.error("[AiBatchClient] 주간 안전 보고서 배치 트리거 실패 (targetDate={})", request.targetDate, e)
+            log.error(
+                "[AiBatchClient] 배치 트리거 실패 (memberId={}, weekStart={})",
+                request.memberId, request.weekStart, e
+            )
             false
         }
     }

@@ -50,10 +50,6 @@ class Todo(
     @Column(nullable = false)
     var title: String,
 
-    /** 예상 소요 시간 (초) */
-    @Column(nullable = false)
-    val estimatedTimeSec: Int,
-
     /** 완료 상태 */
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
