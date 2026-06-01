@@ -42,17 +42,5 @@ interface TodoRepository : JpaRepository<Todo, Long> {
         ORDER BY t.assignedDate DESC, t.createdAt ASC
     """)
     fun findHistoryBetween(memberId: Long, from: LocalDate, to: LocalDate): List<Todo>
-
-    /**
-     * 기간 내 완료된 할 일 목록 (RPT-05 학습 패턴 계산용)
-     * COMPLETED 상태이고 type 무관하게 모두 조회
-     */
-    @Query("""
-        SELECT t FROM Todo t
-        WHERE t.member.id = :memberId
-          AND t.assignedDate BETWEEN :from AND :to
-          AND t.status = 'COMPLETED'
-        ORDER BY t.assignedDate ASC
-    """)
-    fun findCompletedBetween(memberId: Long, from: LocalDate, to: LocalDate): List<Todo>
+    fun deleteAllByMemberId(memberId: Long)
 }

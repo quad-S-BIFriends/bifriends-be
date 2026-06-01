@@ -14,4 +14,5 @@ interface UserStatsRepository : JpaRepository<UserStats, Long> {
      */
     @Query("SELECT u FROM UserStats u WHERE u.member.id = :memberId")
     fun findByMemberIdWithLock(memberId: Long): UserStats?
+    fun deleteByMemberId(memberId: Long)
 }

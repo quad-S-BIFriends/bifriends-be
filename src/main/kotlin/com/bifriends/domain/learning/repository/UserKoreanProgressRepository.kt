@@ -15,4 +15,5 @@ interface UserKoreanProgressRepository : JpaRepository<UserKoreanProgress, Long>
         AND p.koreanStep.grade = :grade
     """)
     fun findAllByMemberIdAndGrade(memberId: Long, grade: Int): List<UserKoreanProgress>
+    fun deleteAllByMemberId(memberId: Long)
 }

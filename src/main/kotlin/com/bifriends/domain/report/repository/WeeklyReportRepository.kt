@@ -15,4 +15,5 @@ interface WeeklyReportRepository : JpaRepository<WeeklyReport, Long> {
 
     /** 해당 주차 리포트 존재 여부 (중복 저장 방지) */
     fun existsByMemberIdAndWeekStart(memberId: Long, weekStart: LocalDate): Boolean
+    fun deleteAllByMemberId(memberId: Long)
 }

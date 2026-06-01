@@ -19,4 +19,5 @@ interface RewardHistoryRepository : JpaRepository<RewardHistory, Long> {
         from: LocalDateTime,
         to: LocalDateTime,
     ): Boolean
+    fun deleteAllByMemberId(memberId: Long)
 }

@@ -27,4 +27,5 @@ interface ChatMessageRepository : JpaRepository<ChatMessage, Long> {
         @Param("from") from: LocalDateTime,
         @Param("to") to: LocalDateTime,
     ): List<ChatMessage>
+    fun deleteAllByMemberId(memberId: Long)
 }

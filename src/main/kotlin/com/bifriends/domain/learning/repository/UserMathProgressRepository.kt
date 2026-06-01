@@ -17,4 +17,5 @@ interface UserMathProgressRepository : JpaRepository<UserMathProgress, Long> {
     fun findAllByMemberIdAndGrade(memberId: Long, grade: Int): List<UserMathProgress>
 
     fun existsByMemberIdAndMathStepId(memberId: Long, mathStepId: Long): Boolean
+    fun deleteAllByMemberId(memberId: Long)
 }

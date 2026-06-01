@@ -36,6 +36,20 @@ class ReportController(
         )
     }
 
+    /**
+     * RPT-08 — 보호자 미션 받기
+     * 이미 생성된 미션이 있으면 캐시 반환, 없으면 AI에 생성 요청 후 저장
+     */
+    @PostMapping("/{reportId}/parent-mission")
+    fun getOrGenerateParentMission(
+        @RequestHeader("Authorization") token: String,
+        @PathVariable reportId: Long,
+    ): ResponseEntity<ParentMissionResponse> {
+        return ResponseEntity.ok(
+            reportService.getOrGenerateParentMission(extractMemberId(token), reportId)
+        )
+    }
+
     private fun extractMemberId(token: String): Long =
         jwtProvider.getMemberId(token.removePrefix("Bearer "))
 }

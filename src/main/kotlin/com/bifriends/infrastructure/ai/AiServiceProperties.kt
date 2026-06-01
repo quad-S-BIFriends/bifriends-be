@@ -10,4 +10,6 @@ data class AiServiceProperties(
     val chatPath: String = "/v1/chat",
     /** BE 스케줄러 → AI 주간 안전 보고서 배치 트리거 경로 */
     val batchWeeklySafetyPath: String = "/api/v1/ai/batch/weekly-safety",
+    /** 보호자 미션 생성 요청 경로 (RPT-08) */
+    val parentMissionPath: String = "/api/v1/ai/parent-mission",
 )

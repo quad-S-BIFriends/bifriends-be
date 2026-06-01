@@ -12,4 +12,6 @@ interface MemberShopItemRepository : JpaRepository<MemberShopItem, Long> {
 
     /** 회원이 특정 아이템을 이미 보유했는지 확인 */
     fun existsByMemberIdAndShopItemId(memberId: Long, shopItemId: Long): Boolean
+    fun deleteAllByMemberIdAndShopItemIdIn(memberId: Long, ids: List<Long>)
+    fun deleteAllByMemberId(memberId: Long)
 }

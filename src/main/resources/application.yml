@@ -61,3 +61,4 @@ ai:
     base-url: ${AI_SERVICE_BASE_URL:http://bifriends-ai:8000}
     chat-path: ${AI_CHAT_PATH:/v1/chat}
     batch-weekly-safety-path: ${AI_BATCH_WEEKLY_SAFETY_PATH:/api/v1/ai/batch/weekly-safety}
+    parent-mission-path: ${AI_PARENT_MISSION_PATH:/api/v1/ai/parent-mission}

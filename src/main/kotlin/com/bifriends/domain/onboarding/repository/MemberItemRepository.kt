@@ -5,4 +5,5 @@ import org.springframework.data.jpa.repository.JpaRepository
 
 interface MemberItemRepository : JpaRepository<MemberItem, Long> {
     fun findAllByMemberId(memberId: Long): List<MemberItem>
+    fun deleteAllByMemberId(memberId: Long)
 }
