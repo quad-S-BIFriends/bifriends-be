@@ -51,6 +51,20 @@ class ParentService(
         return ChangeParentPasswordResponse(changed = true)
     }
 
+    /**
+     * RPT-01-01 — 비밀번호 찾기 (MVP: 별도 인증 없이 새 비밀번호로 재설정)
+     */
+    @Transactional
+    fun resetParentPassword(memberId: Long, request: ResetParentPasswordRequest): ResetParentPasswordResponse {
+        require(request.newPassword == request.newPasswordConfirm) {
+            "새 비밀번호와 새 비밀번호 확인이 일치하지 않습니다."
+        }
+
+        val member = findMember(memberId)
+        member.parentPassword = passwordEncoder.encode(request.newPassword)
+        return ResetParentPasswordResponse(reset = true)
+    }
+
     private fun findMember(memberId: Long) =
         memberRepository.findById(memberId)
             .orElseThrow { IllegalArgumentException("회원을 찾을 수 없습니다. id=$memberId") }

@@ -7,11 +7,6 @@ import jakarta.validation.Valid
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 
-/**
- * 부모 모드 API.
- * RPT-01: PIN 확인으로 부모 모드 진입
- * RPT-12: 부모 비밀번호 변경
- */
 @RestController
 @RequestMapping("/api/v1/parent")
 class ParentController(
@@ -28,13 +23,22 @@ class ParentController(
         return ResponseEntity.ok(parentService.verifyParentPassword(extractMemberId(token), request))
     }
 
-    /** RPT-12 — 부모 비밀번호 변경 */
+    /** RPT-12 — 부모 비밀번호 변경 (현재 비밀번호 확인 필요) */
     @PatchMapping("/password")
     fun changeParentPassword(
         @RequestHeader("Authorization") token: String,
         @Valid @RequestBody request: ChangeParentPasswordRequest,
     ): ResponseEntity<ChangeParentPasswordResponse> {
         return ResponseEntity.ok(parentService.changeParentPassword(extractMemberId(token), request))
+    }
+
+    /** RPT-01-01 — 비밀번호 찾기 (MVP: 별도 인증 없이 재설정) */
+    @PostMapping("/reset-password")
+    fun resetParentPassword(
+        @RequestHeader("Authorization") token: String,
+        @Valid @RequestBody request: ResetParentPasswordRequest,
+    ): ResponseEntity<ResetParentPasswordResponse> {
+        return ResponseEntity.ok(parentService.resetParentPassword(extractMemberId(token), request))
     }
 
     private fun extractMemberId(token: String): Long =

@@ -6,6 +6,7 @@ import com.bifriends.domain.member.dto.MemberSettingsResponse
 import com.bifriends.domain.member.dto.RepresentativeItemRequest
 import com.bifriends.domain.member.dto.RepresentativeItemResponse
 import com.bifriends.domain.member.service.MemberService
+import com.bifriends.domain.member.service.WithdrawalService
 import com.bifriends.infrastructure.security.JwtProvider
 import jakarta.validation.Valid
 import org.springframework.http.ResponseEntity
@@ -15,15 +16,15 @@ import org.springframework.web.bind.annotation.*
 @RequestMapping("/api/v1/members")
 class MemberController(
     private val memberService: MemberService,
-    private val jwtProvider: JwtProvider
+    private val withdrawalService: WithdrawalService,
+    private val jwtProvider: JwtProvider,
 ) {
 
     @GetMapping("/me")
     fun getMyProfile(
-        @RequestHeader("Authorization") token: String
+        @RequestHeader("Authorization") token: String,
     ): ResponseEntity<MemberProfileResponse> {
-        val memberId = extractMemberId(token)
-        return ResponseEntity.ok(memberService.getProfile(memberId))
+        return ResponseEntity.ok(memberService.getProfile(extractMemberId(token)))
     }
 
     /** HOM-10-01~04 — 설정 화면 저장 (이름·학년·관심사 한 번에) */
@@ -32,20 +33,26 @@ class MemberController(
         @RequestHeader("Authorization") token: String,
         @Valid @RequestBody request: MemberSettingsRequest,
     ): ResponseEntity<MemberSettingsResponse> {
-        val memberId = extractMemberId(token)
-        return ResponseEntity.ok(memberService.updateSettings(memberId, request))
+        return ResponseEntity.ok(memberService.updateSettings(extractMemberId(token), request))
     }
 
     @PatchMapping("/me/representative-item")
     fun updateRepresentativeItem(
         @RequestHeader("Authorization") token: String,
-        @Valid @RequestBody request: RepresentativeItemRequest
+        @Valid @RequestBody request: RepresentativeItemRequest,
     ): ResponseEntity<RepresentativeItemResponse> {
-        val memberId = extractMemberId(token)
-        return ResponseEntity.ok(memberService.updateRepresentativeItem(memberId, request.itemType!!))
+        return ResponseEntity.ok(memberService.updateRepresentativeItem(extractMemberId(token), request.itemType!!))
     }
 
-    private fun extractMemberId(token: String): Long {
-        return jwtProvider.getMemberId(token.removePrefix("Bearer "))
+    /** RPT-11 — 회원 탈퇴 */
+    @DeleteMapping("/me")
+    fun withdraw(
+        @RequestHeader("Authorization") token: String,
+    ): ResponseEntity<Void> {
+        withdrawalService.withdraw(extractMemberId(token))
+        return ResponseEntity.noContent().build()
     }
+
+    private fun extractMemberId(token: String): Long =
+        jwtProvider.getMemberId(token.removePrefix("Bearer "))
 }
