@@ -73,6 +73,7 @@ class SecurityConfig(
                     .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
                     .requestMatchers("/api/v1/onboarding/**").authenticated()
                     .requestMatchers("/api/v1/parent/**").authenticated()
+                    .requestMatchers("/api/v1/reports/**").authenticated()
                     .requestMatchers("/api/v1/shop/**").authenticated()
                     .requestMatchers("/api/v1/learning/**").authenticated()
                     .requestMatchers(HttpMethod.POST, "/api/v1/chat/messages").authenticated()
