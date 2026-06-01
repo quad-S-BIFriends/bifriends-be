@@ -368,6 +368,7 @@ class StudyMathService(
             .takeIf { it >= 0 }
             ?: steps.indexOfFirst { it.concept.contains(concept, ignoreCase = true) }
                 .takeIf { it >= 0 }
+            ?: -1
 
         if (matchedIndex < 0) {
             return MathLessonStatusResponse(

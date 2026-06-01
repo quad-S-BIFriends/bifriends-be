@@ -37,7 +37,7 @@ object InternalServicePaths {
         }
 
     private fun HttpMethod.matches(requestMethod: String): Boolean =
-        name.equals(requestMethod, ignoreCase = true)
+        name().equals(requestMethod, ignoreCase = true)
 
     private fun antMatch(pattern: String, path: String): Boolean {
         val regex = pattern

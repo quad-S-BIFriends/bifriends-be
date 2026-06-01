@@ -18,6 +18,8 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
 import org.springframework.security.config.http.SessionCreationPolicy
 import org.springframework.security.core.Authentication
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
+import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.security.web.SecurityFilterChain
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter
@@ -60,15 +62,23 @@ class SecurityConfig(
                     }
                 }
                 internal
-                    .requestMatchers("/health", "/api/v1/members/auth/**", "/oauth2/**", "/login/**").permitAll()
+                    .requestMatchers(
+                        "/health",
+                        "/actuator/health",
+                        "/actuator/health/**",
+                        "/api/v1/members/auth/**",
+                        "/oauth2/**",
+                        "/login/**",
+                    ).permitAll()
                     .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
                     .requestMatchers("/api/v1/onboarding/**").authenticated()
+                    .requestMatchers("/api/v1/parent/**").authenticated()
                     .requestMatchers("/api/v1/learning/**").authenticated()
                     .requestMatchers(HttpMethod.POST, "/api/v1/chat/messages").authenticated()
                     .anyRequest().authenticated()
             }
-            .addFilterBefore(internalServiceAuthenticationFilter, JwtAuthenticationFilter::class.java)
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter::class.java)
+            .addFilterBefore(internalServiceAuthenticationFilter, JwtAuthenticationFilter::class.java)
             .oauth2Login { oauth2 ->
                 oauth2
                     .userInfoEndpoint { it.userService(customOAuth2UserService) }
@@ -83,6 +93,9 @@ class SecurityConfig(
      * OAuth2 로그인 성공 시 호출되어 accessToken + refreshToken을 JSON으로 응답.
      * 클라이언트(Flutter)는 이 토큰을 저장하고 이후 API 요청에 사용.
      */
+    @Bean
+    fun passwordEncoder(): PasswordEncoder = BCryptPasswordEncoder()
+
     @Bean
     fun jwtFilterRegistration(filter: JwtAuthenticationFilter): FilterRegistrationBean<JwtAuthenticationFilter> {
         return FilterRegistrationBean(filter).apply { isEnabled = false }
