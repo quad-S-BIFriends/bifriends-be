@@ -23,30 +23,24 @@ class ChatService(
 ) {
 
     /**
-     * FE에서 받은 메시지를 AI로 중계하고, 사용자·어시스턴트 메시지를 DB에 저장한다.
-     *
-     * - sessionId가 없으면 신규 세션을 자동 생성한다.
-     * - AI 연동이 비활성화(enabled=false)되면 reply=null로 반환하며, 이때도 user 메시지는 저장한다.
+     * FE 메시지 전송 — 세션 자동 생성 + 메시지 저장 + AI 중계
+     * sessionKey(UUID)로 세션을 조회하고, 없으면 신규 생성한다.
      */
     @Transactional
     fun sendMessage(memberId: Long, request: ChatMessageRequest): ChatMessageResponse {
-        // 1. 세션 조회 또는 생성
-        val session = chatSessionRepository.findById(request.sessionId)
-            .orElseGet {
+        // 1. sessionKey로 세션 조회 or 신규 생성
+        val session = chatSessionRepository.findBySessionKey(request.sessionId)
+            ?: run {
                 val member = memberRepository.findById(memberId)
                     .orElseThrow { IllegalArgumentException("회원을 찾을 수 없습니다. id=$memberId") }
                 chatSessionRepository.save(
-                    ChatSession(
-                        sessionId = request.sessionId,
-                        member = member,
-                    )
+                    ChatSession(sessionKey = request.sessionId, member = member)
                 )
             }
 
-        // 2. 소유권 검증
         check(session.member.id == memberId) { "본인의 세션에만 메시지를 보낼 수 있습니다." }
 
-        // 3. 사용자 메시지 저장
+        // 2. 사용자 메시지 저장
         chatMessageRepository.save(
             ChatMessage(
                 session = session,
@@ -56,25 +50,26 @@ class ChatService(
             )
         )
 
-        // 4. AI 호출
-        val aiRequest = AiChatRequest(
-            memberId = memberId,
-            nickname = request.nickname,
-            grade = request.grade,
-            interests = request.interests,
-            sessionId = request.sessionId,
-            message = request.message,
+        // 3. AI 호출
+        val aiResponse = aiChatClient.sendChat(
+            AiChatRequest(
+                memberId = memberId,
+                nickname = request.nickname,
+                grade = request.grade,
+                interests = request.interests,
+                sessionId = request.sessionId,
+                message = request.message,
+            )
         )
-        val aiResponse = aiChatClient.sendChat(aiRequest)
 
-        // 5. 어시스턴트 메시지 저장 (응답이 있을 때만)
-        aiResponse.reply?.let { reply ->
+        // 4. 어시스턴트 메시지 저장
+        aiResponse.reply?.let {
             chatMessageRepository.save(
                 ChatMessage(
                     session = session,
                     memberId = memberId,
                     role = MessageRole.ASSISTANT,
-                    content = reply,
+                    content = it,
                 )
             )
         }
@@ -89,11 +84,11 @@ class ChatService(
 
     // ── Leo 내부 API ──────────────────────────────────────────────────────────
 
-    /** 세션 내 메시지 전체 목록 (Leo 3.5) */
-    fun getSessionMessages(sessionId: String): ChatSessionMessagesResponse {
-        val session = chatSessionRepository.findById(sessionId)
-            .orElseThrow { IllegalArgumentException("세션을 찾을 수 없습니다. sessionId=$sessionId") }
-        val messages = chatMessageRepository.findBySessionSessionIdOrderByCreatedAtAsc(sessionId)
+    /** 세션 내 메시지 전체 목록 (Leo 3.5) — sessionKey로 조회 */
+    fun getSessionMessages(sessionKey: String): ChatSessionMessagesResponse {
+        val session = chatSessionRepository.findBySessionKey(sessionKey)
+            ?: throw IllegalArgumentException("세션을 찾을 수 없습니다. sessionKey=$sessionKey")
+        val messages = chatMessageRepository.findBySessionKeyOrderByCreatedAtAsc(sessionKey)
         return ChatSessionMessagesResponse.from(session, messages)
     }
 
@@ -115,9 +110,9 @@ class ChatService(
 
     /** 세션 제목·상태 수정 (Leo 3.9) */
     @Transactional
-    fun patchSession(sessionId: String, request: PatchChatSessionRequest): PatchChatSessionResponse {
-        val session = chatSessionRepository.findById(sessionId)
-            .orElseThrow { IllegalArgumentException("세션을 찾을 수 없습니다. sessionId=$sessionId") }
+    fun patchSession(sessionKey: String, request: PatchChatSessionRequest): PatchChatSessionResponse {
+        val session = chatSessionRepository.findBySessionKey(sessionKey)
+            ?: throw IllegalArgumentException("세션을 찾을 수 없습니다. sessionKey=$sessionKey")
         session.update(title = request.title, status = request.status)
         return PatchChatSessionResponse.from(session)
     }

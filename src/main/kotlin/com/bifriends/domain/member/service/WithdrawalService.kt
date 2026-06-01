@@ -11,6 +11,7 @@ import com.bifriends.domain.member.repository.MemberRepository
 import com.bifriends.domain.onboarding.repository.MemberInterestRepository
 import com.bifriends.domain.onboarding.repository.MemberItemRepository
 import com.bifriends.domain.report.repository.WeeklyReportRepository
+import com.bifriends.domain.report.repository.WeeklySafetyReportRepository
 import com.bifriends.domain.shop.repository.MemberShopItemRepository
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -49,6 +50,7 @@ class WithdrawalService(
     private val memberItemRepository: MemberItemRepository,
     private val memberShopItemRepository: MemberShopItemRepository,
     private val weeklyReportRepository: WeeklyReportRepository,
+    private val weeklySafetyReportRepository: WeeklySafetyReportRepository,
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
 
@@ -69,6 +71,7 @@ class WithdrawalService(
         memberInterestRepository.deleteAllByMemberId(memberId)
         memberItemRepository.deleteAllByMemberId(memberId)
         memberShopItemRepository.deleteAllByMemberId(memberId)
+        weeklySafetyReportRepository.deleteAllByMemberId(memberId)
         weeklyReportRepository.deleteAllByMemberId(memberId)
         memberRepository.delete(member)
 

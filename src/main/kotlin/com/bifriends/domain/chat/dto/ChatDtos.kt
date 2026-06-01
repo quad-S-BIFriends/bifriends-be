@@ -56,7 +56,7 @@ data class ChatSessionMessagesResponse(
 ) {
     companion object {
         fun from(session: ChatSession, messages: List<ChatMessage>) = ChatSessionMessagesResponse(
-            sessionId = session.sessionId,
+            sessionId = session.sessionKey,
             memberId = session.member.id,
             messages = messages.map { ChatMessageItem.from(it) },
         )
@@ -98,7 +98,7 @@ data class ChatMessageWithSessionItem(
     companion object {
         fun from(msg: ChatMessage) = ChatMessageWithSessionItem(
             id = msg.id,
-            sessionId = msg.session.sessionId,
+            sessionId = msg.session.sessionKey,
             role = msg.role,
             content = msg.content,
             createdAt = msg.createdAt,
@@ -122,7 +122,7 @@ data class PatchChatSessionResponse(
 ) {
     companion object {
         fun from(session: ChatSession) = PatchChatSessionResponse(
-            sessionId = session.sessionId,
+            sessionId = session.sessionKey,
             memberId = session.member.id,
             title = session.title,
             status = session.status,

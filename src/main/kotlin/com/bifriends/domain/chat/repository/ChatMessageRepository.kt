@@ -8,13 +8,15 @@ import java.time.LocalDateTime
 
 interface ChatMessageRepository : JpaRepository<ChatMessage, Long> {
 
-    /** 세션 내 메시지 목록 (Leo 3.5) */
-    fun findBySessionSessionIdOrderByCreatedAtAsc(sessionId: String): List<ChatMessage>
+    /** 세션 내 메시지 목록 (sessionKey 기반) */
+    @Query("""
+        SELECT m FROM ChatMessage m
+        WHERE m.session.sessionKey = :sessionKey
+        ORDER BY m.createdAt ASC
+    """)
+    fun findBySessionKeyOrderByCreatedAtAsc(@Param("sessionKey") sessionKey: String): List<ChatMessage>
 
-    /**
-     * 회원 기간별 메시지 목록 (Leo 3.6)
-     * session을 fetch join해 N+1 방지 (ChatMessageWithSessionItem에서 sessionId 접근).
-     */
+    /** 회원 기간별 메시지 조회 — session fetch join으로 N+1 방지 */
     @Query("""
         SELECT m FROM ChatMessage m
         JOIN FETCH m.session
@@ -27,5 +29,6 @@ interface ChatMessageRepository : JpaRepository<ChatMessage, Long> {
         @Param("from") from: LocalDateTime,
         @Param("to") to: LocalDateTime,
     ): List<ChatMessage>
+
     fun deleteAllByMemberId(memberId: Long)
 }
