@@ -22,7 +22,7 @@ spring:
   sql:
     init:
       mode: always
-      data-locations: classpath:db/math_seed.sql,classpath:db/korean_seed.sql
+      data-locations: classpath:db/math_seed.sql,classpath:db/korean_seed.sql,classpath:db/shop_seed.sql
 
   security:
     oauth2:

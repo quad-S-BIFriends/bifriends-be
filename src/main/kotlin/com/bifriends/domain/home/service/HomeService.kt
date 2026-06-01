@@ -3,6 +3,7 @@ package com.bifriends.domain.home.service
 import com.bifriends.domain.home.dto.GreetingResponse
 import com.bifriends.domain.home.dto.HomeResponse
 import com.bifriends.domain.home.dto.MemberSummary
+import com.bifriends.domain.shop.dto.EquippedItemsResponse
 import com.bifriends.domain.home.model.GreetingPolicy
 import com.bifriends.domain.member.repository.MemberRepository
 import org.springframework.stereotype.Service
@@ -89,6 +90,12 @@ class HomeService(
             stats = updatedStats,
             attendance = attendanceResult,
             todos = todos,
+            equippedItems = EquippedItemsResponse(
+                hatId = member.equippedHatId,
+                glassesId = member.equippedGlassesId,
+                clothesId = member.equippedClothesId,
+                backgroundId = member.equippedBackgroundId,
+            ),
         )
     }
 }

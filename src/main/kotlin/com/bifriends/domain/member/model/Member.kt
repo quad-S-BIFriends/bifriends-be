@@ -70,6 +70,19 @@ class Member(
     @Column
     var parentPassword: String? = null,
 
+    // ── 착용 아이템 (카테고리별 독립, ShopItem.id 참조) ──────────────────
+    @Column(name = "equipped_hat_id")
+    var equippedHatId: Long? = null,
+
+    @Column(name = "equipped_glasses_id")
+    var equippedGlassesId: Long? = null,
+
+    @Column(name = "equipped_clothes_id")
+    var equippedClothesId: Long? = null,
+
+    @Column(name = "equipped_background_id")
+    var equippedBackgroundId: Long? = null,
+
     @Enumerated(EnumType.STRING)
     @Column
     var representativeItemType: ItemType? = null,

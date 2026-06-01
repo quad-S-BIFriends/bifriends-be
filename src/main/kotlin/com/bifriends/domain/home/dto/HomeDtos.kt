@@ -1,6 +1,7 @@
 package com.bifriends.domain.home.dto
 
 import com.bifriends.domain.home.model.GreetingType
+import com.bifriends.domain.shop.dto.EquippedItemsResponse
 
 // UserStatsResponse, AttendanceResult 는 같은 패키지(dto) 내 UserStatsDtos.kt 에 정의되어 있어 import 불필요.
 // TodoResponse 는 같은 패키지(dto) 내 TodoDtos.kt 에 정의되어 있어 import 불필요.
@@ -28,6 +29,9 @@ data class HomeResponse(
 
     /** 오늘의 할 일 목록 */
     val todos: List<TodoResponse>,
+
+    /** 현재 착용 아이템 (Leo 캐릭터 렌더링용) */
+    val equippedItems: EquippedItemsResponse,
 )
 
 // ── 회원 요약 ──────────────────────────────────────────────────────────────
