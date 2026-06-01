@@ -2,11 +2,15 @@ package com.bifriends.domain.member.service
 
 import com.bifriends.domain.member.dto.MemberItemInfo
 import com.bifriends.domain.member.dto.MemberProfileResponse
+import com.bifriends.domain.member.dto.MemberSettingsRequest
+import com.bifriends.domain.member.dto.MemberSettingsResponse
 import com.bifriends.domain.member.dto.RepresentativeItemResponse
 import com.bifriends.domain.member.event.MemberRegisteredEvent
 import com.bifriends.domain.member.model.Member
 import com.bifriends.domain.member.repository.MemberRepository
+import com.bifriends.domain.onboarding.model.Interest
 import com.bifriends.domain.onboarding.model.ItemType
+import com.bifriends.domain.onboarding.model.MemberInterest
 import com.bifriends.domain.onboarding.repository.MemberInterestRepository
 import com.bifriends.domain.onboarding.repository.MemberItemRepository
 import org.springframework.context.ApplicationEventPublisher
@@ -63,6 +67,36 @@ class MemberService(
             items = items,
             representativeItemType = member.representativeItemType,
             onboardingCompleted = member.onboardingCompleted
+        )
+    }
+
+    /**
+     * HOM-10-04 — 설정 저장 버튼.
+     * 이름·학년·관심사를 한 번에 저장한다. null 필드는 변경하지 않는다.
+     */
+    @Transactional
+    fun updateSettings(memberId: Long, request: MemberSettingsRequest): MemberSettingsResponse {
+        val member = findById(memberId)
+
+        request.nickname?.let { member.nickname = it }
+        request.grade?.let { member.grade = it }
+
+        val currentInterests: List<Interest> = if (request.interests != null) {
+            memberInterestRepository.deleteAllByMemberId(memberId)
+            memberInterestRepository.flush()
+            val saved = request.interests.distinct().map { interest ->
+                MemberInterest(member = member, interest = interest)
+            }
+            memberInterestRepository.saveAll(saved)
+            request.interests.distinct()
+        } else {
+            memberInterestRepository.findAllByMemberId(memberId).map { it.interest }
+        }
+
+        return MemberSettingsResponse(
+            nickname = member.nickname,
+            grade = member.grade,
+            interests = currentInterests,
         )
     }
 

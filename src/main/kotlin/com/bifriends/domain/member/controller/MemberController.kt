@@ -1,6 +1,8 @@
 package com.bifriends.domain.member.controller
 
 import com.bifriends.domain.member.dto.MemberProfileResponse
+import com.bifriends.domain.member.dto.MemberSettingsRequest
+import com.bifriends.domain.member.dto.MemberSettingsResponse
 import com.bifriends.domain.member.dto.RepresentativeItemRequest
 import com.bifriends.domain.member.dto.RepresentativeItemResponse
 import com.bifriends.domain.member.service.MemberService
@@ -22,6 +24,16 @@ class MemberController(
     ): ResponseEntity<MemberProfileResponse> {
         val memberId = extractMemberId(token)
         return ResponseEntity.ok(memberService.getProfile(memberId))
+    }
+
+    /** HOM-10-01~04 — 설정 화면 저장 (이름·학년·관심사 한 번에) */
+    @PatchMapping("/me/settings")
+    fun updateSettings(
+        @RequestHeader("Authorization") token: String,
+        @Valid @RequestBody request: MemberSettingsRequest,
+    ): ResponseEntity<MemberSettingsResponse> {
+        val memberId = extractMemberId(token)
+        return ResponseEntity.ok(memberService.updateSettings(memberId, request))
     }
 
     @PatchMapping("/me/representative-item")
