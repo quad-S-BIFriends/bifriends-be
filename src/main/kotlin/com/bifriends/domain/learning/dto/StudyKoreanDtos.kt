@@ -60,6 +60,8 @@ data class KoreanStepProgressItem(
 
 data class KoreanValidateAnswerRequest(
     val answer: String,   // 국어는 텍스트 답안만 존재
+    /** 이 문제에서 노출된 힌트 단계 수 (0~3, FE 관리) */
+    val hintsUsed: Int = 0,
 )
 
 data class KoreanValidateAnswerResponse(

@@ -59,6 +59,8 @@ data class StepProgressItem(
 
 data class ValidateAnswerRequest(
     val answer: JsonNode,   // String 또는 {numerator, denominator} 객체 모두 JsonNode로 수신
+    /** 이 문제에서 노출된 힌트 단계 수 (0~3, FE 관리) */
+    val hintsUsed: Int = 0,
 )
 
 data class ValidateAnswerResponse(

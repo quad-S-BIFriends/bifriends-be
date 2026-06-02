@@ -12,4 +12,6 @@ data class AiServiceProperties(
     val batchWeeklySafetyPath: String = "/api/v1/ai/batch/weekly-safety",
     /** 보호자 미션 생성 요청 경로 (RPT-08) */
     val parentMissionPath: String = "/api/v1/ai/parent-mission",
+    /** 친구랑 감정 학습 시나리오 생성 요청 경로 (EMO-04) */
+    val emotionScenarioPath: String = "/api/v1/ai/content/scenario",
 )
