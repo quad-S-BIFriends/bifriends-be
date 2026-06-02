@@ -42,5 +42,13 @@ interface TodoRepository : JpaRepository<Todo, Long> {
         ORDER BY t.assignedDate DESC, t.createdAt ASC
     """)
     fun findHistoryBetween(memberId: Long, from: LocalDate, to: LocalDate): List<Todo>
+    /** 특정 기간 내 완료된 할 일 조회 (주간 리포트 학습 패턴 계산용) */
+    @Query("""
+        SELECT t FROM Todo t
+        WHERE t.member.id = :memberId
+          AND t.status = com.bifriends.domain.home.model.TodoStatus.COMPLETED
+          AND t.assignedDate BETWEEN :from AND :to
+    """)
+    fun findCompletedBetween(memberId: Long, from: LocalDate, to: LocalDate): List<Todo>
     fun deleteAllByMemberId(memberId: Long)
 }

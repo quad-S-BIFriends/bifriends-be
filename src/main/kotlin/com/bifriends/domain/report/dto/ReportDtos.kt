@@ -1,7 +1,7 @@
 package com.bifriends.domain.report.dto
 
 import com.bifriends.domain.report.model.SafetySignal
-import com.bifriends.domain.report.model.WeeklyReport
+// import com.bifriends.domain.report.model.WeeklyReport
 import java.time.LocalDate
 
 // ── RPT-02 리포트 목록 ─────────────────────────────────────────────────────────
@@ -13,17 +13,7 @@ data class ReportSummaryItem(
     val safetySignal: SafetySignal,
     /** 보호자 미션 수령 여부 */
     val hasMission: Boolean,
-) {
-    companion object {
-        fun from(r: WeeklyReport) = ReportSummaryItem(
-            reportId = r.id,
-            weekStart = r.weekStart,
-            weekEnd = r.weekEnd,
-            safetySignal = r.safetySignal,
-            hasMission = r.parentMission != null,
-        )
-    }
-}
+)
 
 data class ReportListResponse(
     val reports: List<ReportSummaryItem>,
