@@ -17,6 +17,7 @@ object InternalServicePaths {
         arrayOf(HttpMethod.GET) to "/api/v1/members/*/learning-progress",
         arrayOf(HttpMethod.GET) to "/api/v1/chat/sessions/*/messages",
         arrayOf(HttpMethod.GET) to "/api/v1/chat/messages",
+        arrayOf(HttpMethod.GET) to "/api/v1/report/learning-summary",
         // Leo 연동 — 수학 concept 조회 (LRN_13 / LRN_14·15·16)
         arrayOf(HttpMethod.GET) to "/api/v1/learning/math/concepts",
         arrayOf(HttpMethod.GET) to "/api/v1/learning/math/concepts/lesson-status",

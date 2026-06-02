@@ -1,5 +1,6 @@
 package com.bifriends.domain.report.dto
 
+import com.fasterxml.jackson.annotation.JsonProperty
 import com.bifriends.domain.report.model.SafetySignal
 // import com.bifriends.domain.report.model.WeeklyReport
 import java.time.LocalDate
@@ -91,4 +92,26 @@ data class ParentMissionResponse(
     val praise: String,
     /** AI 생성 추천 활동 */
     val mission: String,
+)
+
+// ── Internal API: 학습 리포트 집계 ──────────────────────────────────────────────
+
+data class LearningSummaryResponse(
+    val math: List<LearningConceptSummaryItem>,
+    val korean: List<LearningConceptSummaryItem>,
+    val todos: TodoSummaryResponse,
+)
+
+data class LearningConceptSummaryItem(
+    val concept: String,
+    val solved: Long,
+    @JsonProperty("avg_attempts")
+    val avgAttempts: Double,
+    @JsonProperty("avg_hints")
+    val avgHints: Double,
+)
+
+data class TodoSummaryResponse(
+    val assigned: Long,
+    val completed: Long,
 )

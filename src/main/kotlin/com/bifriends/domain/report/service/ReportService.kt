@@ -2,6 +2,8 @@ package com.bifriends.domain.report.service
 
 import com.bifriends.domain.home.model.TodoType
 import com.bifriends.domain.home.repository.TodoRepository
+import com.bifriends.domain.learning.model.LearningSubject
+import com.bifriends.domain.learning.repository.LearningAttemptRepository
 import com.bifriends.domain.report.dto.*
 import com.bifriends.domain.report.model.SafetySignal
 import com.bifriends.domain.report.model.WeeklyReport
@@ -20,6 +22,7 @@ class ReportService(
     private val weeklyReportRepository: WeeklyReportRepository,
     private val weeklySafetyReportRepository: WeeklySafetyReportRepository,
     private val todoRepository: TodoRepository,
+    private val learningAttemptRepository: LearningAttemptRepository,
     private val objectMapper: ObjectMapper,
     private val aiParentMissionClient: AiParentMissionClient,
 ) {
@@ -74,6 +77,22 @@ class ReportService(
             ),
             parentMission = extractParentMission(sections),
             keywords = emptyList(),
+        )
+    }
+
+    fun getLearningSummary(memberId: Long, from: java.time.LocalDate, to: java.time.LocalDate): LearningSummaryResponse {
+        require(!from.isAfter(to)) { "from은 to보다 늦을 수 없습니다." }
+
+        val fromDateTime = from.atStartOfDay()
+        val toDateTime = to.atTime(23, 59, 59)
+
+        return LearningSummaryResponse(
+            math = aggregateLearningSummary(memberId, LearningSubject.MATH, fromDateTime, toDateTime),
+            korean = aggregateLearningSummary(memberId, LearningSubject.KOREAN, fromDateTime, toDateTime),
+            todos = TodoSummaryResponse(
+                assigned = todoRepository.countAssignedBetween(memberId, from, to),
+                completed = todoRepository.countCompletedBetween(memberId, from, to),
+            ),
         )
     }
 
@@ -149,5 +168,26 @@ class ReportService(
             learningDays = learningDays,
             completedTodoCount = completed.count { it.type == TodoType.LEARNING },
         )
+    }
+
+    private fun aggregateLearningSummary(
+        memberId: Long,
+        subject: LearningSubject,
+        from: java.time.LocalDateTime,
+        to: java.time.LocalDateTime,
+    ): List<LearningConceptSummaryItem> {
+        return learningAttemptRepository.findWeeklySummaryBySubject(memberId, subject, from, to)
+            .map { row ->
+                val concept = row[0] as String
+                val solved = row[1] as Long
+                val avgAttempts = (row[2] as Number).toDouble()
+                val avgHints = (row[3] as Number).toDouble()
+                LearningConceptSummaryItem(
+                    concept = concept,
+                    solved = solved,
+                    avgAttempts = avgAttempts,
+                    avgHints = avgHints,
+                )
+            }
     }
 }

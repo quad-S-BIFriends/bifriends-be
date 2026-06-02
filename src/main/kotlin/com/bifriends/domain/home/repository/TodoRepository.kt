@@ -50,5 +50,21 @@ interface TodoRepository : JpaRepository<Todo, Long> {
           AND t.assignedDate BETWEEN :from AND :to
     """)
     fun findCompletedBetween(memberId: Long, from: LocalDate, to: LocalDate): List<Todo>
+
+    @Query("""
+        SELECT COUNT(t) FROM Todo t
+        WHERE t.member.id = :memberId
+          AND t.assignedDate BETWEEN :from AND :to
+    """)
+    fun countAssignedBetween(memberId: Long, from: LocalDate, to: LocalDate): Long
+
+    @Query("""
+        SELECT COUNT(t) FROM Todo t
+        WHERE t.member.id = :memberId
+          AND t.status = com.bifriends.domain.home.model.TodoStatus.COMPLETED
+          AND t.assignedDate BETWEEN :from AND :to
+    """)
+    fun countCompletedBetween(memberId: Long, from: LocalDate, to: LocalDate): Long
+
     fun deleteAllByMemberId(memberId: Long)
 }
