@@ -48,7 +48,7 @@ class EmotionScenarioService(
         val member = memberRepository.findById(memberId)
             .orElseThrow { IllegalArgumentException("회원을 찾을 수 없습니다. id=$memberId") }
 
-        val nickname = member.nickname ?: member.name
+        val nickname = member.nickname ?: "친구"
 
         val interests = memberInterestRepository.findAllByMemberId(memberId)
             .map { it.interest.name }

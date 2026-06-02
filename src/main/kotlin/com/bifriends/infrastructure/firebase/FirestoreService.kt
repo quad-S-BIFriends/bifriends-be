@@ -91,7 +91,7 @@ class FirestoreService {
      *
      * @param limit 최대 조회 수 (기본 20)
      */
-    fun getMindSessionList(memberId: Long, limit: Long = 20): List<Map<String, Any>> {
+    fun getMindSessionList(memberId: Long, limit: Int = 20): List<Map<String, Any>> {
         return try {
             db.collection("users")
                 .document(memberId.toString())
