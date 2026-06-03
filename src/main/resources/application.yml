@@ -48,9 +48,6 @@ firebase:
     path: ${FIREBASE_CONFIG_PATH:classpath:firebase-service-account.json}
   storage:
     bucket: ${FIREBASE_STORAGE_BUCKET:bifriends-5df72.firebasestorage.app}
-  firestore:
-    # Firebase 콘솔의 DB ID. (default)가 아니라 이름 지정 DB(예: bifriends)를 쓸 때 필수.
-    database-id: ${FIRESTORE_DATABASE_ID:(default)}
   # 친구랑 탭 폴백 이미지 다운로드 토큰
   # 파일 경로: fallback/{감정명}/{step}.png (step3는 step3-1.png, step3-2.png, step3-3.png)
   # 키 형식:  {romanized}-{step}  (예: gomaeum-step1, gomaeum-step3-1)
@@ -107,5 +104,8 @@ ai:
     enabled: ${AI_SERVICE_ENABLED:false}
     base-url: ${AI_SERVICE_BASE_URL:http://bifriends-ai:8001}
     chat-path: ${AI_CHAT_PATH:/v1/ai/chat}
+    base-url: ${AI_SERVICE_BASE_URL:http://bifriends-ai:8001}
+    chat-path: ${AI_CHAT_PATH:/v1/ai/chat}
     batch-weekly-safety-path: ${AI_BATCH_WEEKLY_SAFETY_PATH:/api/v1/ai/batch/weekly-safety}
+    parent-mission-path: ${AI_PARENT_MISSION_PATH:/api/v1/ai/parent-mission}
     emotion-scenario-path: ${AI_EMOTION_SCENARIO_PATH:/api/v1/ai/content/scenario}
