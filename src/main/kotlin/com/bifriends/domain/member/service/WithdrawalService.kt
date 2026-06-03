@@ -5,6 +5,7 @@ import com.bifriends.domain.chat.repository.ChatSessionRepository
 import com.bifriends.domain.home.repository.RewardHistoryRepository
 import com.bifriends.domain.home.repository.TodoRepository
 import com.bifriends.domain.home.repository.UserStatsRepository
+import com.bifriends.domain.learning.repository.LearningAttemptRepository
 import com.bifriends.domain.learning.repository.UserKoreanProgressRepository
 import com.bifriends.domain.learning.repository.UserMathProgressRepository
 import com.bifriends.domain.member.repository.MemberRepository
@@ -30,11 +31,12 @@ import org.springframework.transaction.annotation.Transactional
  *   5. user_stats           (members FK)
  *   6. user_math_progress   (members FK)
  *   7. user_korean_progress (members FK)
- *   8. member_interests     (members FK)
- *   9. member_items         (members FK)
- *  10. member_shop_items    (members FK)
- *  11. weekly_reports       (members FK)
- *  12. members              (최종 삭제)
+ *   8. learning_attempt     (members FK)
+ *   9. member_interests     (members FK)
+ *  10. member_items         (members FK)
+ *  11. member_shop_items    (members FK)
+ *  12. weekly_reports       (members FK)
+ *  13. members              (최종 삭제)
  */
 @Service
 class WithdrawalService(
@@ -46,6 +48,7 @@ class WithdrawalService(
     private val userStatsRepository: UserStatsRepository,
     private val userMathProgressRepository: UserMathProgressRepository,
     private val userKoreanProgressRepository: UserKoreanProgressRepository,
+    private val learningAttemptRepository: LearningAttemptRepository,
     private val memberInterestRepository: MemberInterestRepository,
     private val memberItemRepository: MemberItemRepository,
     private val memberShopItemRepository: MemberShopItemRepository,
@@ -68,6 +71,7 @@ class WithdrawalService(
         userStatsRepository.deleteByMemberId(memberId)
         userMathProgressRepository.deleteAllByMemberId(memberId)
         userKoreanProgressRepository.deleteAllByMemberId(memberId)
+        learningAttemptRepository.deleteAllByMemberId(memberId)
         memberInterestRepository.deleteAllByMemberId(memberId)
         memberItemRepository.deleteAllByMemberId(memberId)
         memberShopItemRepository.deleteAllByMemberId(memberId)

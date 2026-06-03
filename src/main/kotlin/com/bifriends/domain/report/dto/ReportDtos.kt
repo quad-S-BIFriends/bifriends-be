@@ -97,6 +97,10 @@ data class ParentMissionResponse(
 // ── Internal API: 학습 리포트 집계 ──────────────────────────────────────────────
 
 data class LearningSummaryResponse(
+    /** 집계에 사용한 주 시작일 (요청 from, inclusive) */
+    val weekStart: LocalDate,
+    /** 집계에 사용한 주 종료일 (요청 to, inclusive) */
+    val weekEnd: LocalDate,
     val math: List<LearningConceptSummaryItem>,
     val korean: List<LearningConceptSummaryItem>,
     val todos: TodoSummaryResponse,

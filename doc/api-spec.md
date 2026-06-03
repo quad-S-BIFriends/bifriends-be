@@ -1420,7 +1420,56 @@ Base path: `/api/v1/mind` · **JWT 필수**
 
 ---
 
-### 13-11. 주간 안전 보고서 배치 트리거 (BE → AI)
+### 13-11. 학습 리포트 집계 (AI → BE)
+
+**GET** `/api/v1/report/learning-summary` · **X-Internal-Service 인증**
+
+주간 성장 리포트 생성 전, 해당 주간의 학습·할 일 집계를 조회합니다.
+
+> **주간 범위**: `week_start` / `week_end`는 **AI가 정한 기간**을 사용합니다.  
+> BE는 `weekly-report`·`weekly-safety-report` 콜백의 날짜를 그대로 저장하며, 별도로 주를 재계산하지 않습니다.  
+> 이 API도 AI가 정한 `from`·`to`(보통 콜백과 동일한 `week_start`·`week_end`)를 쿼리로 넘기면, 응답 `weekStart`·`weekEnd`에 **실제 집계에 쓴 inclusive 범위**(`yyyy-MM-dd`)를 돌려줍니다.
+
+#### Query
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `memberId` | long | O | 회원 ID |
+| `from` | string (date) | O | 집계 시작일 (`yyyy-MM-dd`, inclusive) |
+| `to` | string (date) | O | 집계 종료일 (`yyyy-MM-dd`, inclusive) |
+
+- `from`이 `to`보다 늦으면 **400**
+
+#### Response `200 OK`
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `weekStart` | string (date) | 집계 시작일 (`yyyy-MM-dd`) |
+| `weekEnd` | string (date) | 집계 종료일 (`yyyy-MM-dd`) |
+| `math` | array | 수학 개념별 집계 |
+| `korean` | array | 국어 개념별 집계 |
+| `todos` | object | 할 일 배정·완료 건수 |
+
+`math` / `korean` 항목: `{ concept, solved, avg_attempts, avg_hints }`  
+`todos`: `{ assigned, completed }`
+
+```json
+{
+  "weekStart": "2026-05-26",
+  "weekEnd": "2026-06-01",
+  "math": [
+    { "concept": "받아올림 없는 세 자리 덧셈", "solved": 5, "avg_attempts": 1.2, "avg_hints": 0.4 }
+  ],
+  "korean": [
+    { "concept": "낱말 익히기", "solved": 3, "avg_attempts": 2.0, "avg_hints": 1.7 }
+  ],
+  "todos": { "assigned": 15, "completed": 12 }
+}
+```
+
+---
+
+### 13-12. 주간 안전 보고서 배치 트리거 (BE → AI)
 
 > **BE 내부 동작 — 외부 노출 없음**
 
@@ -1434,7 +1483,7 @@ Base path: `/api/v1/mind` · **JWT 필수**
 
 ---
 
-### 13-12. 주간 안전 보고서 수신 (AI → BE 콜백)
+### 13-13. 주간 안전 보고서 수신 (AI → BE 콜백)
 
 **POST** `/api/v1/weekly-safety-report` · **X-Internal-Service 인증**
 
@@ -1468,7 +1517,7 @@ Base path: `/api/v1/mind` · **JWT 필수**
 
 ---
 
-### 13-13. 주간 성장 리포트 수신 (AI → BE 콜백)
+### 13-14. 주간 성장 리포트 수신 (AI → BE 콜백)
 
 **POST** `/api/v1/weekly-report` · **X-Internal-Service 인증**
 

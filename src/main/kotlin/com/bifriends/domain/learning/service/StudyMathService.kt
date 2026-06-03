@@ -4,6 +4,7 @@ import com.bifriends.domain.member.repository.MemberRepository
 import com.bifriends.domain.learning.dto.*
 import com.bifriends.domain.learning.model.StepStatus
 import com.bifriends.domain.learning.model.UserMathProgress
+import com.bifriends.domain.learning.model.LearningSubject
 import com.bifriends.domain.learning.repository.MathStepRepository
 import com.bifriends.domain.learning.repository.UserMathProgressRepository
 import com.bifriends.domain.learning.util.LearningCycleContentSanitizer
@@ -20,6 +21,7 @@ class StudyMathService(
     private val memberRepository: MemberRepository,
     private val mathStepRepository: MathStepRepository,
     private val userMathProgressRepository: UserMathProgressRepository,
+    private val learningAttemptService: LearningAttemptService,
 ) {
 
     // ───────────────────────────────────────────────────────────
@@ -142,6 +144,7 @@ class StudyMathService(
     // 4-4. 답안 검증
     // ───────────────────────────────────────────────────────────
 
+    @Transactional
     fun validateAnswer(
         memberId: Long,
         stepId: Long,
@@ -161,6 +164,17 @@ class StudyMathService(
             ?: throw IllegalStateException("answer 필드가 없습니다. stepId=$stepId, cycle=$cycleNumber, q=$questionIndex")
 
         val isCorrect = compareAnswers(correctAnswer, request.answer)
+
+        learningAttemptService.recordValidation(
+            memberId = memberId,
+            subject = LearningSubject.MATH,
+            concept = step.concept,
+            stepId = stepId,
+            cycleNumber = cycleNumber,
+            questionIndex = questionIndex,
+            isCorrect = isCorrect,
+            hintsUsed = request.hintsUsed,
+        )
 
         return if (isCorrect) {
             ValidateAnswerResponse(correct = true, explanation = question.get("explanation"))
