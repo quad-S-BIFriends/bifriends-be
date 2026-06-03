@@ -10,11 +10,13 @@ import java.time.LocalDateTime
  *
  * sections JSON 구조 (AI가 생성):
  * {
- *   "growth":          { "summary": "...", "parentTip": "..." },
- *   "learningStatus":  { "math": "...", "korean": "...", "emotion": "..." },
- *   "chatSafety":      { "signal": "GREEN", "score": 2, "reasonSummary": "..." },
- *   "parentMission":   { "praise": "...", "mission": "..." }  // 버튼 클릭 시 추가
+ *   "growth_summary": "...",
+ *   "math":           { "well_done": "...", "struggled": "..." },
+ *   "korean":         { "well_done": "...", "struggled": "..." },
+ *   "parent_mission": { "praise": "...", "activity": "..." }
  * }
+ *
+ * parent_mission은 weekly 콜백 시 저장되며, 부모가 '미션 받기'를 누르면 [missionRevealed]가 true가 된다.
  */
 @Entity
 @Table(
@@ -45,15 +47,24 @@ class WeeklyReport(
     @Column(nullable = false, columnDefinition = "TEXT")
     var sectionsJson: String,
 
+    /** 부모가 '미션 받기'를 눌러 미션을 수령했는지 */
+    @Column(nullable = false)
+    var missionRevealed: Boolean = false,
+
     @Column(nullable = false, updatable = false)
     val createdAt: LocalDateTime = LocalDateTime.now(),
 
     @Column(nullable = false)
     var updatedAt: LocalDateTime = LocalDateTime.now(),
 ) {
-    /** 보호자 미션 섹션 추가 (on-demand 캐시) */
     fun updateSections(newSectionsJson: String) {
         this.sectionsJson = newSectionsJson
+        this.missionRevealed = false
+        this.updatedAt = LocalDateTime.now()
+    }
+
+    fun revealMission() {
+        this.missionRevealed = true
         this.updatedAt = LocalDateTime.now()
     }
 }

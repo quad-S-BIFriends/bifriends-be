@@ -21,10 +21,10 @@ data class WeeklyReportCallbackRequest(
     /**
      * AI가 생성한 4섹션 JSON 문자열
      * {
-     *   "growth":         { "summary": "...", "parentTip": "..." },
-     *   "learningStatus": { "math": "...", "korean": "...", "emotion": "..." },
-     *   "chatSafety":     { "signal": "GREEN", "score": 2, "reasonSummary": "..." },
-     *   "parentMission":  null  // 버튼 클릭 시 별도 업데이트
+     *   "growth_summary": "...",
+     *   "math":           { "well_done": "...", "struggled": "..." },
+     *   "korean":         { "well_done": "...", "struggled": "..." },
+     *   "parent_mission": { "praise": "...", "activity": "..." }
      * }
      */
     val sections: String,

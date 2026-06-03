@@ -326,6 +326,122 @@ Base path: `/api/v1/parent` · **JWT 필수**
 
 ---
 
+### 4-3. 주간 리포트 목록 (RPT-02)
+
+**GET** `/api/v1/reports`
+
+부모 모드에서 주간 성장일기 목록을 최신순으로 조회합니다.
+
+**Response** `200 OK`
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `reports` | array | 리포트 요약 목록 |
+| `reports[].reportId` | long | 리포트 ID |
+| `reports[].weekStart` | string (date) | 주 시작일 (`yyyy-MM-dd`) |
+| `reports[].weekEnd` | string (date) | 주 종료일 |
+| `reports[].safetySignal` | SafetySignal | 챗 안전 신호 (`GREEN` \| `YELLOW` \| `RED`) |
+| `reports[].hasMission` | boolean | 보호자 미션 **수령** 여부 (`미션 받기` 클릭 완료) |
+
+```json
+{
+  "reports": [
+    {
+      "reportId": 12,
+      "weekStart": "2026-05-26",
+      "weekEnd": "2026-06-01",
+      "safetySignal": "GREEN",
+      "hasMission": false
+    }
+  ]
+}
+```
+
+> `safetySignal`은 `weekly_safety_report` 테이블(별도 AI 배치)에서 조회합니다.
+
+---
+
+### 4-4. 리포트 상세 (RPT-03~07)
+
+**GET** `/api/v1/reports/{reportId}`
+
+성장 요약·학습 패턴·학습 현황·챗 안전 신호를 통합 조회합니다.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `reportId` | long | 리포트 ID |
+| `weekStart` / `weekEnd` | string (date) | 주간 범위 |
+| `growth.summary` | string \| null | AI 생성 성장 요약 |
+| `learningPattern.learningDays` | array\<int\> | 학습한 요일 (1=월 ~ 7=일, BE 계산) |
+| `learningPattern.completedTodoCount` | int | 해당 주 학습 할 일 완료 횟수 (BE 계산) |
+| `learningStatus.math` | SubjectStatus \| null | 수학 잘한 점 / 어려운 점 |
+| `learningStatus.korean` | SubjectStatus \| null | 국어 잘한 점 / 어려운 점 |
+| `chatSafety.signal` | SafetySignal | 챗 안전 신호 |
+| `chatSafety.score` | int | 안전 점수 |
+| `chatSafety.reasonSummary` | string | 위험 요약 |
+| `parentMission` | ParentMission \| null | **미션 받기 전 null** |
+| `keywords` | array\<string\> | 주요 키워드 (현재 빈 배열) |
+
+`SubjectStatus`: `{ "well_done": string \| null, "struggled": string \| null }`  
+`ParentMission`: `{ "praise": string, "activity": string }`
+
+```json
+{
+  "reportId": 12,
+  "weekStart": "2026-05-26",
+  "weekEnd": "2026-06-01",
+  "growth": {
+    "summary": "이번 주 민준이는 할 일을 15개 중 13개나 꾸준히 해냈어요."
+  },
+  "learningPattern": {
+    "learningDays": [1, 2, 4, 5],
+    "completedTodoCount": 8
+  },
+  "learningStatus": {
+    "math": {
+      "well_done": "받아올림이 없는 세 자리 덧셈을 대부분 한 번에 맞혔어요.",
+      "struggled": "받아올림이 있는 뺄셈은 힌트를 여러 번 보며 풀었어요."
+    },
+    "korean": {
+      "well_done": "낱말 익히기를 큰 어려움 없이 해냈어요.",
+      "struggled": "이번 주 국어는 특별히 어려워한 부분은 없었어요."
+    }
+  },
+  "chatSafety": {
+    "signal": "GREEN",
+    "score": 2,
+    "reasonSummary": ""
+  },
+  "parentMission": null,
+  "keywords": []
+}
+```
+
+---
+
+### 4-5. 보호자 미션 받기 (RPT-08)
+
+**POST** `/api/v1/reports/{reportId}/parent-mission`
+
+주간 리포트에 **이미 저장된** `parent_mission`을 수령(reveal)합니다. AI 별도 호출 없음.
+
+- 최초 클릭: `missionRevealed = true`로 저장 후 미션 반환
+- 재클릭: 저장된 미션 반환
+- weekly 콜백에 `parent_mission`이 없으면 `500` (`보호자 미션이 아직 준비되지 않았습니다.`)
+
+**Response** `200 OK`
+
+```json
+{
+  "praise": "이번 주 덧셈 정말 척척 풀더라, 너무 멋졌어!",
+  "activity": "마트에서 물건 두 개의 값을 함께 빼서 거스름돈을 맞혀보며 뺄셈을 놀이처럼 연습해보세요."
+}
+```
+
+> 수령 후 `GET /api/v1/reports/{reportId}`의 `parentMission`도 동일 값으로 채워집니다.
+
+---
+
 ## 5. 회원 (Member)
 
 Base path: `/api/v1/members` · **JWT 필수**
@@ -1322,20 +1438,25 @@ Base path: `/api/v1/mind` · **JWT 필수**
 
 **POST** `/api/v1/weekly-safety-report` · **X-Internal-Service 인증**
 
+챗 안전 신호 전용. 성장 리포트(`weekly-report`)와 **별도** 배치·저장.
+
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
 | `member_id` | long | O | 보고서 대상 회원 ID |
-| `report_date` | string | O | 분석 기준 날짜 (금요일, `yyyy-MM-dd`) |
-| `safety_level` | SafetyLevel | O | `SAFE` \| `CONCERN` \| `DANGER` |
-| `summary` | string | O | 주간 대화 요약 |
-| `keywords` | array\<string\> | X | 주요 감지 키워드 |
+| `week_start` | string (date) | O | 주 시작일 (`yyyy-MM-dd`) |
+| `week_end` | string (date) | O | 주 종료일 |
+| `safety_signal` | string | O | `GREEN` \| `YELLOW` \| `RED` |
+| `score` | int | O | 안전 점수 (0~3 GREEN, 4~7 YELLOW, 8+ RED) |
+| `reason_summary` | string | X | Gemini 생성 한두 문장 요약 |
 
 ```json
 {
-  "member_id": 1, "report_date": "2026-05-29",
-  "safety_level": "CONCERN",
-  "summary": "이번 주 대화에서 학교 친구 관계에 대한 부정적 감정이 감지되었습니다.",
-  "keywords": ["외로움", "친구"]
+  "member_id": 1,
+  "week_start": "2026-05-26",
+  "week_end": "2026-06-01",
+  "safety_signal": "YELLOW",
+  "score": 5,
+  "reason_summary": "이번 주 대화에서 학교 친구 관계에 대한 부정적 감정이 감지되었습니다."
 }
 ```
 
@@ -1344,6 +1465,61 @@ Base path: `/api/v1/mind` · **JWT 필수**
 ```json
 { "received": true }
 ```
+
+---
+
+### 13-13. 주간 성장 리포트 수신 (AI → BE 콜백)
+
+**POST** `/api/v1/weekly-report` · **X-Internal-Service 인증**
+
+AI가 `POST /api/v1/ai/report/weekly` 등으로 생성한 **4섹션 JSON**을 BE에 저장합니다.  
+`parent_mission`은 weekly 생성 시 함께 포함되며, 부모의 `미션 받기` 클릭 시 reveal 됩니다.
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `member_id` | long | O | 리포트 대상 회원 ID |
+| `week_start` | string (date) | O | 주 시작일 |
+| `week_end` | string (date) | O | 주 종료일 |
+| `sections` | string | O | 4섹션 JSON **문자열** (아래 구조) |
+
+`sections` JSON 구조 (AI 생성, snake_case):
+
+```json
+{
+  "growth_summary": "이번 주 민준이는 할 일을 15개 중 13개나 꾸준히 해냈어요.",
+  "math": {
+    "well_done": "받아올림이 없는 세 자리 덧셈을 대부분 한 번에 맞혔어요.",
+    "struggled": "받아올림이 있는 뺄셈은 힌트를 여러 번 보며 풀었어요."
+  },
+  "korean": {
+    "well_done": "낱말 익히기를 큰 어려움 없이 해냈어요.",
+    "struggled": "이번 주 국어는 특별히 어려워한 부분은 없었어요."
+  },
+  "parent_mission": {
+    "praise": "이번 주 덧셈 정말 척척 풀더라, 너무 멋졌어!",
+    "activity": "마트에서 물건 두 개의 값을 함께 빼서 거스름돈을 맞혀보며 뺄셈을 놀이처럼 연습해보세요."
+  }
+}
+```
+
+**Request 예시**
+
+```json
+{
+  "member_id": 1,
+  "week_start": "2026-05-26",
+  "week_end": "2026-06-01",
+  "sections": "{\"growth_summary\":\"...\",\"math\":{\"well_done\":\"...\",\"struggled\":\"...\"},\"korean\":{\"well_done\":\"...\",\"struggled\":\"...\"},\"parent_mission\":{\"praise\":\"...\",\"activity\":\"...\"}}"
+}
+```
+
+**Response** `200 OK`
+
+```json
+{ "received": true }
+```
+
+> 동일 `member_id` + `week_start` 재수신 시 `sections` 업데이트 및 `missionRevealed` 초기화.
 
 ---
 
@@ -1363,4 +1539,4 @@ Base path: `/api/v1/mind` · **JWT 필수**
 
 ---
 
-*최종 수정: 2026-06-02*
+*최종 수정: 2026-06-03*

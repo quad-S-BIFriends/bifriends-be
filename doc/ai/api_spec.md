@@ -428,7 +428,7 @@ Content-Type: application/json
 
 ---
 
-### 3.8 주간 안전 리포트 저장 🚧
+### 3.8 주간 안전 리포트 저장 ✅
 
 ```http
 POST /api/v1/weekly-safety-report
@@ -436,25 +436,90 @@ X-Internal-Service: bifriends-ai
 Content-Type: application/json
 ```
 
-#### Request / Response
+챗 안전 신호 전용. 성장 리포트(`weekly-report`)와 **별도** 배치·저장.
 
-**미정 — AI 팀 명세 입력 요청**
+#### Request (snake_case)
 
-제안 placeholder:
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `member_id` | long | O | 회원 ID |
+| `week_start` | string (date) | O | 주 시작일 |
+| `week_end` | string (date) | O | 주 종료일 |
+| `safety_signal` | string | O | `GREEN` \| `YELLOW` \| `RED` |
+| `score` | int | O | 안전 점수 |
+| `reason_summary` | string | X | Gemini 요약 |
 
 ```json
 {
-  "memberId": 1,
-  "weekStartDate": "2026-05-26",
-  "summary": "...",
-  "riskLevel": "LOW",
-  "details": {}
+  "member_id": 1,
+  "week_start": "2026-05-26",
+  "week_end": "2026-06-01",
+  "safety_signal": "YELLOW",
+  "score": 5,
+  "reason_summary": "이번 주 대화에서 학교 친구 관계에 대한 부정적 감정이 감지되었습니다."
 }
+```
+
+#### Response `200`
+
+```json
+{ "received": true }
 ```
 
 ---
 
-### 3.9 채팅 세션 수정 🚧
+### 3.9 주간 성장 리포트 저장 ✅
+
+```http
+POST /api/v1/weekly-report
+X-Internal-Service: bifriends-ai
+Content-Type: application/json
+```
+
+AI가 `POST /api/v1/ai/report/weekly` 등으로 생성한 **4섹션**을 BE에 저장합니다.
+
+> **보호자 미션**: weekly 생성 시 `parent_mission`을 sections에 **함께 포함**합니다.  
+> BE → AI 별도 `parent-mission` API 호출은 **사용하지 않습니다**.  
+> 부모 `미션 받기` 클릭 시 BE가 저장된 값을 reveal 합니다.
+
+#### Request (snake_case)
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `member_id` | long | O | 회원 ID |
+| `week_start` | string (date) | O | 주 시작일 |
+| `week_end` | string (date) | O | 주 종료일 |
+| `sections` | string | O | 4섹션 JSON 문자열 |
+
+`sections` 내부 구조 (AI 생성):
+
+```json
+{
+  "growth_summary": "이번 주 민준이는 할 일을 15개 중 13개나 꾸준히 해냈어요.",
+  "math": {
+    "well_done": "받아올림이 없는 세 자리 덧셈을 대부분 한 번에 맞혔어요.",
+    "struggled": "받아올림이 있는 뺄셈은 힌트를 여러 번 보며 풀었어요."
+  },
+  "korean": {
+    "well_done": "낱말 익히기를 큰 어려움 없이 해냈어요.",
+    "struggled": "이번 주 국어는 특별히 어려워한 부분은 없었어요."
+  },
+  "parent_mission": {
+    "praise": "이번 주 덧셈 정말 척척 풀더라, 너무 멋졌어!",
+    "activity": "마트에서 물건 두 개의 값을 함께 빼서 거스름돈을 맞혀보며 뺄셈을 놀이처럼 연습해보세요."
+  }
+}
+```
+
+#### Response `200`
+
+```json
+{ "received": true }
+```
+
+---
+
+### 3.10 채팅 세션 수정 🚧
 
 ```http
 PATCH /api/v1/chat/sessions/{sessionId}
@@ -529,7 +594,11 @@ Content-Type: application/json
 | 용도 | FE (JWT) | AI (내부 헤더) |
 |------|----------|----------------|
 | 수학 학습 | `/api/v1/study/math/**` | `/api/v1/learning/math/**` |
-| 국어 학습 | (추가 예정) | `/api/v1/learning/korean/**` |
+| 국어 학습 | `/api/v1/study/korean/**` | `/api/v1/learning/korean/**` |
+| 성장일기 리포트 | `GET/POST /api/v1/reports/**` | — |
+| 학습 리포트 집계 | — | `GET /api/v1/report/learning-summary` |
+| 주간 안전 콜백 | — | `POST /api/v1/weekly-safety-report` |
+| 주간 성장 콜백 | — | `POST /api/v1/weekly-report` |
 | 회원 프로필 | `GET /api/v1/members/me` | `GET /api/v1/members/{id}/profile` |
 | 채팅 전송 | `POST /api/v1/chat/messages` | — (BE가 AI 호출) |
 
@@ -545,7 +614,9 @@ Content-Type: application/json
 | `INTERNAL_SERVICE_AUTH_ENABLED` | `true` | 내부 인증 on/off |
 | `AI_SERVICE_ENABLED` | `false` | BE → AI 호출 on/off |
 | `AI_SERVICE_BASE_URL` | `http://bifriends-ai:8000` | AI 서버 URL |
-| `AI_CHAT_PATH` | `/v1/chat` | 채팅 path |
+| `AI_CHAT_PATH` | `/v1/ai/chat` | 채팅 path |
+| `AI_BATCH_WEEKLY_SAFETY_PATH` | `/api/v1/ai/batch/weekly-safety` | 안전 배치 트리거 |
+| `AI_EMOTION_SCENARIO_PATH` | `/api/v1/ai/content/scenario` | 감정 시나리오 생성 |
 
 ### bifriends-ai (권장)
 
@@ -562,7 +633,7 @@ Content-Type: application/json
 2. **🚧 API** 중 우선 구현 순서
 3. **3.6 query param** naming: `member_id` vs `memberId`
 4. **채팅 메시지 저장** — BE DB vs AI DB vs 양쪽
-5. **weekly-safety-report** request/response 스키마
+5. **weekly-safety-report** / **weekly-report** 스키마 — ✅ BE 반영 완료 (2026-06-03)
 6. **에러 응답** 공통 형식 예시
 
 ---
@@ -571,4 +642,5 @@ Content-Type: application/json
 
 | 날짜 | 내용 |
 |------|------|
+| 2026-06-03 | 주간 성장 리포트 콜백(`weekly-report`) 추가, 보호자 미션 weekly 포함·별도 API 폐기, 안전 리포트 스키마 확정 |
 | 2026-05-28 | 초안 작성 (프로필·채팅 구현 반영, 나머지 협의 초안) |

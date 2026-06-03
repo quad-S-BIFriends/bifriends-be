@@ -38,10 +38,10 @@ class ReportController(
 
     /**
      * RPT-08 — 보호자 미션 받기
-     * 이미 생성된 미션이 있으면 캐시 반환, 없으면 AI에 생성 요청 후 저장
+     * weekly 리포트에 저장된 parent_mission을 수령(reveal)한다. AI 별도 호출 없음.
      */
     @PostMapping("/{reportId}/parent-mission")
-    fun getOrGenerateParentMission(
+    fun revealParentMission(
         @RequestHeader("Authorization") token: String,
         @PathVariable reportId: Long,
     ): ResponseEntity<ParentMissionResponse> {

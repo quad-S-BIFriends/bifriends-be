@@ -39,7 +39,7 @@ data class ReportDetailResponse(
     /** RPT-07 챗 안전 신호 */
     val chatSafety: ChatSafetyResponse,
 
-    /** RPT-08 보호자 미션 (버튼 클릭 전 null) */
+    /** RPT-08 보호자 미션 ('미션 받기' 수령 전 null) */
     val parentMission: ParentMissionResponse?,
 
     /** 주요 키워드 */
@@ -51,8 +51,6 @@ data class ReportDetailResponse(
 data class GrowthResponse(
     /** AI 생성 주간 성장 요약 */
     val summary: String?,
-    /** AI 생성 보호자 팁 */
-    val parentTip: String?,
 )
 
 // ── RPT-05 학습 패턴 ──────────────────────────────────────────────────────────
@@ -69,12 +67,14 @@ data class LearningPatternResponse(
 data class LearningStatusResponse(
     val math: SubjectStatusResponse?,
     val korean: SubjectStatusResponse?,
-    val emotion: SubjectStatusResponse?,
 )
 
 data class SubjectStatusResponse(
-    /** AI 생성 한 줄 요약 */
-    val summary: String,
+    /** AI 생성 — 잘한 점 */
+    @JsonProperty("well_done")
+    val wellDone: String?,
+    /** AI 생성 — 어려운 점 */
+    val struggled: String?,
 )
 
 // ── RPT-07 챗 안전 신호 ───────────────────────────────────────────────────────
@@ -90,8 +90,8 @@ data class ChatSafetyResponse(
 data class ParentMissionResponse(
     /** AI 생성 칭찬 멘트 */
     val praise: String,
-    /** AI 생성 추천 활동 */
-    val mission: String,
+    /** AI 생성 추천 활동 (AI sections의 activity) */
+    val activity: String,
 )
 
 // ── Internal API: 학습 리포트 집계 ──────────────────────────────────────────────
