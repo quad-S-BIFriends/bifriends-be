@@ -15,8 +15,8 @@
   },
   "cycles": [
     {
-      "cycle": 1,
-      "type": "word_card",
+      "cycle_number": 1,
+      "cycle_type": "word_card",
       "slides": [
         {
           "word": "의견",
@@ -39,8 +39,8 @@
       ]
     },
     {
-      "cycle": 2,
-      "type": "fact_check",
+      "cycle_number": 2,
+      "cycle_type": "fact_check",
       "questions": [
         {
           "question_id": 1,
@@ -101,8 +101,8 @@
       ]
     },
     {
-      "cycle": 3,
-      "type": "diagram_order",
+      "cycle_number": 3,
+      "cycle_type": "diagram_order",
       "diagram_type": "sequence",
       "boxes": [
         {
@@ -187,8 +187,8 @@
       ]
     },
     {
-      "cycle": 4,
-      "type": "inference",
+      "cycle_number": 4,
+      "cycle_type": "inference",
       "questions": [
         {
           "question_id": 1,
@@ -253,8 +253,8 @@
       ]
     },
     {
-      "cycle": 5,
-      "type": "summary_fill",
+      "cycle_number": 5,
+      "cycle_type": "summary_fill",
       "summary_template": "민수는 지우개가 없어서 지우에게 빌려 달라고 했어요. 지우는 새 지우개가 [BLANK_1] 걱정했어요. 두 사람은 서로의 생각을 말하고 [BLANK_2] 문제를 해결했어요.",
       "questions": [
         {

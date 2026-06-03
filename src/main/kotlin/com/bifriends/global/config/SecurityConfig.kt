@@ -77,6 +77,7 @@ class SecurityConfig(
                     .requestMatchers("/api/v1/shop/**").authenticated()
                     .requestMatchers("/api/v1/learning/**").authenticated()
                     .requestMatchers(HttpMethod.POST, "/api/v1/chat/messages").authenticated()
+                    .requestMatchers("/api/v1/mind/**").authenticated()
                     .anyRequest().authenticated()
             }
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter::class.java)

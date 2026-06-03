@@ -71,7 +71,7 @@ step_number=N → 이전 step(N-1)의 isStepCompleted=true 이면 AVAILABLE, 아
 
 시드 데이터(`math_seed.sql`)는 `cycle_number`, `cycle_type`, `confirm_button_text` 등 snake_case 키를 사용합니다. 서버는 JsonNode를 그대로 반환하므로 클라이언트도 snake_case로 파싱해야 합니다.
 
-> **향후 고려**: 클라이언트가 camelCase를 선호한다면 `sanitizeCycleNode()`에서 키 변환 로직을 추가하거나, 시드 데이터를 camelCase로 재생성합니다.
+> **API 정규화**: `LearningCycleContentSanitizer`가 응답 시 `cycle`→`cycle_number`, `type`→`cycle_type`(국어 시드)을 통일합니다. DB 시드는 변경하지 않습니다.
 
 ### 3-4. `findOrCreateProgress` 패턴
 

@@ -15,11 +15,12 @@
 4. [부모 모드 (Parent)](#4-부모-모드-parent)
 5. [회원 (Member)](#5-회원-member)
 6. [홈 (Home)](#6-홈-home)
-7. [공부방 — 수학 (Learning Math)](#7-공부방--수학-learning-math)
-8. [공부방 — 국어 (Learning Korean)](#8-공부방--국어-learning-korean)
-9. [할 일 (Todo)](#9-할-일-todo)
-10. [채팅 (Chat)](#10-채팅-chat)
-11. [내부 전용 API (Internal — Leo)](#11-내부-전용-api-internal--leo)
+7. [상점 (Shop)](#7-상점-shop)
+8. [공부방 — 수학 (Learning Math)](#8-공부방--수학-learning-math)
+9. [공부방 — 국어 (Learning Korean)](#9-공부방--국어-learning-korean)
+10. [할 일 (Todo)](#10-할-일-todo)
+11. [채팅 (Chat)](#11-채팅-chat)
+12. [내부 전용 API (Internal — Leo)](#12-내부-전용-api-internal--leo)
 
 ---
 
@@ -368,9 +369,13 @@ Base path: `/api/v1/members` · **JWT 필수**
 
 **PATCH** `/api/v1/members/me/representative-item`
 
+> **아이템 체계 안내**
+> - **온보딩 선물** (`GIFT_1`~`GIFT_4`): [3-5 선물 선택](#3-5-선물-아이템-선택-onb-08)으로 획득 → `GET /members/me`의 `items`에 표시 → **이 API**로 대표 설정
+> - **상점 코스메틱** (모자·안경·옷·배경): [7. 상점 (Shop)](#7-상점-shop)에서 풀 차감 **구매** 후 착용. 대표 아이템 API와 **별개**
+
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `itemType` | ItemType | O | 대표로 설정할 아이템 |
+| `itemType` | ItemType | O | 대표로 설정할 아이템 (`GIFT_1`~`GIFT_4`만 가능) |
 
 ```json
 { "itemType": "GIFT_1" }
@@ -411,6 +416,16 @@ Base path: `/api/v1/members` · **JWT 필수**
 | `attendance.streakDays` | int | 연속 출석 일수 |
 | `attendance.reward` | RewardResult \| null | 지급된 보상 (이미 처리됐으면 null) |
 | `todos` | array\<TodoResponse\> | 오늘의 할 일 목록 |
+| `equippedItems` | EquippedItemsResponse | 상점 코스메틱 착용 현황 (카테고리별 `shop_item.id`) |
+
+`EquippedItemsResponse` 필드:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `hatId` | long \| null | 착용 중인 모자 ID |
+| `glassesId` | long \| null | 착용 중인 안경 ID |
+| `clothesId` | long \| null | 착용 중인 옷 ID |
+| `backgroundId` | long \| null | 착용 중인 배경 ID |
 
 `TodoResponse` 필드:
 
@@ -454,17 +469,194 @@ Base path: `/api/v1/members` · **JWT 필수**
       "source": "SYSTEM", "learningType": "MATH", "assignedDate": "2026-06-01" },
     { "id": 3, "type": "EMOTION", "title": "친구 기분 알아보기 💌", "status": "COMPLETED",
       "source": "SYSTEM", "learningType": null, "assignedDate": "2026-06-01" }
+  ],
+  "equippedItems": {
+    "hatId": 1,
+    "glassesId": null,
+    "clothesId": 3,
+    "backgroundId": 5
+  }
+}
+```
+
+---
+
+## 7. 상점 (Shop)
+
+Base path: `/api/v1/shop` · **JWT 필수** · 기능명세 **HOM-09**
+
+레오 꾸미기 **상점** — 풀을 사용해 코스메틱 아이템을 구매·착용합니다.
+
+| 구분 | 획득 방법 | 보유·표시 | 대표/착용 |
+|------|-----------|-----------|-----------|
+| 온보딩 선물 `GIFT_1`~`GIFT_4` | `POST /onboarding/gift` | `GET /members/me` → `items` | `PATCH /members/me/representative-item` |
+| 상점 코스메틱 | `POST /shop/items/{itemId}/purchase` | `GET /shop/my-items` | `PATCH /shop/items/{itemId}/equip` · 홈 `equippedItems` |
+
+`ShopItemCategory`: `HAT` \| `GLASSES` \| `CLOTHES` \| `BACKGROUND`
+
+---
+
+### 7-1. 상점 아이템 목록 (HOM-09-01/03)
+
+**GET** `/api/v1/shop/items`
+
+판매 중(`isActive=true`) 아이템 전체와, 회원별 **이미 구매 여부**(`owned`)를 반환합니다.
+
+**Response** `200 OK`
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `availablePool` | int | 현재 보유 풀 (구매 가능 여부 판단용) |
+| `items` | array\<ShopItemResponse\> | 상점 아이템 목록 |
+
+`ShopItemResponse` 필드:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | long | 아이템 ID |
+| `name` | string | 아이템 이름 |
+| `category` | ShopItemCategory | 카테고리 |
+| `price` | int | 구매 가격 (풀) |
+| `imageKey` | string | FE 에셋 로드 키 (예: `hat_cap_blue`) |
+| `owned` | boolean | 이미 구매했으면 `true` |
+
+```json
+{
+  "availablePool": 12,
+  "items": [
+    { "id": 1, "name": "파란 모자", "category": "HAT", "price": 5, "imageKey": "hat_cap_blue", "owned": false },
+    { "id": 3, "name": "우주 배경", "category": "BACKGROUND", "price": 30, "imageKey": "background_space", "owned": true }
   ]
 }
 ```
 
 ---
 
-## 7. 공부방 — 수학 (Learning Math)
+### 7-2. 나의 서랍 — 보유 아이템 + 착용 현황
+
+**GET** `/api/v1/shop/my-items`
+
+구매한 코스메틱 목록과 카테고리별 **현재 착용 ID**를 반환합니다.
+
+**Response** `200 OK`
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `items` | array\<OwnedShopItemResponse\> | 보유 아이템 목록 |
+| `equipped` | EquippedItemsResponse | 착용 중인 아이템 ID (홈 `equippedItems`와 동일 구조) |
+
+`OwnedShopItemResponse` 필드:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | long | 아이템 ID |
+| `name` | string | 아이템 이름 |
+| `category` | ShopItemCategory | 카테고리 |
+| `imageKey` | string | FE 에셋 키 |
+| `acquiredAt` | string (datetime) | 구매 시각 |
+
+```json
+{
+  "items": [
+    { "id": 3, "name": "우주 배경", "category": "BACKGROUND", "imageKey": "background_space", "acquiredAt": "2026-06-01T15:30:00" }
+  ],
+  "equipped": { "hatId": 1, "glassesId": null, "clothesId": null, "backgroundId": 3 }
+}
+```
+
+---
+
+### 7-3. 아이템 구매 (HOM-09-03/04)
+
+**POST** `/api/v1/shop/items/{itemId}/purchase`
+
+| Path | Type | Description |
+|------|------|-------------|
+| `itemId` | long | 구매할 상점 아이템 ID |
+
+- 보유 풀에서 `price`만큼 차감
+- `member_shop_items`에 소유 이력 저장 (동일 아이템 중복 구매 불가)
+- 자동 착용은 **하지 않음** — 구매 후 `7-4` 착용 API 호출
+
+**Response** `200 OK`
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `itemId` | long | 구매한 아이템 ID |
+| `itemName` | string | 아이템 이름 |
+| `category` | ShopItemCategory | 카테고리 |
+| `imageKey` | string | FE 에셋 키 |
+| `remainingPool` | int | 구매 후 남은 풀 |
+| `acquiredAt` | string (datetime) | 구매 시각 |
+
+```json
+{
+  "itemId": 1,
+  "itemName": "파란 모자",
+  "category": "HAT",
+  "imageKey": "hat_cap_blue",
+  "remainingPool": 7,
+  "acquiredAt": "2026-06-01T16:00:00"
+}
+```
+
+**에러** `400`
+
+| 상황 | 메시지 예시 |
+|------|-------------|
+| 이미 보유 | `이미 보유한 아이템입니다.` |
+| 풀 부족 | `풀이 부족합니다. 현재 availablePool=..., 필요=...` |
+| 비활성 아이템 | `현재 판매 중인 아이템이 아닙니다.` |
+
+---
+
+### 7-4. 아이템 착용 (HOM-09-05)
+
+**PATCH** `/api/v1/shop/items/{itemId}/equip`
+
+| Path | Type | Description |
+|------|------|-------------|
+| `itemId` | long | 착용할 아이템 ID (반드시 보유 중) |
+
+카테고리에 맞는 슬롯(`hatId` / `glassesId` / `clothesId` / `backgroundId`)에 저장됩니다. 같은 카테고리에 다른 아이템을 착용하면 **덮어씁니다**.
+
+**Response** `200 OK`
+
+```json
+{
+  "equipped": { "hatId": 1, "glassesId": null, "clothesId": null, "backgroundId": null }
+}
+```
+
+**에러** `400` — `보유하지 않은 아이템입니다.`
+
+---
+
+### 7-5. 아이템 해제 (카테고리 단위)
+
+**DELETE** `/api/v1/shop/items/{category}/equip`
+
+| Path | Type | Description |
+|------|------|-------------|
+| `category` | ShopItemCategory | 해제할 슬롯 (`HAT`, `GLASSES`, `CLOTHES`, `BACKGROUND`) |
+
+해당 카테고리 착용 ID를 `null`로 설정합니다.
+
+**Response** `200 OK`
+
+```json
+{
+  "equipped": { "hatId": null, "glassesId": null, "clothesId": null, "backgroundId": 3 }
+}
+```
+
+---
+
+## 8. 공부방 — 수학 (Learning Math)
 
 Base path: `/api/v1/learning/math` · **JWT 필수**
 
-### 7-1. 로드맵 조회
+### 8-1. 로드맵 조회
 
 **GET** `/api/v1/learning/math/roadmap`
 
@@ -487,13 +679,48 @@ Base path: `/api/v1/learning/math` · **JWT 필수**
 
 ---
 
-### 7-2. 스텝 콘텐츠 조회
+### 8-2. 스텝 콘텐츠 조회
 
 **GET** `/api/v1/learning/math/steps/{stepId}/content`
 
+`answer`, `explanation` 필드는 서버에서 제거됩니다. 호출 시 `lastAccessedAt`이 갱신됩니다.
+
+**Path Parameter**
+
+| Name | Type | Description |
+| --- | --- | --- |
+| `stepId` | long | 스텝 ID |
+
+**Response** `200 OK`
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `stepId` | long | 스텝 ID |
+| `stepTitle` | string | 스텝 제목 |
+| `concept` | string | 학습 개념 |
+| `grade` | int | 학년 |
+| `cycles` | array\<JsonNode\> | 사이클 목록 (answer/explanation 제거) |
+
+> `cycles` 내 JSON 키는 snake_case입니다 (`cycle_number`, `cycle_type` 등). 수학·국어 공통 canonical 키입니다. DB 시드에 `cycle`/`type`(국어)이 있어도 응답에서는 `cycle_number`/`cycle_type`으로 정규화됩니다.
+>
+> 각 `questions[]` 항목에는 0-based `questionIndex`가 추가됩니다 (camelCase).
+
+```json
+{
+  "stepId": 2,
+  "stepTitle": "자연수의 뺄셈",
+  "concept": "뺄셈",
+  "grade": 4,
+  "cycles": [
+    { "cycle_number": 1, "cycle_type": "concept", "slides": [] },
+    { "cycle_number": 2, "cycle_type": "choice", "questions": [{ "questionIndex": 0 }] }
+  ]
+}
+```
+
 ---
 
-### 7-3. 진도 조회
+### 8-3. 진도 조회
 
 **GET** `/api/v1/learning/math/progress`
 
@@ -508,7 +735,7 @@ Base path: `/api/v1/learning/math` · **JWT 필수**
 
 ---
 
-### 7-4. 답안 검증
+### 8-4. 답안 검증
 
 **POST** `/api/v1/learning/math/steps/{stepId}/cycles/{cycleNumber}/questions/{questionIndex}/validate`
 
@@ -524,7 +751,7 @@ Base path: `/api/v1/learning/math` · **JWT 필수**
 
 ---
 
-### 7-5. 사이클 완료 처리
+### 8-5. 사이클 완료 처리
 
 **POST** `/api/v1/learning/math/steps/{stepId}/cycles/{cycleNumber}/complete`
 
@@ -534,7 +761,7 @@ Base path: `/api/v1/learning/math` · **JWT 필수**
 
 ---
 
-### 7-6. 스텝 완료 처리
+### 8-6. 스텝 완료 처리
 
 **POST** `/api/v1/learning/math/steps/{stepId}/complete`
 
@@ -544,38 +771,52 @@ Base path: `/api/v1/learning/math` · **JWT 필수**
 
 ---
 
-## 8. 공부방 — 국어 (Learning Korean)
+## 9. 공부방 — 국어 (Learning Korean)
 
 Base path: `/api/v1/learning/korean` · **JWT 필수**
 
-7. 공부방 — 수학과 동일한 엔드포인트 구조입니다.
+8. 공부방 — 수학과 동일한 엔드포인트 구조입니다.
 
-### 8-1. 로드맵 조회
+### 9-1. 로드맵 조회
 
 **GET** `/api/v1/learning/korean/roadmap`
 
 ---
 
-### 8-2. 스텝 콘텐츠 조회
+### 9-2. 스텝 콘텐츠 조회
 
 **GET** `/api/v1/learning/korean/steps/{stepId}/content`
 
-국어는 `passage` 필드가 추가로 포함됩니다.
+`answer` 필드는 서버에서 제거됩니다. 호출 시 `lastAccessedAt`이 갱신됩니다. 수학(8-2)과 동일하게 `cycles`는 `cycle_number`, `cycle_type` canonical 키로 정규화됩니다 (`cycle`/`type`은 응답에 포함되지 않음).
+
+**Path Parameter**
+
+| Name | Type | Description |
+| --- | --- | --- |
+| `stepId` | long | 스텝 ID |
+
+**Response** `200 OK`
 
 | Field | Type | Description |
 |-------|------|-------------|
+| `stepId` | long | 스텝 ID |
+| `stepTitle` | string | 스텝 제목 |
+| `concept` | string | 학습 개념 |
+| `grade` | int | 학년 |
 | `passage` | JsonNode | 지문 `{ title, text, image }` |
-| `cycles` | array\<JsonNode\> | 사이클 목록 (answer 제거됨) |
+| `cycles` | array\<JsonNode\> | 사이클 목록 (answer 제거, 키 정규화) |
+
+> `cycle_type` 값은 과목별로 다릅니다 (예: `word_card`, `fact_check`). 키 이름만 수학과 통일합니다.
 
 ---
 
-### 8-3. 진도 조회
+### 9-3. 진도 조회
 
 **GET** `/api/v1/learning/korean/progress`
 
 ---
 
-### 8-4. 답안 검증
+### 9-4. 답안 검증
 
 **POST** `/api/v1/learning/korean/steps/{stepId}/cycles/{cycleNumber}/questions/{questionIndex}/validate`
 
@@ -585,21 +826,21 @@ Base path: `/api/v1/learning/korean` · **JWT 필수**
 
 ---
 
-### 8-5. 사이클 완료 처리
+### 9-5. 사이클 완료 처리
 
 **POST** `/api/v1/learning/korean/steps/{stepId}/cycles/{cycleNumber}/complete`
 
 ---
 
-### 8-6. 스텝 완료 처리
+### 9-6. 스텝 완료 처리
 
 **POST** `/api/v1/learning/korean/steps/{stepId}/complete`
 
 ---
 
-## 9. 할 일 (Todo)
+## 10. 할 일 (Todo)
 
-### 9-1. 할 일 완료 처리
+### 10-1. 할 일 완료 처리
 
 **PATCH** `/api/v1/todos/{todoId}/complete` · **JWT 필수**
 
@@ -621,7 +862,7 @@ Base path: `/api/v1/learning/korean` · **JWT 필수**
 
 ---
 
-### 9-2. Agent 할 일 추가 (Leo 전용)
+### 10-2. Agent 할 일 추가 (Leo 전용)
 
 **POST** `/api/v1/todos` · **X-Internal-Service 인증**
 
@@ -635,7 +876,7 @@ Base path: `/api/v1/learning/korean` · **JWT 필수**
 
 ---
 
-### 9-3. Agent 할 일 수정 (Leo 전용)
+### 10-3. Agent 할 일 수정 (Leo 전용)
 
 **PATCH** `/api/v1/todos/{todoId}` · **X-Internal-Service 인증**
 
@@ -647,7 +888,7 @@ Base path: `/api/v1/learning/korean` · **JWT 필수**
 
 ---
 
-### 9-4. Agent 할 일 삭제 (Leo 전용)
+### 10-4. Agent 할 일 삭제 (Leo 전용)
 
 **DELETE** `/api/v1/todos/{todoId}?memberId={memberId}` · **X-Internal-Service 인증**
 
@@ -657,9 +898,9 @@ Base path: `/api/v1/learning/korean` · **JWT 필수**
 
 ---
 
-## 10. 채팅 (Chat)
+## 11. 채팅 (Chat)
 
-### 10-1. 채팅 메시지 전송
+### 11-1. 채팅 메시지 전송
 
 **POST** `/api/v1/chat/messages` · **JWT 필수**
 
@@ -695,11 +936,11 @@ Base path: `/api/v1/learning/korean` · **JWT 필수**
 
 ---
 
-## 11. 내부 전용 API (Internal — Leo)
+## 12. 내부 전용 API (Internal — Leo)
 
 > **인증**: `X-Internal-Service: <INTERNAL_SERVICE_TOKEN>` 헤더 필수. JWT 불필요.
 
-### 11-1. 회원 프로필 조회
+### 12-1. 회원 프로필 조회
 
 **GET** `/api/v1/members/{memberId}/profile`
 
@@ -709,7 +950,7 @@ Base path: `/api/v1/learning/korean` · **JWT 필수**
 
 ---
 
-### 11-2. 수학 스텝 전체 목록
+### 12-2. 수학 스텝 전체 목록
 
 **GET** `/api/v1/learning/math/steps?memberId={memberId}`
 
@@ -725,15 +966,15 @@ Base path: `/api/v1/learning/korean` · **JWT 필수**
 
 ---
 
-### 11-3. 국어 스텝 전체 목록
+### 12-3. 국어 스텝 전체 목록
 
 **GET** `/api/v1/learning/korean/steps?memberId={memberId}`
 
-11-2와 동일 구조.
+12-2와 동일 구조.
 
 ---
 
-### 11-4. 통합 학습 진도
+### 12-4. 통합 학습 진도
 
 **GET** `/api/v1/members/{memberId}/learning-progress`
 
@@ -747,7 +988,7 @@ Base path: `/api/v1/learning/korean` · **JWT 필수**
 
 ---
 
-### 11-5. 채팅 세션 메시지 목록
+### 12-5. 채팅 세션 메시지 목록
 
 **GET** `/api/v1/chat/sessions/{sessionId}/messages`
 
@@ -763,7 +1004,7 @@ Base path: `/api/v1/learning/korean` · **JWT 필수**
 
 ---
 
-### 11-6. 기간별 채팅 메시지 조회
+### 12-6. 기간별 채팅 메시지 조회
 
 **GET** `/api/v1/chat/messages?memberId={memberId}&from={from}&to={to}`
 
@@ -780,7 +1021,7 @@ Base path: `/api/v1/learning/korean` · **JWT 필수**
 
 ---
 
-### 11-7. 채팅 세션 수정
+### 12-7. 채팅 세션 수정
 
 **PATCH** `/api/v1/chat/sessions/{sessionId}`
 
@@ -804,7 +1045,7 @@ Base path: `/api/v1/learning/korean` · **JWT 필수**
 
 ---
 
-### 11-8. 수학 concept 목록 (LRN_13)
+### 12-8. 수학 concept 목록 (LRN_13)
 
 **GET** `/api/v1/learning/math/concepts?memberId={memberId}`
 
@@ -819,7 +1060,7 @@ Base path: `/api/v1/learning/korean` · **JWT 필수**
 
 ---
 
-### 11-9. 수학 concept별 lesson 상태 (LRN_14/15/16)
+### 12-9. 수학 concept별 lesson 상태 (LRN_14/15/16)
 
 **GET** `/api/v1/learning/math/concepts/lesson-status?memberId={memberId}&concept={concept}`
 
@@ -839,7 +1080,7 @@ Base path: `/api/v1/learning/korean` · **JWT 필수**
 
 ---
 
-### 11-10. 현재 국어 lesson (LRN_32/33)
+### 12-10. 현재 국어 lesson (LRN_32/33)
 
 **GET** `/api/v1/learning/korean/lessons/current?memberId={memberId}`
 
@@ -851,7 +1092,7 @@ Base path: `/api/v1/learning/korean` · **JWT 필수**
 
 ---
 
-### 11-11. 주간 안전 보고서 배치 트리거 (BE → AI)
+### 12-11. 주간 안전 보고서 배치 트리거 (BE → AI)
 
 > **BE 내부 동작 — 외부 노출 없음**
 
@@ -865,7 +1106,7 @@ Base path: `/api/v1/learning/korean` · **JWT 필수**
 
 ---
 
-### 11-12. 주간 안전 보고서 수신 (AI → BE 콜백)
+### 12-12. 주간 안전 보고서 수신 (AI → BE 콜백)
 
 **POST** `/api/v1/weekly-safety-report` · **X-Internal-Service 인증**
 
@@ -910,4 +1151,4 @@ Base path: `/api/v1/learning/korean` · **JWT 필수**
 
 ---
 
-*최종 수정: 2026-06-01*
+*최종 수정: 2026-06-02*

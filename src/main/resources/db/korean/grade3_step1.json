@@ -14,8 +14,8 @@
   },
   "cycles": [
     {
-      "cycle": 1,
-      "type": "word_card",
+      "cycle_number": 1,
+      "cycle_type": "word_card",
       "slides": [
         {
           "word": "주룩주룩",
@@ -38,8 +38,8 @@
       ]
     },
     {
-      "cycle": 2,
-      "type": "fact_check",
+      "cycle_number": 2,
+      "cycle_type": "fact_check",
       "questions": [
         {
           "question_id": 1,
@@ -99,8 +99,8 @@
       ]
     },
     {
-      "cycle": 3,
-      "type": "diagram_order",
+      "cycle_number": 3,
+      "cycle_type": "diagram_order",
       "diagram_type": "sequence",
       "boxes": [
         {
@@ -181,8 +181,8 @@
       ]
     },
     {
-      "cycle": 4,
-      "type": "inference",
+      "cycle_number": 4,
+      "cycle_type": "inference",
       "questions": [
         {
           "question_id": 1,
@@ -247,8 +247,8 @@
       ]
     },
     {
-      "cycle": 5,
-      "type": "summary_fill",
+      "cycle_number": 5,
+      "cycle_type": "summary_fill",
       "summary_template": "오늘은 비가 [BLANK_1] 내렸어요. 민준이는 창가에 앉아 빗소리를 들었어요. 흙냄새가 코끝에 풍겨오고, 젖은 꽃잎을 바라보며 민준이는 [BLANK_2] 기분이 들었어요.",
       "questions": [
         {

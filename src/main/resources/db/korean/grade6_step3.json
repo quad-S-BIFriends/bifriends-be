@@ -15,8 +15,8 @@
   },
   "cycles": [
     {
-      "cycle": 1,
-      "type": "word_card",
+      "cycle_number": 1,
+      "cycle_type": "word_card",
       "slides": [
         {
           "word": "정보",
@@ -39,8 +39,8 @@
       ]
     },
     {
-      "cycle": 2,
-      "type": "fact_check",
+      "cycle_number": 2,
+      "cycle_type": "fact_check",
       "questions": [
         {
           "question_id": 1,
@@ -100,8 +100,8 @@
       ]
     },
     {
-      "cycle": 3,
-      "type": "diagram_order",
+      "cycle_number": 3,
+      "cycle_type": "diagram_order",
       "diagram_type": "sequence",
       "boxes": [
         {
@@ -186,8 +186,8 @@
       ]
     },
     {
-      "cycle": 4,
-      "type": "inference",
+      "cycle_number": 4,
+      "cycle_type": "inference",
       "questions": [
         {
           "question_id": 1,
@@ -252,8 +252,8 @@
       ]
     },
     {
-      "cycle": 5,
-      "type": "summary_fill",
+      "cycle_number": 5,
+      "cycle_type": "summary_fill",
       "summary_template": "하린이는 인터넷에서 학교가 쉰다는 글을 봤어요. 하지만 바로 믿지 않고 어디에서 나온 [BLANK_1] 먼저 확인했어요. 하린이는 학교 알림장과 홈페이지를 다시 살펴보았고, 그 글은 [BLANK_2]",
       "questions": [
         {

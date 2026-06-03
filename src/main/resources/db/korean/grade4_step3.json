@@ -14,8 +14,8 @@
   },
   "cycles": [
     {
-      "cycle": 1,
-      "type": "word_card",
+      "cycle_number": 1,
+      "cycle_type": "word_card",
       "slides": [
         {
           "word": "오염",
@@ -38,8 +38,8 @@
       ]
     },
     {
-      "cycle": 2,
-      "type": "fact_check",
+      "cycle_number": 2,
+      "cycle_type": "fact_check",
       "questions": [
         {
           "question_id": 1,
@@ -100,8 +100,8 @@
       ]
     },
     {
-      "cycle": 3,
-      "type": "diagram_order",
+      "cycle_number": 3,
+      "cycle_type": "diagram_order",
       "diagram_type": "cause_effect",
       "boxes": [
         {
@@ -186,8 +186,8 @@
       ]
     },
     {
-      "cycle": 4,
-      "type": "inference",
+      "cycle_number": 4,
+      "cycle_type": "inference",
       "questions": [
         {
           "question_id": 1,
@@ -252,8 +252,8 @@
       ]
     },
     {
-      "cycle": 5,
-      "type": "summary_fill",
+      "cycle_number": 5,
+      "cycle_type": "summary_fill",
       "summary_template": "환경이 [BLANK_1] 동물과 식물도 살기 힘들고 건강도 나빠져요. 그래서 우리 모두가 분리수거와 대중교통 이용 같은 [BLANK_2] 환경을 지킬 수 있어요.",
       "questions": [
         {

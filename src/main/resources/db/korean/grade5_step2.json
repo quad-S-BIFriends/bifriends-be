@@ -15,8 +15,8 @@
   },
   "cycles": [
     {
-      "cycle": 1,
-      "type": "word_card",
+      "cycle_number": 1,
+      "cycle_type": "word_card",
       "slides": [
         {
           "word": "댓글",
@@ -39,8 +39,8 @@
       ]
     },
     {
-      "cycle": 2,
-      "type": "fact_check",
+      "cycle_number": 2,
+      "cycle_type": "fact_check",
       "questions": [
         {
           "question_id": 1,
@@ -101,8 +101,8 @@
       ]
     },
     {
-      "cycle": 3,
-      "type": "diagram_order",
+      "cycle_number": 3,
+      "cycle_type": "diagram_order",
       "diagram_type": "sequence",
       "boxes": [
         {
@@ -187,8 +187,8 @@
       ]
     },
     {
-      "cycle": 4,
-      "type": "inference",
+      "cycle_number": 4,
+      "cycle_type": "inference",
       "questions": [
         {
           "question_id": 1,
@@ -253,8 +253,8 @@
       ]
     },
     {
-      "cycle": 5,
-      "type": "summary_fill",
+      "cycle_number": 5,
+      "cycle_type": "summary_fill",
       "summary_template": "레오는 직접 만든 그림을 SNS에 올렸어요. 하지만 친구의 댓글을 보고 [BLANK_1] 다음 날 친구는 미안하다고 사과했고, 레오는 자신의 마음을 [BLANK_2]",
       "questions": [
         {

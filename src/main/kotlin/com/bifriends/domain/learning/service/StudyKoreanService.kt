@@ -8,9 +8,9 @@ import com.bifriends.domain.learning.model.StepStatus
 import com.bifriends.domain.learning.model.UserKoreanProgress
 import com.bifriends.domain.learning.repository.KoreanStepRepository
 import com.bifriends.domain.learning.repository.UserKoreanProgressRepository
+import com.bifriends.domain.learning.util.LearningCycleContentSanitizer
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.node.ArrayNode
-import com.fasterxml.jackson.databind.node.ObjectNode
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDateTime
@@ -96,7 +96,7 @@ class StudyKoreanService(
             ?: throw IllegalStateException("content_json에 cycles 필드가 없습니다. stepId=$stepId")
 
         val sanitizedCycles = (cyclesNode as ArrayNode).map { cycle ->
-            sanitizeCycleNode(cycle)
+            LearningCycleContentSanitizer.sanitizeKoreanCycle(cycle)
         }
 
         return KoreanStepContentResponse(
@@ -107,23 +107,6 @@ class StudyKoreanService(
             passage = passage,
             cycles = sanitizedCycles,
         )
-    }
-
-    /**
-     * 사이클 노드에서 각 question의 answer만 제거.
-     * related_sentence, hints 등은 클라이언트에 그대로 노출.
-     * Cycle 1 (word_card)은 questions 없으므로 그대로 반환.
-     */
-    private fun sanitizeCycleNode(cycle: JsonNode): JsonNode {
-        val copy = cycle.deepCopy<ObjectNode>()
-        val questions = copy.get("questions") as? ArrayNode ?: return copy
-        questions.forEachIndexed { index, q ->
-            if (q is ObjectNode) {
-                q.put("questionIndex", index)
-                q.remove("answer")
-            }
-        }
-        return copy
     }
 
     // ───────────────────────────────────────────────────────────

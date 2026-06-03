@@ -6,9 +6,9 @@ import com.bifriends.domain.learning.model.StepStatus
 import com.bifriends.domain.learning.model.UserMathProgress
 import com.bifriends.domain.learning.repository.MathStepRepository
 import com.bifriends.domain.learning.repository.UserMathProgressRepository
+import com.bifriends.domain.learning.util.LearningCycleContentSanitizer
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.node.ArrayNode
-import com.fasterxml.jackson.databind.node.ObjectNode
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDateTime
@@ -92,7 +92,7 @@ class StudyMathService(
             ?: throw IllegalStateException("content_json에 cycles 필드가 없습니다. stepId=$stepId")
 
         val sanitizedCycles = (cyclesNode as ArrayNode).map { cycle ->
-            sanitizeCycleNode(cycle)
+            LearningCycleContentSanitizer.sanitizeMathCycle(cycle)
         }
 
         return StepContentResponse(
@@ -102,20 +102,6 @@ class StudyMathService(
             grade = step.grade,
             cycles = sanitizedCycles,
         )
-    }
-
-    /** 사이클 노드에서 각 question의 answer, explanation 제거 + questionIndex 부여 */
-    private fun sanitizeCycleNode(cycle: JsonNode): JsonNode {
-        val copy = cycle.deepCopy<ObjectNode>()
-        val questions = copy.get("questions") as? ArrayNode ?: return copy
-        questions.forEachIndexed { index, q ->
-            if (q is ObjectNode) {
-                q.put("questionIndex", index)
-                q.remove("answer")
-                q.remove("explanation")
-            }
-        }
-        return copy
     }
 
     // ───────────────────────────────────────────────────────────

@@ -35,6 +35,7 @@
 ## 핵심 설계 결정
 
 - **정답 서버 검증**: `answer`/`explanation` 필드는 DB에만 존재, 콘텐츠 API 응답에서 제거
+- **사이클 JSON 키**: 수학·국어 시드 모두 `cycle_number`, `cycle_type` (API 응답도 동일; 국어 legacy `cycle`/`type`은 sanitizer가 정규화)
 - **콘텐츠 저장**: `content_json TEXT` + `JsonNodeConverter` (hypersistence 의존성 없이)
 - **사이클 완료 추적**: `@ElementCollection` → `user_math_progress_cycles` 테이블, `MutableSet<Int>` 으로 중복 방지
 - **중도 종료**: 사이클 단위로만 완료 저장, 사이클 내 문항 상태는 클라이언트 관리 (LRN_MATH_30)
