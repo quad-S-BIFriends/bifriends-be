@@ -1,8 +1,12 @@
 package com.bifriends.infrastructure.firebase
 
 import com.google.cloud.firestore.DocumentReference
+import com.google.cloud.firestore.Firestore
+import com.google.cloud.firestore.Query
+import com.google.firebase.FirebaseApp
 import com.google.firebase.cloud.FirestoreClient
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 
 /**
@@ -13,50 +17,53 @@ import org.springframework.stereotype.Service
  * Firestore 경로: users/{memberId}/mindSessions/{setId}
  */
 @Service
-class FirestoreService {
+class FirestoreService(
+    @Value("\${firebase.firestore.database-id:(default)}") private val databaseId: String,
+) {
     private val log = LoggerFactory.getLogger(javaClass)
 
-    private val db get() = FirestoreClient.getFirestore()
+    private val db: Firestore by lazy {
+        val app = FirebaseApp.getInstance()
+        if (databaseId == "(default)") {
+            FirestoreClient.getFirestore(app)
+        } else {
+            log.info("[Firestore] named database 사용 — databaseId={}", databaseId)
+            FirestoreClient.getFirestore(app, databaseId)
+        }
+    }
 
     /**
-     * 감정 학습 세션을 저장한다.
-     *
-     * @param memberId   회원 ID
-     * @param setId      세트 고유 ID (AI가 생성)
-     * @param sessionData Firestore에 저장할 Map (감정, 상황, 배운 표현, steps 전체, 완료 시각)
-     * @return 저장된 문서 참조
+     * 기동 시 Firestore 연결 가능 여부를 점검한다. 실패해도 앱 기동은 계속된다.
      */
+    fun verifyConnectivity() {
+        try {
+            db.collection("_connectivity").document("probe").get().get()
+            log.info("[Firestore] connectivity check OK — databaseId={}", databaseId)
+        } catch (e: Throwable) {
+            log.warn("[Firestore] connectivity check failed — Firestore 미연동 가능: {}", e.message)
+        }
+    }
+
     fun saveMindSession(
         memberId: Long,
         setId: String,
         sessionData: Map<String, Any>,
-    ): DocumentReference {
-        val docRef = db.collection("users")
-            .document(memberId.toString())
-            .collection("mindSessions")
-            .document(setId)
-
-        docRef.set(sessionData).get()  // 동기 완료 대기
-
+    ): DocumentReference = runFirestoreWrite("mindSession 저장") {
+        val docRef = mindSessionsCollection(memberId).document(setId)
+        docRef.set(sessionData).get()
         log.info("[Firestore] mindSession 저장 완료 — memberId={}, setId={}", memberId, setId)
-        return docRef
+        docRef
     }
 
     /**
-     * 특정 회원의 모든 mindSessions에서 배운 표현 목록을 조회한다.
-     * AI가 중복 표현을 생성하지 않도록 사용한다.
-     *
-     * @return 이미 학습한 표현 문자열 목록 (중복 없음)
+     * 시나리오 중복 방지용. 실패 시 빈 목록(학습 생성은 계속 가능).
      */
     fun getLearnedExpressions(memberId: Long): List<String> {
         return try {
-            val snapshots = db.collection("users")
-                .document(memberId.toString())
-                .collection("mindSessions")
+            mindSessionsCollection(memberId)
                 .get()
                 .get()
-
-            snapshots.documents
+                .documents
                 .mapNotNull { it.getString("learnedExpression") }
                 .distinct()
         } catch (e: Exception) {
@@ -66,45 +73,86 @@ class FirestoreService {
     }
 
     /**
-     * 저장된 특정 세션을 조회한다 (히스토리 재열람용).
-     *
-     * @return 세션 데이터 Map, 존재하지 않으면 null
+     * @return 세션 데이터. 문서가 없으면 null. 인프라 오류는 [FirestoreOperationException].
      */
-    fun getMindSession(memberId: Long, setId: String): Map<String, Any>? {
-        return try {
-            val doc = db.collection("users")
-                .document(memberId.toString())
-                .collection("mindSessions")
-                .document(setId)
-                .get()
-                .get()
-
+    fun getMindSession(memberId: Long, setId: String): Map<String, Any>? =
+        runFirestoreRead("mindSession 조회") {
+            val doc = mindSessionsCollection(memberId).document(setId).get().get()
             if (doc.exists()) doc.data else null
-        } catch (e: Exception) {
-            log.warn("[Firestore] mindSession 조회 실패 — memberId={}, setId={}: {}", memberId, setId, e.message)
-            null
         }
-    }
 
     /**
-     * 회원의 mindSessions 목록을 최신순으로 조회한다 (히스토리 화면).
-     *
-     * @param limit 최대 조회 수 (기본 20)
+     * 완료 세션 목록(최신순). 인프라 오류는 [FirestoreOperationException].
      */
-    fun getMindSessionList(memberId: Long, limit: Int = 20): List<Map<String, Any>> {
-        return try {
-            db.collection("users")
-                .document(memberId.toString())
-                .collection("mindSessions")
-                .orderBy("completedAt", com.google.cloud.firestore.Query.Direction.DESCENDING)
-                .limit(limit)
-                .get()
-                .get()
-                .documents
-                .mapNotNull { it.data }
-        } catch (e: Exception) {
-            log.warn("[Firestore] mindSession 목록 조회 실패 — memberId={}: {}", memberId, e.message)
-            emptyList()
+    fun getMindSessionList(memberId: Long, limit: Int = 20): List<Map<String, Any>> =
+        runFirestoreRead("mindSession 목록 조회") {
+            try {
+                queryOrderedByCompletedAt(memberId, limit)
+            } catch (e: Exception) {
+                if (isIndexOrQueryError(e)) {
+                    log.warn(
+                        "[Firestore] completedAt index missing, using in-memory sort — memberId={}: {}",
+                        memberId,
+                        e.message,
+                    )
+                    querySortedInMemory(memberId, limit)
+                } else {
+                    throw e
+                }
+            }
         }
+
+    private fun mindSessionsCollection(memberId: Long) =
+        db.collection("users").document(memberId.toString()).collection("mindSessions")
+
+    private fun queryOrderedByCompletedAt(memberId: Long, limit: Int): List<Map<String, Any>> =
+        mindSessionsCollection(memberId)
+            .orderBy("completedAt", Query.Direction.DESCENDING)
+            .limit(limit)
+            .get()
+            .get()
+            .documents
+            .mapNotNull { it.data }
+
+    private fun querySortedInMemory(memberId: Long, limit: Int): List<Map<String, Any>> {
+        val maxFetch = maxOf(limit * 5, 100)
+        val docs = mindSessionsCollection(memberId)
+            .limit(maxFetch)
+            .get()
+            .get()
+            .documents
+            .mapNotNull { it.data }
+
+        return docs
+            .sortedByDescending { it["completedAt"] as? String ?: "" }
+            .take(limit)
     }
+
+    private fun isIndexOrQueryError(e: Exception): Boolean {
+        var current: Throwable? = e
+        while (current != null) {
+            val message = current.message?.lowercase() ?: ""
+            if (message.contains("failed_precondition") ||
+                message.contains("requires an index") ||
+                message.contains("index")
+            ) {
+                return true
+            }
+            current = current.cause
+        }
+        return false
+    }
+
+    private fun <T> runFirestoreRead(operation: String, block: () -> T): T =
+        try {
+            block()
+        } catch (e: FirestoreOperationException) {
+            throw e
+        } catch (e: Exception) {
+            log.error("[Firestore] {} 실패: {}", operation, e.message)
+            throw FirestoreOperationException("Firestore $operation 실패", e)
+        }
+
+    private fun <T> runFirestoreWrite(operation: String, block: () -> T): T =
+        runFirestoreRead(operation, block)
 }

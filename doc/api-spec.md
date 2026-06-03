@@ -19,8 +19,9 @@
 8. [공부방 — 수학 (Learning Math)](#8-공부방--수학-learning-math)
 9. [공부방 — 국어 (Learning Korean)](#9-공부방--국어-learning-korean)
 10. [할 일 (Todo)](#10-할-일-todo)
-11. [채팅 (Chat)](#11-채팅-chat)
-12. [내부 전용 API (Internal — Leo)](#12-내부-전용-api-internal--leo)
+11. [친구랑 — 감정 학습 (Mind)](#11-친구랑--감정-학습-mind)
+12. [채팅 (Chat)](#12-채팅-chat)
+13. [내부 전용 API (Internal — Leo)](#13-내부-전용-api-internal--leo)
 
 ---
 
@@ -898,9 +899,220 @@ Base path: `/api/v1/learning/korean` · **JWT 필수**
 
 ---
 
-## 11. 채팅 (Chat)
+## 11. 친구랑 — 감정 학습 (Mind)
 
-### 11-1. 채팅 메시지 전송
+Base path: `/api/v1/mind` · **JWT 필수**
+
+> **저장소**: 완료된 세션만 Firestore `users/{memberId}/mindSessions/{setId}`에 저장됩니다.  
+> **흐름**: `POST /scenario`(생성) → 아이가 step1~4 학습 → `POST /sessions`(저장·보상) → `GET /sessions`(히스토리) / `GET /sessions/{sessionId}`(다시보기)  
+> **경로 파라미터 `sessionId`**: 시나리오 응답의 `setId`와 동일한 값입니다.  
+> **레거시**: `POST /api/v1/emotion/scenarios`는 생성·저장·보상을 한 번에 처리합니다. 신규 앱은 `/api/v1/mind/**` 사용을 권장합니다.  
+> **Firestore 오류**: 저장·히스토리 조회 실패 시 `503 Service Unavailable` (빈 목록으로 숨기지 않음). 운영 설정은 [doc/mind/README.md](mind/README.md) 참고.
+
+---
+
+### 11-1. 감정 학습 시나리오 생성
+
+**POST** `/api/v1/mind/scenario`
+
+"이야기 보러 가기!" 클릭 시 호출합니다. AI가 4단계 학습 세트를 생성하고 step3 만화 이미지를 Firebase Storage에 업로드한 뒤 URL을 반환합니다. **이 시점에는 Firestore에 저장하지 않습니다.**
+
+> AI 호출 + Storage 업로드로 응답이 **10~30초** 걸릴 수 있습니다.
+
+**Request Body**
+
+| Field | Type | Required | Description |
+| --- | --- | --- | --- |
+| `emotion` | string | X | 감정 지정. 미지정 시 AI가 선택 (`기쁨` / `속상함` / `부끄러움` / `화남` / `실망` / `고마움`) |
+
+```json
+{ "emotion": "속상함" }
+```
+
+**Response** `200 OK`
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `setId` | string | 세션 고유 ID (이후 저장·조회에 사용) |
+| `emotion` | string | 감정명 |
+| `situation` | string | 상황 설명 |
+| `learnedExpression` | string | 배울 표현 |
+| `isFallback` | boolean | AI 실패 시 폴백 시나리오 여부 |
+| `steps` | object | step1~step4 학습 콘텐츠 |
+
+`steps` 구조:
+
+| Step | 주요 필드 |
+| --- | --- |
+| `step1` | `title`, `expression`, `emotion`, `bodySensation`, `situationExample`, `imageUrl`, `nextButtonText` |
+| `step2` | `title`, `visualClue`, `question`, `choices[]`, `imageUrl`, `retryMessage`, `nextButtonText` |
+| `step3` | `title`, `comic[]` (`cut`, `text`, `imageUrl`), `question`, `choices[]`, `retryMessage`, `nextButtonText` |
+| `step4` | `title`, `leoIntro`, `question`, `choices[]` (`type` 포함), `retryMessage`, `successMessage`, `reward`, `completeButtonText` |
+
+`choices[]` (step2·step3): `{ "id", "text", "isCorrect", "feedback" }`  
+`choices[]` (step4): `{ "id", "text", "type", "isCorrect", "feedback" }`  
+`reward`: `{ "type": "POOL", "amount": 3 }` (예시)
+
+```json
+{
+  "setId": "set_20260603_abc123",
+  "emotion": "속상함",
+  "situation": "친구가 장난 댓글을 달았어요",
+  "learnedExpression": "속상해",
+  "isFallback": false,
+  "steps": {
+    "step1": {
+      "title": "오늘의 표현",
+      "expression": "속상해",
+      "emotion": "속상함",
+      "bodySensation": "가슴이 먹먹해요",
+      "situationExample": "친구가 나를 놀릴 때",
+      "imageUrl": "https://storage.googleapis.com/.../step1.png",
+      "nextButtonText": "다음"
+    },
+    "step2": { "title": "...", "choices": [{ "id": "a", "text": "속상한 표정", "isCorrect": true, "feedback": "..." }], "..." : "..." },
+    "step3": { "title": "...", "comic": [{ "cut": 1, "text": "...", "imageUrl": "https://..." }], "..." : "..." },
+    "step4": { "title": "...", "reward": { "type": "POOL", "amount": 3 }, "..." : "..." }
+  }
+}
+```
+
+---
+
+### 11-2. 학습 완료 세션 저장
+
+**POST** `/api/v1/mind/sessions`
+
+아이가 **step4까지 완료**했을 때 FE가 `POST /scenario`로 받은 세션 전체를 전송합니다. Firestore에 저장하고 감정 학습 보상(풀)을 지급합니다. **히스토리 목록·다시보기는 이 API 호출 이후에만 가능**합니다.
+
+**Request Body**
+
+| Field | Type | Required | Description |
+| --- | --- | --- | --- |
+| `setId` | string | O | `POST /scenario` 응답의 `setId` |
+| `emotion` | string | O | 감정명 |
+| `situation` | string | O | 상황 설명 |
+| `learnedExpression` | string | O | 배운 표현 |
+| `isFallback` | boolean | X | 폴백 시나리오 여부 (기본 `false`) |
+| `steps` | object | O | step1~step4 전체 (`11-1` 응답과 동일 구조) |
+
+**Response** `200 OK`
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `setId` | string | 저장된 세션 ID |
+| `rewardAmount` | int | 지급된 풀 수 (실패 시 `0`, 비치명적) |
+
+```json
+{ "setId": "set_20260603_abc123", "rewardAmount": 3 }
+```
+
+서버가 `completedAt`(ISO-8601 UTC)을 자동 기록합니다.
+
+**Response** `503 Service Unavailable` — Firestore 저장 실패(인증·네트워크·권한 등)
+
+---
+
+### 11-3. 학습 히스토리 목록 조회
+
+**GET** `/api/v1/mind/sessions`
+
+완료·저장된 세션 목록을 **최신순**(`completedAt` DESC)으로 반환합니다.
+
+> 기본 최대 **20건** 조회 (서버 내부 limit). 쿼리 파라미터는 현재 미지원.
+
+**Response** `200 OK`
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `sessions` | array | 세션 요약 목록 |
+| `totalCount` | int | `sessions` 길이 |
+
+`sessions[]` 항목:
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `setId` | string | 세션 ID (`GET /sessions/{sessionId}`의 `sessionId`와 동일) |
+| `emotion` | string | 감정명 |
+| `learnedExpression` | string | 배운 표현 |
+| `completedAt` | string | 완료 시각 (ISO-8601) |
+| `isFallback` | boolean | 폴백 시나리오 여부 |
+
+```json
+{
+  "sessions": [
+    {
+      "setId": "set_20260603_abc123",
+      "emotion": "속상함",
+      "learnedExpression": "속상해",
+      "completedAt": "2026-06-03T02:15:30.123456789Z",
+      "isFallback": false
+    }
+  ],
+  "totalCount": 1
+}
+```
+
+세션이 없으면 `{ "sessions": [], "totalCount": 0 }` 입니다. (Firestore 장애와 구분: 장애 시 `503`)
+
+**Response** `503 Service Unavailable` — Firestore 목록 조회 실패
+
+---
+
+### 11-4. 학습 세션 상세 조회 (다시보기)
+
+**GET** `/api/v1/mind/sessions/{sessionId}`
+
+완료된 세션을 다시 볼 때 사용합니다. step1~step4 전체 콘텐츠를 반환합니다.
+
+**Path Parameter**
+
+| Name | Type | Description |
+| --- | --- | --- |
+| `sessionId` | string | `setId` (예: `set_20260603_abc123`) |
+
+**Response** `200 OK`
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `setId` | string | 세션 ID |
+| `emotion` | string | 감정명 |
+| `situation` | string | 상황 설명 |
+| `learnedExpression` | string | 배운 표현 |
+| `isFallback` | boolean | 폴백 시나리오 여부 |
+| `completedAt` | string | 완료 시각 (ISO-8601) |
+| `steps` | object | step1~step4 (`11-1`과 동일 구조) |
+
+```json
+{
+  "setId": "set_20260603_abc123",
+  "emotion": "속상함",
+  "situation": "친구가 장난 댓글을 달았어요",
+  "learnedExpression": "속상해",
+  "isFallback": false,
+  "completedAt": "2026-06-03T02:15:30.123456789Z",
+  "steps": {
+    "step1": { "title": "...", "expression": "속상해", "imageUrl": "https://...", "nextButtonText": "다음" },
+    "step2": { "title": "...", "choices": [], "imageUrl": "https://...", "nextButtonText": "다음" },
+    "step3": { "title": "...", "comic": [{ "cut": 1, "text": "...", "imageUrl": "https://..." }], "choices": [], "nextButtonText": "다음" },
+    "step4": { "title": "...", "leoIntro": "...", "reward": { "type": "POOL", "amount": 3 }, "completeButtonText": "완료" }
+  }
+}
+```
+
+**Response** `404 Not Found` — 해당 회원의 `sessionId` 문서가 없을 때
+
+```json
+{ "message": "세션을 찾을 수 없습니다. sessionId=..." }
+```
+
+**Response** `503 Service Unavailable` — Firestore 조회 실패(문서 없음과 구분)
+
+---
+
+## 12. 채팅 (Chat)
+
+### 12-1. 채팅 메시지 전송
 
 **POST** `/api/v1/chat/messages` · **JWT 필수**
 
@@ -936,11 +1148,11 @@ Base path: `/api/v1/learning/korean` · **JWT 필수**
 
 ---
 
-## 12. 내부 전용 API (Internal — Leo)
+## 13. 내부 전용 API (Internal — Leo)
 
 > **인증**: `X-Internal-Service: <INTERNAL_SERVICE_TOKEN>` 헤더 필수. JWT 불필요.
 
-### 12-1. 회원 프로필 조회
+### 13-1. 회원 프로필 조회
 
 **GET** `/api/v1/members/{memberId}/profile`
 
@@ -950,7 +1162,7 @@ Base path: `/api/v1/learning/korean` · **JWT 필수**
 
 ---
 
-### 12-2. 수학 스텝 전체 목록
+### 13-2. 수학 스텝 전체 목록
 
 **GET** `/api/v1/learning/math/steps?memberId={memberId}`
 
@@ -966,7 +1178,7 @@ Base path: `/api/v1/learning/korean` · **JWT 필수**
 
 ---
 
-### 12-3. 국어 스텝 전체 목록
+### 13-3. 국어 스텝 전체 목록
 
 **GET** `/api/v1/learning/korean/steps?memberId={memberId}`
 
@@ -974,7 +1186,7 @@ Base path: `/api/v1/learning/korean` · **JWT 필수**
 
 ---
 
-### 12-4. 통합 학습 진도
+### 13-4. 통합 학습 진도
 
 **GET** `/api/v1/members/{memberId}/learning-progress`
 
@@ -988,7 +1200,7 @@ Base path: `/api/v1/learning/korean` · **JWT 필수**
 
 ---
 
-### 12-5. 채팅 세션 메시지 목록
+### 13-5. 채팅 세션 메시지 목록
 
 **GET** `/api/v1/chat/sessions/{sessionId}/messages`
 
@@ -1004,7 +1216,7 @@ Base path: `/api/v1/learning/korean` · **JWT 필수**
 
 ---
 
-### 12-6. 기간별 채팅 메시지 조회
+### 13-6. 기간별 채팅 메시지 조회
 
 **GET** `/api/v1/chat/messages?memberId={memberId}&from={from}&to={to}`
 
@@ -1021,7 +1233,7 @@ Base path: `/api/v1/learning/korean` · **JWT 필수**
 
 ---
 
-### 12-7. 채팅 세션 수정
+### 13-7. 채팅 세션 수정
 
 **PATCH** `/api/v1/chat/sessions/{sessionId}`
 
@@ -1045,7 +1257,7 @@ Base path: `/api/v1/learning/korean` · **JWT 필수**
 
 ---
 
-### 12-8. 수학 concept 목록 (LRN_13)
+### 13-8. 수학 concept 목록 (LRN_13)
 
 **GET** `/api/v1/learning/math/concepts?memberId={memberId}`
 
@@ -1060,7 +1272,7 @@ Base path: `/api/v1/learning/korean` · **JWT 필수**
 
 ---
 
-### 12-9. 수학 concept별 lesson 상태 (LRN_14/15/16)
+### 13-9. 수학 concept별 lesson 상태 (LRN_14/15/16)
 
 **GET** `/api/v1/learning/math/concepts/lesson-status?memberId={memberId}&concept={concept}`
 
@@ -1080,7 +1292,7 @@ Base path: `/api/v1/learning/korean` · **JWT 필수**
 
 ---
 
-### 12-10. 현재 국어 lesson (LRN_32/33)
+### 13-10. 현재 국어 lesson (LRN_32/33)
 
 **GET** `/api/v1/learning/korean/lessons/current?memberId={memberId}`
 
@@ -1092,7 +1304,7 @@ Base path: `/api/v1/learning/korean` · **JWT 필수**
 
 ---
 
-### 12-11. 주간 안전 보고서 배치 트리거 (BE → AI)
+### 13-11. 주간 안전 보고서 배치 트리거 (BE → AI)
 
 > **BE 내부 동작 — 외부 노출 없음**
 
@@ -1106,7 +1318,7 @@ Base path: `/api/v1/learning/korean` · **JWT 필수**
 
 ---
 
-### 12-12. 주간 안전 보고서 수신 (AI → BE 콜백)
+### 13-12. 주간 안전 보고서 수신 (AI → BE 콜백)
 
 **POST** `/api/v1/weekly-safety-report` · **X-Internal-Service 인증**
 

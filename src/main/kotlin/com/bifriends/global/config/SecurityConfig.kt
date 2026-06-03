@@ -10,7 +10,6 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import org.springframework.boot.web.servlet.FilterRegistrationBean
-import org.springframework.http.HttpMethod
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.http.HttpStatus
@@ -23,6 +22,7 @@ import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.security.web.SecurityFilterChain
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher
 
 @Configuration
 @EnableWebSecurity
@@ -55,29 +55,21 @@ class SecurityConfig(
                 }
             }
             .authorizeHttpRequests { auth ->
-                val internal = auth
-                InternalServicePaths.securityRules().forEach { (methods, pattern) ->
-                    methods.forEach { method ->
-                        internal.requestMatchers(method, pattern).hasRole(InternalServicePaths.ROLE)
-                    }
-                }
-                internal
+                auth
                     .requestMatchers(
-                        "/health",
-                        "/actuator/health",
-                        "/actuator/health/**",
-                        "/api/v1/members/auth/**",
-                        "/oauth2/**",
-                        "/login/**",
+                        AntPathRequestMatcher("/health"),
+                        AntPathRequestMatcher("/actuator/health"),
+                        AntPathRequestMatcher("/actuator/health/**"),
+                        AntPathRequestMatcher("/api/v1/members/auth/**"),
+                        AntPathRequestMatcher("/oauth2/**"),
+                        AntPathRequestMatcher("/login/**"),
                     ).permitAll()
-                    .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
-                    .requestMatchers("/api/v1/onboarding/**").authenticated()
-                    .requestMatchers("/api/v1/parent/**").authenticated()
-                    .requestMatchers("/api/v1/reports/**").authenticated()
-                    .requestMatchers("/api/v1/shop/**").authenticated()
-                    .requestMatchers("/api/v1/learning/**").authenticated()
-                    .requestMatchers(HttpMethod.POST, "/api/v1/chat/messages").authenticated()
-                    .requestMatchers("/api/v1/mind/**").authenticated()
+                    .requestMatchers(
+                        AntPathRequestMatcher("/swagger-ui/**"),
+                        AntPathRequestMatcher("/v3/api-docs/**"),
+                        AntPathRequestMatcher("/swagger-ui.html"),
+                    ).permitAll()
+                    // JWT API는 anyRequest 한 곳에서만 authenticated() — 경로별 MVC matcher는 JWT가 401로 막히는 경우가 있음
                     .anyRequest().authenticated()
             }
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter::class.java)

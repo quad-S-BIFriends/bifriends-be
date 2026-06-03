@@ -40,6 +40,9 @@ Thumbs.db
 ### Env ###
 .env
 
+### Local test artifacts ###
+response.txt
+
 ### Claude ###
 .claude/
 .claudeignore

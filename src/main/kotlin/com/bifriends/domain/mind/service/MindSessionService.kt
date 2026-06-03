@@ -17,6 +17,7 @@ import com.bifriends.domain.mind.dto.MindStep3Data
 import com.bifriends.domain.mind.dto.MindStep4ChoiceData
 import com.bifriends.domain.mind.dto.MindStep4Data
 import com.bifriends.domain.mind.dto.MindStepsData
+import com.bifriends.infrastructure.firebase.FirestoreOperationException
 import com.bifriends.infrastructure.firebase.FirestoreService
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
@@ -39,7 +40,11 @@ class MindSessionService(
 
     fun saveSession(memberId: Long, request: MindSessionSaveRequest): MindSessionSaveResponse {
         val sessionData = buildSessionMap(request)
-        firestoreService.saveMindSession(memberId, request.setId, sessionData)
+        try {
+            firestoreService.saveMindSession(memberId, request.setId, sessionData)
+        } catch (e: FirestoreOperationException) {
+            throw firestoreUnavailable("학습 세션을 저장하지 못했습니다.", e)
+        }
 
         var rewardAmount = 0
         runCatching {
@@ -58,7 +63,11 @@ class MindSessionService(
     }
 
     fun getSessionList(memberId: Long): MindSessionListResponse {
-        val docs = firestoreService.getMindSessionList(memberId)
+        val docs = try {
+            firestoreService.getMindSessionList(memberId)
+        } catch (e: FirestoreOperationException) {
+            throw firestoreUnavailable("학습 히스토리를 불러오지 못했습니다.", e)
+        }
         val summaries = docs.map { data ->
             MindSessionSummary(
                 setId             = data["setId"] as? String ?: "",
@@ -72,10 +81,17 @@ class MindSessionService(
     }
 
     fun getSession(memberId: Long, sessionId: String): MindSessionDetailResponse {
-        val data = firestoreService.getMindSession(memberId, sessionId)
+        val data = try {
+            firestoreService.getMindSession(memberId, sessionId)
+        } catch (e: FirestoreOperationException) {
+            throw firestoreUnavailable("학습 세션을 불러오지 못했습니다.", e)
+        }
             ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "세션을 찾을 수 없습니다. sessionId=$sessionId")
         return mapToDetail(data)
     }
+
+    private fun firestoreUnavailable(message: String, cause: FirestoreOperationException) =
+        ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, message, cause)
 
     private fun buildSessionMap(req: MindSessionSaveRequest): Map<String, Any> {
         val s = req.steps

@@ -1,0 +1,53 @@
+{
+  "setId": "test_manual_001",
+  "emotion": "기쁨",
+  "situation": "친구가 칭찬해줬어요",
+  "learnedExpression": "기뻐",
+  "isFallback": true,
+  "steps": {
+    "step1": {
+      "title": "오늘의 표현",
+      "expression": "기뻐",
+      "emotion": "기쁨",
+      "bodySensation": "가슴이 두근거려요",
+      "situationExample": "친구가 칭찬할 때",
+      "imageUrl": "https://example.com/step1.png",
+      "nextButtonText": "다음"
+    },
+    "step2": {
+      "title": "어떤 기분일까요?",
+      "visualClue": "웃는 표정",
+      "question": "어떤 기분일까요?",
+      "choices": [
+        { "id": "a", "text": "기쁜 표정", "isCorrect": true, "feedback": "맞아요!" }
+      ],
+      "imageUrl": "https://example.com/step2.png",
+      "retryMessage": "다시 골라볼까요?",
+      "nextButtonText": "다음"
+    },
+    "step3": {
+      "title": "3컷 만화",
+      "comic": [
+        { "cut": 1, "text": "친구가 칭찬했어요", "imageUrl": "https://example.com/c1.png" }
+      ],
+      "question": "무슨 일이었을까요?",
+      "choices": [
+        { "id": "a", "text": "칭찬", "isCorrect": true, "feedback": "맞아요!" }
+      ],
+      "retryMessage": "다시 골라볼까요?",
+      "nextButtonText": "다음"
+    },
+    "step4": {
+      "title": "이렇게 말하고 싶어!",
+      "leoIntro": "레오가 도와줄게",
+      "question": "어떻게 말할까요?",
+      "choices": [
+        { "id": "a", "text": "고마워, 기뻐!", "type": "expression", "isCorrect": true, "feedback": "잘했어요!" }
+      ],
+      "retryMessage": "다시 골라볼까요?",
+      "successMessage": "완료!",
+      "reward": { "type": "POOL", "amount": 3 },
+      "completeButtonText": "완료"
+    }
+  }
+}

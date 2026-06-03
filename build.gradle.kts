@@ -55,7 +55,9 @@ dependencies {
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 
+    implementation(platform("com.google.cloud:libraries-bom:26.59.0"))
     implementation("com.google.firebase:firebase-admin:9.2.0")
+    implementation("io.grpc:grpc-netty-shaded")
 }
 
 kotlin {
