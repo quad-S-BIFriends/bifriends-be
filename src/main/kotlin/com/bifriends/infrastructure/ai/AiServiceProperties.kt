@@ -10,6 +10,8 @@ data class AiServiceProperties(
     val chatPath: String = "/v1/chat",
     /** BE 스케줄러 → AI 주간 안전 보고서 배치 트리거 경로 */
     val batchWeeklySafetyPath: String = "/api/v1/ai/batch/weekly-safety",
+    /** BE 스케줄러 → AI 주간 성장 리포트(부모용) 배치 트리거 경로 */
+    val batchWeeklyReportPath: String = "/api/v1/ai/report/weekly",
     /** 친구랑 감정 학습 시나리오 생성 요청 경로 (EMO-04) */
     val emotionScenarioPath: String = "/api/v1/ai/content/scenario",
 )

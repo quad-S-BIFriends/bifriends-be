@@ -1,33 +1,29 @@
 -- ============================================================
--- 상점 아이템 시드 데이터
--- 가격 정책 (기능명세서 기준):
---   HAT        5풀  (소형)
---   GLASSES   10풀  (소형)
---   CLOTHES   15풀  (중형)
---   BACKGROUND 30풀  (대형)
+-- 상점 — 레오 전체 의상 프리셋 (FE 고정 item_code)
+-- 온보딩 선물: GIFT_1(책), GIFT_2(리본), GIFT_3(꽃다발), GIFT_4(선글라스)
 -- ============================================================
 
-INSERT INTO shop_items (name, category, price, image_key, is_active)
-SELECT * FROM (VALUES
-  -- 모자 (5풀)
-  ('빨간 야구모자',  'HAT',        5,  'hat_baseball_red',    true),
-  ('파란 야구모자',  'HAT',        5,  'hat_baseball_blue',   true),
-  ('밀짚모자',      'HAT',        5,  'hat_straw',           true),
-  ('왕관',          'HAT',        5,  'hat_crown',           true),
+-- 레거시 코스메틱 행 제거 (item_code NOT NULL 마이그레이션 차단 방지)
+DELETE FROM member_shop_items;
+DELETE FROM shop_items;
 
-  -- 안경 (10풀)
-  ('하트 안경',     'GLASSES',    10, 'glasses_heart',       true),
-  ('별 안경',       'GLASSES',    10, 'glasses_star',        true),
-  ('둥근 안경',     'GLASSES',    10, 'glasses_round',       true),
+-- 구 CHECK(HAT/GLASSES/…) 제거 — OUTFIT 허용
+ALTER TABLE shop_items DROP CONSTRAINT IF EXISTS shop_items_category_check;
 
-  -- 옷 (15풀)
-  ('우주복',        'CLOTHES',    15, 'clothes_spacesuit',   true),
-  ('줄무늬 티셔츠', 'CLOTHES',    15, 'clothes_stripe',      true),
-  ('공룡 후드집업', 'CLOTHES',    15, 'clothes_dino_hoodie', true),
-
-  -- 배경 (30풀)
-  ('우주 배경',     'BACKGROUND', 30, 'bg_space',            true),
-  ('숲속 배경',     'BACKGROUND', 30, 'bg_forest',           true),
-  ('바닷속 배경',   'BACKGROUND', 30, 'bg_ocean',            true)
-) AS v(name, category, price, image_key, is_active)
-WHERE NOT EXISTS (SELECT 1 FROM shop_items LIMIT 1);
+INSERT INTO shop_items (item_code, name, category, price, image_key, is_active)
+VALUES
+  ('OUTFIT_DEFAULT',  '기본',         'OUTFIT', 0,  'outfit_default',   true),
+  ('GIFT_3',          '꽃다발',       'OUTFIT', 5,  'outfit_flower',    true),
+  ('GIFT_1',          '책',           'OUTFIT', 5,  'outfit_book',      true),
+  ('GIFT_4',          '선글라스',     'OUTFIT', 10, 'outfit_sunglasses', true),
+  ('GIFT_2',          '리본',         'OUTFIT', 10, 'outfit_ribbon',    true),
+  ('GIFT_6',          '과학자 가운',  'OUTFIT', 15, 'outfit_scientist', true),
+  ('GIFT_7',          '가수',         'OUTFIT', 15, 'outfit_singer',    true),
+  ('GIFT_5',          '공룡 의상',    'OUTFIT', 15, 'outfit_dino',      true),
+  ('OUTFIT_STUDYING', '공부중',       'OUTFIT', 20, 'outfit_studying',  true)
+ON CONFLICT (item_code) DO UPDATE SET
+  name = EXCLUDED.name,
+  category = EXCLUDED.category,
+  price = EXCLUDED.price,
+  image_key = EXCLUDED.image_key,
+  is_active = EXCLUDED.is_active;

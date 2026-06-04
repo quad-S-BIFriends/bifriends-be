@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>BiFriends BE — ERD</title>
+  <style>
+    :root {
+      --bg: #eef2f6;
+      --card: #fff;
+      --text: #1a2332;
+      --muted: #5c6b7a;
+      --border: #c8d4e0;
+      --accent: #0969da;
+      --line: #1d4ed8;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: "Segoe UI", system-ui, sans-serif; background: var(--bg); color: var(--text); line-height: 1.5; }
+
+    .page-header {
+      background: var(--card);
+      border-bottom: 1px solid var(--border);
+      padding: 1rem 1.5rem;
+      position: sticky; top: 0; z-index: 20;
+    }
+    .page-header h1 { margin: 0; font-size: 1.35rem; }
+    .page-header p { margin: 0.3rem 0 0; color: var(--muted); font-size: 0.88rem; }
+
+    main { max-width: 1280px; margin: 0 auto; padding: 1.25rem 1.5rem 3rem; }
+
+    .section {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      margin-bottom: 1.5rem;
+      overflow: hidden;
+    }
+    .section-head {
+      padding: 0.85rem 1.15rem;
+      border-bottom: 1px solid var(--border);
+      background: #f8fafc;
+    }
+    .section-head h2 { margin: 0; font-size: 1.05rem; }
+    .section-head p { margin: 0.25rem 0 0; font-size: 0.82rem; color: var(--muted); }
+
+    .overview-body {
+      padding: 1rem;
+      overflow: auto;
+      max-height: min(70vh, 720px);
+      background: #fafbfc;
+    }
+    .overview-body svg { display: block; margin: 0 auto; min-width: 900px; }
+    .overview-body .entityBox { cursor: pointer; }
+    .overview-body .entityBox:hover { filter: brightness(0.92); }
+    .overview-body .entityBox.selected { stroke: var(--accent) !important; stroke-width: 3px !important; }
+    .overview-body .relationshipLine { stroke: var(--line) !important; stroke-width: 2px !important; opacity: 0.85; }
+
+    .browse-toolbar {
+      display: flex; flex-wrap: wrap; gap: 0.65rem; align-items: center;
+      padding: 1rem 1.15rem;
+      border-bottom: 1px solid var(--border);
+      background: #f8fafc;
+    }
+    .search-wrap { flex: 1; min-width: 200px; }
+    .search-wrap input {
+      width: 100%; padding: 0.55rem 0.75rem; border: 1px solid var(--border);
+      border-radius: 8px; font-size: 0.95rem;
+    }
+    .search-wrap input:focus { outline: 2px solid #93c5fd; border-color: var(--accent); }
+    .filter-chips { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+    .chip {
+      border: 1px solid var(--border); background: #fff; border-radius: 999px;
+      padding: 0.3rem 0.65rem; font-size: 0.78rem; cursor: pointer; white-space: nowrap;
+    }
+    .chip:hover { background: #eff6ff; }
+    .chip.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+    .result-count { font-size: 0.8rem; color: var(--muted); width: 100%; }
+
+    .table-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 0.55rem;
+      padding: 1rem 1.15rem;
+      border-bottom: 1px solid var(--border);
+      max-height: 280px;
+      overflow-y: auto;
+    }
+    .table-card {
+      text-align: left; border: 1px solid var(--border); border-radius: 8px;
+      padding: 0.55rem 0.65rem; background: #fff; cursor: pointer;
+      transition: border-color 0.12s, box-shadow 0.12s;
+    }
+    .table-card:hover { border-color: var(--accent); box-shadow: 0 2px 8px rgba(9,105,218,0.12); }
+    .table-card.active { border-color: var(--accent); background: #eff6ff; box-shadow: 0 0 0 2px #93c5fd; }
+    .table-card.hidden { display: none; }
+    .table-card code { font-size: 0.82rem; font-weight: 600; display: block; }
+    .table-card .card-label { font-size: 0.75rem; color: var(--muted); margin-top: 0.15rem; }
+    .table-card .card-domain {
+      display: inline-block; margin-top: 0.35rem; font-size: 0.68rem; font-weight: 600;
+      padding: 0.1rem 0.4rem; border-radius: 4px;
+    }
+
+    .detail-body { padding: 1.15rem 1.25rem 1.5rem; min-height: 200px; }
+    .detail-body h3 {
+      margin: 0 0 0.35rem; font-size: 1.25rem;
+      display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;
+    }
+    .badge { font-size: 0.72rem; padding: 0.15rem 0.45rem; border-radius: 4px; font-weight: 600; }
+    .purpose { color: var(--muted); margin: 0 0 0.85rem; }
+    .rel-list { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-bottom: 1rem; }
+    .rel-chip {
+      font-size: 0.78rem; padding: 0.2rem 0.5rem; border-radius: 999px;
+      background: #eff6ff; border: 1px solid #bfdbfe; cursor: pointer;
+    }
+    .rel-chip:hover { background: #dbeafe; }
+    .schema-table { width: 100%; border-collapse: collapse; font-size: 0.84rem; }
+    .schema-table th, .schema-table td { border: 1px solid var(--border); padding: 0.4rem 0.6rem; text-align: left; vertical-align: top; }
+    .schema-table th { background: #f6f8fa; }
+    .key { font-size: 0.68rem; padding: 0.08rem 0.3rem; border-radius: 3px; margin-right: 0.15rem; font-weight: 600; }
+    .key-pk { background: #fef3c7; color: #92400e; }
+    .key-fk { background: #dbeafe; color: #1e40af; }
+    .key-uk { background: #dcfce7; color: #166534; }
+    .notes { margin: 0.75rem 0 0; padding-left: 1.2rem; color: var(--muted); font-size: 0.84rem; }
+    .entity-path { margin-top: 0.65rem; font-size: 0.8rem; color: var(--muted); }
+    .empty { color: var(--muted); text-align: center; padding: 2.5rem 1rem; }
+    .loading { color: var(--muted); text-align: center; padding: 3rem; }
+    .err { color: #b91c1c; padding: 1rem; font-size: 0.9rem; }
+    .summary-box {
+      background: #f0f7ff; border: 1px solid #bfdbfe; border-radius: 10px;
+      padding: 0.85rem 1rem; margin-bottom: 1rem; font-size: 0.9rem;
+    }
+    .summary-box p { margin: 0.35rem 0 0; }
+    .summary-box p:first-child { margin-top: 0; }
+    .summary-box strong { color: #1e40af; }
+    .detail-block { margin-bottom: 1rem; }
+    .detail-block h4 { margin: 0 0 0.45rem; font-size: 0.92rem; color: var(--text); }
+    .col-heading { margin: 1rem 0 0.45rem; font-size: 0.92rem; }
+    .flow-list, .api-list { margin: 0; padding-left: 1.25rem; font-size: 0.86rem; color: var(--text); }
+    .api-list li { margin: 0.2rem 0; }
+    .enum-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; margin-top: 0.35rem; }
+    .enum-table th, .enum-table td { border: 1px solid var(--border); padding: 0.35rem 0.5rem; text-align: left; }
+    .enum-table th { background: #f6f8fa; }
+    .enum-type { font-weight: 400; color: var(--muted); font-size: 0.8rem; }
+    .enum-note { margin: 0 0 0.35rem; font-size: 0.8rem; color: var(--muted); }
+    .path-tree {
+      margin: 0; padding: 0.85rem 1rem; font-size: 0.8rem; line-height: 1.55;
+      background: #1e293b; color: #e2e8f0; border-radius: 0 0 0 0;
+      overflow-x: auto; font-family: ui-monospace, Consolas, monospace;
+    }
+    .path-tree .pg { color: #93c5fd; }
+    .path-tree .fs { color: #fcd34d; }
+    .path-tree .st { color: #86efac; }
+    .kind-badge { font-size: 0.68rem; padding: 0.12rem 0.4rem; border-radius: 4px; font-weight: 600; }
+    .kind-firestore { background: #ffedd5; color: #c2410c; }
+    .kind-storage { background: #dcfce7; color: #166534; }
+    .kind-auth { background: #ede9fe; color: #5b21b6; }
+    .link-pg-chip {
+      font-size: 0.78rem; padding: 0.2rem 0.5rem; border-radius: 999px;
+      background: #f0fdf4; border: 1px solid #86efac; cursor: pointer;
+    }
+    .link-pg-chip:hover { background: #dcfce7; }
+    .firebase-diagram-wrap { padding: 1rem; border-bottom: 1px solid var(--border); background: #fafbfc; }
+    .firebase-diagram-wrap svg { display: block; margin: 0 auto; max-width: 100%; }
+  </style>
+</head>
+<body>
+  <div class="page-header">
+    <h1>BiFriends BE — 데이터베이스 ERD</h1>
+    <p>PostgreSQL 19테이블 + Firebase(감정 학습) · 검색·카드 클릭으로 상세 설명</p>
+  </div>
+
+  <main>
+    <section class="section" id="section-overview">
+      <div class="section-head">
+        <h2>① 전체 관계도</h2>
+        <p>19개 PostgreSQL 테이블 FK 관계 (선으로 연결). 박스 클릭 시 아래 상세로 이동합니다.</p>
+      </div>
+      <div class="overview-body" id="overview-diagram">
+        <p class="loading">관계도 불러오는 중…</p>
+      </div>
+    </section>
+
+    <section class="section" id="section-detail">
+      <div class="section-head">
+        <h2>② 테이블 상세</h2>
+        <p>검색·기능 필터로 찾고, 카드를 클릭하면 역할·흐름·API·enum·컬럼 설명이 표시됩니다.</p>
+      </div>
+
+      <div class="browse-toolbar">
+        <div class="search-wrap">
+          <input type="search" id="search-input" placeholder="테이블명 (todos), 기능 (홈, 채팅, 상점, 레오…) 검색" autocomplete="off" />
+        </div>
+        <div class="filter-chips" id="domain-filters"></div>
+        <span class="result-count" id="result-count"></span>
+      </div>
+
+      <div class="table-grid" id="table-grid"></div>
+
+      <div class="detail-body" id="detail-panel">
+        <p class="empty">테이블 카드 또는 위 관계도의 박스를 클릭하세요.</p>
+      </div>
+    </section>
+
+    <section class="section" id="section-firebase">
+      <div class="section-head">
+        <h2>③ Firebase (PostgreSQL 밖)</h2>
+        <p>친구랑 감정 학습(Mind) — Firestore 세션 + Storage 이미지. <code>members.id</code> = <code>users/{memberId}</code></p>
+      </div>
+      <pre class="path-tree" id="firebase-path-tree">경로 트리 불러오는 중…</pre>
+      <div class="firebase-diagram-wrap" id="firebase-diagram">
+        <p class="loading">Firebase 연동도 불러오는 중…</p>
+      </div>
+      <div class="browse-toolbar">
+        <div class="search-wrap">
+          <input type="search" id="firebase-search-input" placeholder="Firestore, Storage, mind, 감정, fallback, 로그인…" autocomplete="off" />
+        </div>
+        <div class="filter-chips" id="firebase-kind-filters"></div>
+        <span class="result-count" id="firebase-result-count"></span>
+      </div>
+      <div class="table-grid" id="firebase-grid"></div>
+      <div class="detail-body" id="firebase-detail-panel">
+        <p class="empty">Firebase 카드를 클릭하면 경로·역할·필드·PostgreSQL 연결이 표시됩니다.</p>
+      </div>
+    </section>
+  </main>
+
+  <script src="erd-tables-enriched.js"></script>
+  <script src="erd-firebase-enriched.js"></script>
+  <script type="module">
+    const DOMAINS = {
+      member: { label: "회원", color: "#3b82f6" },
+      onboarding: { label: "온보딩", color: "#8b5cf6" },
+      home: { label: "홈·보상", color: "#22c55e" },
+      chat: { label: "채팅", color: "#f97316" },
+      learning: { label: "학습", color: "#14b8a6" },
+      shop: { label: "상점", color: "#ec4899" },
+      report: { label: "리포트", color: "#ef4444" },
+    };
+
+    const TABLES = window.ERD_TABLES;
+    if (!TABLES) {
+      console.error('ERD_TABLES missing: load erd-tables-enriched.js from the same folder as ERD.html');
+    }
+
+    const SEARCH_ALIASES = {
+      레오: "chat", 채팅: "chat", chat: "chat", 대화: "chat",
+      홈: "home", 할일: "home", 풀: "home", 보상: "home", todo: "home",
+      회원: "member", member: "member", 로그인: "member", google: "member",
+      온보딩: "onboarding", 선물: "onboarding", 관심사: "onboarding", pin: "onboarding",
+      학습: "learning", 수학: "learning", 국어: "learning", 문제: "learning",
+      상점: "shop", 의상: "shop", 구매: "shop", 착용: "shop", outfit: "shop",
+      리포트: "report", 안전: "report", 부모: "report", 주간: "report",
+    };
+
+    const FIREBASE_ITEMS = window.ERD_FIREBASE;
+    const FIREBASE_KINDS = {
+      all: { label: "전체", color: "#64748b" },
+      firestore: { label: "Firestore", color: "#ea580c" },
+      storage: { label: "Storage", color: "#16a34a" },
+      auth: { label: "Auth", color: "#7c3aed" },
+    };
+    const FIREBASE_SEARCH_ALIASES = {
+      firebase: "firestore", firestore: "firestore", 마음: "firestore", mind: "firestore",
+      감정: "firestore", mindsession: "firestore", 히스토리: "firestore", 세션: "firestore",
+      storage: "storage", 이미지: "storage", 만화: "storage", comic: "storage",
+      fallback: "storage", 폴백: "storage",
+      auth: "auth", 로그인: "auth", token: "auth", google: "auth",
+    };
+    const FIREBASE_PATH_TREE = `PostgreSQL  members.id  (bigint)
+    │
+    └── Firestore  users/{memberId}     ← memberId = members.id 문자열
+            └── mindSessions/{setId}   ← step4 완료 후만 저장
+
+Storage (같은 버킷)
+    ├── fallback/{감정}/step1.png …     ← AI 폴백 (사전 업로드)
+    └── mindSessions/{setId}/comic/*.png ← POST /mind/scenario 시 BE 업로드`;
+
+    let selectedTable = null;
+    let domainFilter = "all";
+    let selectedFirebase = null;
+    let firebaseKindFilter = "all";
+    let mermaidApi = null;
+
+    function buildFullDiagram() {
+      if (!TABLES) return "erDiagram";
+      const seen = new Set();
+      const lines = ["erDiagram"];
+      for (const [name, t] of Object.entries(TABLES)) {
+        for (const r of t.relations || []) {
+          if (!TABLES[r.to] || (r.card && r.card.includes(".."))) continue;
+          const key = [name, r.to].sort().join("-");
+          if (seen.has(key)) continue;
+          seen.add(key);
+          const card = r.card && !r.card.includes("..") ? r.card : "||--o{";
+          // Mermaid 11: 관계마다 ": 라벨" 필수 (없으면 Parse error)
+          lines.push(`    ${name} ${card} ${r.to} : rel`);
+        }
+      }
+      return lines.join("\n");
+    }
+
+    function searchBlob(name, t) {
+      const d = DOMAINS[t.domain];
+      const extra = [t.role, t.whenUsed, ...(t.flows || []), ...(t.apis || [])].filter(Boolean).join(" ");
+      return [name, t.label, t.purpose, extra, d.label, d.label.replace("·", " ")].join(" ").toLowerCase();
+    }
+
+    function matchesSearch(name, t, query) {
+      if (!query) return true;
+      const q = query.toLowerCase().trim();
+      if (!q) return true;
+      if (searchBlob(name, t).includes(q)) return true;
+      for (const [alias, dom] of Object.entries(SEARCH_ALIASES)) {
+        if (q.includes(alias) && t.domain === dom) return true;
+      }
+      return false;
+    }
+
+    function matchesDomain(name, t) {
+      if (domainFilter === "all") return true;
+      return t.domain === domainFilter;
+    }
+
+    function renderDomainFilters() {
+      const el = document.getElementById("domain-filters");
+      const chips = [{ id: "all", label: "전체" }];
+      for (const [id, d] of Object.entries(DOMAINS)) {
+        chips.push({ id, label: d.label });
+      }
+      el.innerHTML = chips
+        .map((c) => `<button type="button" class="chip${domainFilter === c.id ? " active" : ""}" data-domain="${c.id}">${c.label}</button>`)
+        .join("");
+      el.querySelectorAll(".chip").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          domainFilter = btn.dataset.domain;
+          renderDomainFilters();
+          renderTableGrid();
+        });
+      });
+    }
+
+    function renderTableGrid() {
+      const grid = document.getElementById("table-grid");
+      if (!TABLES) {
+        grid.innerHTML = "";
+        document.getElementById("result-count").textContent = "";
+        renderDetail(null);
+        return;
+      }
+      const query = document.getElementById("search-input").value;
+      let visible = 0;
+      const sorted = Object.keys(TABLES).sort();
+      grid.innerHTML = sorted
+        .map((name) => {
+          const t = TABLES[name];
+          const show = matchesSearch(name, t, query) && matchesDomain(name, t);
+          if (show) visible++;
+          const d = DOMAINS[t.domain];
+          return `<button type="button" class="table-card${show ? "" : " hidden"}${name === selectedTable ? " active" : ""}" data-table="${name}">
+            <code>${name}</code>
+            <span class="card-label">${t.label}</span>
+            <span class="card-domain" style="background:${d.color}18;color:${d.color}">${d.label}</span>
+          </button>`;
+        })
+        .join("");
+      document.getElementById("result-count").textContent = `${visible}개 테이블 표시 (총 ${sorted.length}개)`;
+      grid.querySelectorAll(".table-card:not(.hidden)").forEach((card) => {
+        card.addEventListener("click", () => selectTable(card.dataset.table, true));
+      });
+    }
+
+    function kindBadge(kind) {
+      const k = FIREBASE_KINDS[kind] || FIREBASE_KINDS.all;
+      return `<span class="kind-badge kind-${kind}">${k.label}</span>`;
+    }
+
+    function renderEnums(enums) {
+      if (!enums || !enums.length) return "";
+      return enums
+        .map((e) => {
+          const rows = (e.values || [])
+            .map((v) => `<tr><td><code>${v.v}</code></td><td>${v.d || ""}</td></tr>`)
+            .join("");
+          const note = e.note ? `<p class="enum-note">${e.note}</p>` : "";
+          const typeLabel = e.type ? `<span class="enum-type">(${e.type})</span>` : "";
+          return `<div class="detail-block">
+            <h4>정해진 값 · <code>${e.field}</code> ${typeLabel}</h4>
+            ${note}
+            <table class="enum-table"><thead><tr><th>코드</th><th>설명</th></tr></thead><tbody>${rows}</tbody></table>
+          </div>`;
+        })
+        .join("");
+    }
+
+    function renderDetail(name) {
+      const panel = document.getElementById("detail-panel");
+      if (!TABLES) {
+        panel.innerHTML = '<p class="err">테이블 데이터를 불러오지 못했습니다. <code>erd-tables-enriched.js</code>가 <code>ERD.html</code>과 같은 폴더에 있는지 확인하고, 로컬에서는 파일을 직접 열거나 간단한 HTTP 서버로 여세요.</p>';
+        return;
+      }
+      const t = TABLES[name];
+      if (!t) {
+        panel.innerHTML = '<p class="empty">테이블을 찾을 수 없습니다.</p>';
+        return;
+      }
+      const dom = DOMAINS[t.domain];
+      const relHtml = (t.relations || [])
+        .filter((r) => TABLES[r.to])
+        .map((r) => `<button type="button" class="rel-chip" data-jump="${r.to}"><code>${name}</code> → <code>${r.to}</code> (${r.label}) ${r.desc || ""}</button>`)
+        .join("");
+      const colRows = (t.columns || [])
+        .map((c) => {
+          const keys = (c.keys || []).map((k) => `<span class="key key-${k.toLowerCase()}">${k}</span>`).join("");
+          return `<tr><td><code>${c.name}</code> ${keys}</td><td>${c.type}</td><td>${c.desc || ""}</td></tr>`;
+        })
+        .join("");
+      const notes = (t.notes || []).map((n) => `<li>${n}</li>`).join("");
+      const flows = (t.flows || []).map((f) => `<li>${f}</li>`).join("");
+      const apis = (t.apis || []).map((a) => `<li>${a}</li>`).join("");
+
+      panel.innerHTML = `
+        <h3>
+          <code>${name}</code>
+          <span class="badge" style="background:${dom.color}22;color:${dom.color}">${dom.label}</span>
+          <span style="font-weight:400;color:var(--muted);font-size:0.95rem">${t.label}</span>
+        </h3>
+        <div class="summary-box">
+          <p><strong>한 줄 요약</strong> — ${t.purpose || ""}</p>
+          ${t.role ? `<p><strong>역할</strong> — ${t.role}</p>` : ""}
+          ${t.whenUsed ? `<p><strong>언제 쓰이나요</strong> — ${t.whenUsed}</p>` : ""}
+        </div>
+        ${flows ? `<div class="detail-block"><h4>데이터가 만들어지는 흐름</h4><ol class="flow-list">${flows}</ol></div>` : ""}
+        ${apis ? `<div class="detail-block"><h4>관련 API (백엔드)</h4><ul class="api-list">${apis}</ul></div>` : ""}
+        ${renderEnums(t.enums)}
+        ${relHtml ? `<div class="detail-block"><h4>연결된 테이블</h4><div class="rel-list">${relHtml}</div></div>` : ""}
+        <h4 class="col-heading">컬럼</h4>
+        <table class="schema-table">
+          <thead><tr><th>컬럼</th><th>타입</th><th>설명</th></tr></thead>
+          <tbody>${colRows}</tbody>
+        </table>
+        ${notes ? `<ul class="notes">${notes}</ul>` : ""}
+        ${t.entity ? `<div class="entity-path">엔티티: <code>src/main/kotlin/com/bifriends/${t.entity}</code></div>` : ""}
+      `;
+      panel.querySelectorAll("[data-jump]").forEach((btn) => {
+        btn.addEventListener("click", () => selectTable(btn.dataset.jump, true));
+      });
+    }
+
+    function bindOverviewClicks() {
+      const host = document.getElementById("overview-diagram");
+      host.querySelectorAll(".entityBox").forEach((box) => {
+        const text = box.querySelector(".entityLabel")?.textContent?.trim();
+        if (!text || !TABLES[text]) return;
+        box.addEventListener("click", () => selectTable(text, true));
+      });
+    }
+
+    function highlightOverview(name) {
+      document.getElementById("overview-diagram").querySelectorAll(".entityBox").forEach((box) => {
+        const text = box.querySelector(".entityLabel")?.textContent?.trim();
+        box.classList.toggle("selected", text === name);
+      });
+    }
+
+    function selectTable(name, scroll) {
+      if (!TABLES[name]) return;
+      selectedTable = name;
+      renderTableGrid();
+      renderDetail(name);
+      highlightOverview(name);
+      if (scroll) {
+        document.getElementById("section-detail").scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    }
+
+    function firebaseSearchBlob(name, t) {
+      const k = FIREBASE_KINDS[t.kind];
+      return [name, t.label, t.path, t.purpose, t.role, k?.label, ...(t.flows || []), ...(t.apis || [])].join(" ").toLowerCase();
+    }
+
+    function matchesFirebaseSearch(name, t, query) {
+      if (!query) return true;
+      const q = query.toLowerCase().trim();
+      if (!q) return true;
+      if (firebaseSearchBlob(name, t).includes(q)) return true;
+      for (const [alias, kind] of Object.entries(FIREBASE_SEARCH_ALIASES)) {
+        if (q.includes(alias) && t.kind === kind) return true;
+      }
+      return false;
+    }
+
+    function matchesFirebaseKind(name, t) {
+      if (firebaseKindFilter === "all") return true;
+      return t.kind === firebaseKindFilter;
+    }
+
+    function renderFirebaseKindFilters() {
+      const el = document.getElementById("firebase-kind-filters");
+      const chips = [{ id: "all", label: "전체" }];
+      for (const [id, k] of Object.entries(FIREBASE_KINDS)) {
+        if (id === "all") continue;
+        chips.push({ id, label: k.label });
+      }
+      el.innerHTML = chips
+        .map((c) => `<button type="button" class="chip${firebaseKindFilter === c.id ? " active" : ""}" data-fb-kind="${c.id}">${c.label}</button>`)
+        .join("");
+      el.querySelectorAll(".chip").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          firebaseKindFilter = btn.dataset.fbKind;
+          renderFirebaseKindFilters();
+          renderFirebaseGrid();
+        });
+      });
+    }
+
+    function renderFirebaseGrid() {
+      const grid = document.getElementById("firebase-grid");
+      if (!FIREBASE_ITEMS) {
+        grid.innerHTML = "";
+        document.getElementById("firebase-result-count").textContent = "";
+        renderFirebaseDetail(null);
+        return;
+      }
+      const query = document.getElementById("firebase-search-input").value;
+      let visible = 0;
+      const sorted = Object.keys(FIREBASE_ITEMS).sort();
+      grid.innerHTML = sorted
+        .map((name) => {
+          const t = FIREBASE_ITEMS[name];
+          const show = matchesFirebaseSearch(name, t, query) && matchesFirebaseKind(name, t);
+          if (show) visible++;
+          const k = FIREBASE_KINDS[t.kind] || FIREBASE_KINDS.all;
+          return `<button type="button" class="table-card${show ? "" : " hidden"}${name === selectedFirebase ? " active" : ""}" data-fb="${name}">
+            <code>${name}</code>
+            <span class="card-label">${t.label}</span>
+            <span class="card-domain" style="background:${k.color}18;color:${k.color}">${k.label}</span>
+          </button>`;
+        })
+        .join("");
+      document.getElementById("firebase-result-count").textContent =
+        `${visible}개 항목 표시 (총 ${sorted.length}개)`;
+      grid.querySelectorAll(".table-card:not(.hidden)").forEach((card) => {
+        card.addEventListener("click", () => selectFirebase(card.dataset.fb, true));
+      });
+    }
+
+    function renderFirebaseDetail(name) {
+      const panel = document.getElementById("firebase-detail-panel");
+      if (!FIREBASE_ITEMS) {
+        panel.innerHTML =
+          '<p class="err"><code>erd-firebase-enriched.js</code>를 불러오지 못했습니다. <code>ERD.html</code>과 같은 폴더에서 열어 주세요.</p>';
+        return;
+      }
+      const t = FIREBASE_ITEMS[name];
+      if (!t) {
+        panel.innerHTML = '<p class="empty">Firebase 항목을 찾을 수 없습니다.</p>';
+        return;
+      }
+      const relHtml = (t.relations || [])
+        .map((r) => {
+          if (r.target === "pg" && TABLES?.[r.to]) {
+            return `<button type="button" class="link-pg-chip" data-jump-pg="${r.to}">PostgreSQL <code>${r.to}</code> (${r.label}) ${r.desc || ""}</button>`;
+          }
+          if (FIREBASE_ITEMS[r.to]) {
+            return `<button type="button" class="rel-chip" data-jump-fb="${r.to}"><code>${name}</code> → <code>${r.to}</code> (${r.label}) ${r.desc || ""}</button>`;
+          }
+          return `<span class="rel-chip" style="cursor:default"><code>${name}</code> → <code>${r.to}</code> (${r.label})</span>`;
+        })
+        .join("");
+      const colRows = (t.columns || [])
+        .map((c) => {
+          const keys = (c.keys || []).map((k) => `<span class="key key-${k.toLowerCase()}">${k}</span>`).join("");
+          return `<tr><td><code>${c.name}</code> ${keys}</td><td>${c.type}</td><td>${c.desc || ""}</td></tr>`;
+        })
+        .join("");
+      const notes = (t.notes || []).map((n) => `<li>${n}</li>`).join("");
+      const flows = (t.flows || []).map((f) => `<li>${f}</li>`).join("");
+      const apis = (t.apis || []).map((a) => `<li>${a}</li>`).join("");
+
+      panel.innerHTML = `
+        <h3>
+          ${kindBadge(t.kind)}
+          <code>${name}</code>
+          <span style="font-weight:400;color:var(--muted);font-size:0.95rem">${t.label}</span>
+        </h3>
+        <p class="purpose"><strong>경로</strong> — <code>${t.path || ""}</code></p>
+        <div class="summary-box">
+          <p><strong>한 줄 요약</strong> — ${t.purpose || ""}</p>
+          ${t.role ? `<p><strong>역할</strong> — ${t.role}</p>` : ""}
+          ${t.whenUsed ? `<p><strong>언제 쓰이나요</strong> — ${t.whenUsed}</p>` : ""}
+        </div>
+        ${flows ? `<div class="detail-block"><h4>데이터가 만들어지는 흐름</h4><ol class="flow-list">${flows}</ol></div>` : ""}
+        ${apis ? `<div class="detail-block"><h4>관련 API (백엔드)</h4><ul class="api-list">${apis}</ul></div>` : ""}
+        ${renderEnums(t.enums)}
+        ${relHtml ? `<div class="detail-block"><h4>연결</h4><div class="rel-list">${relHtml}</div></div>` : ""}
+        <h4 class="col-heading">필드 · 설정</h4>
+        <table class="schema-table">
+          <thead><tr><th>이름</th><th>타입</th><th>설명</th></tr></thead>
+          <tbody>${colRows}</tbody>
+        </table>
+        ${notes ? `<ul class="notes">${notes}</ul>` : ""}
+        ${t.entity ? `<div class="entity-path">코드: <code>src/main/kotlin/com/bifriends/${t.entity}</code></div>` : ""}
+      `;
+      panel.querySelectorAll("[data-jump-fb]").forEach((btn) => {
+        btn.addEventListener("click", () => selectFirebase(btn.dataset.jumpFb, true));
+      });
+      panel.querySelectorAll("[data-jump-pg]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          selectTable(btn.dataset.jumpPg, true);
+        });
+      });
+    }
+
+    function selectFirebase(name, scroll) {
+      if (!FIREBASE_ITEMS?.[name]) return;
+      selectedFirebase = name;
+      renderFirebaseGrid();
+      renderFirebaseDetail(name);
+      if (scroll) {
+        document.getElementById("section-firebase").scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    }
+
+    async function renderFirebaseOverview() {
+      const host = document.getElementById("firebase-diagram");
+      if (!mermaidApi) return;
+      const source = `flowchart LR
+  members[(PostgreSQL members)]
+  users[Firestore users/memberId]
+  ms[mindSessions/setId]
+  fb[fallback/감정/]
+  comic[mindSessions/setId/comic/]
+  members -->|"id 문자열"| users
+  users --> ms
+  ms -.->|"step3 imageUrl"| comic
+  fb -.->|"isFallback"| ms`;
+      try {
+        const { svg } = await mermaidApi.render("firebase-flow", source);
+        host.innerHTML = svg;
+      } catch (e) {
+        host.innerHTML = `<p class="err">Firebase 연동도 오류: ${e.message}</p>`;
+      }
+    }
+
+    function initFirebaseSection() {
+      document.getElementById("firebase-path-tree").textContent = FIREBASE_PATH_TREE;
+      if (!FIREBASE_ITEMS) {
+        document.getElementById("firebase-diagram").innerHTML =
+          '<p class="err"><code>erd-firebase-enriched.js</code>가 필요합니다.</p>';
+        renderFirebaseDetail(null);
+        return;
+      }
+      renderFirebaseKindFilters();
+      renderFirebaseGrid();
+      renderFirebaseOverview();
+    }
+
+    async function renderOverview() {
+      const host = document.getElementById("overview-diagram");
+      const source = buildFullDiagram();
+      try {
+        const { svg } = await mermaidApi.render("overview-erd", source);
+        host.innerHTML = svg;
+        bindOverviewClicks();
+        if (selectedTable) highlightOverview(selectedTable);
+      } catch (e) {
+        host.innerHTML = `<p class="err">관계도 오류: ${e.message}</p>`;
+      }
+    }
+
+    import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
+    mermaid.initialize({
+      startOnLoad: false,
+      theme: "base",
+      themeVariables: {
+        primaryColor: "#e0f2fe",
+        primaryBorderColor: "#1d4ed8",
+        primaryTextColor: "#0f172a",
+        lineColor: "#1d4ed8",
+        fontSize: "13px",
+      },
+      er: { layoutDirection: "TB", minEntityWidth: 100, entityPadding: 10, diagramPadding: 16 },
+    });
+    mermaidApi = mermaid;
+
+    document.getElementById("search-input").addEventListener("input", renderTableGrid);
+    document.getElementById("firebase-search-input").addEventListener("input", renderFirebaseGrid);
+
+    if (!TABLES) {
+      document.getElementById("overview-diagram").innerHTML =
+        '<p class="err">관계도를 그리려면 <code>erd-tables-enriched.js</code>가 필요합니다. <code>bifriends-be/doc/</code>에서 ERD.html을 열거나, 해당 폴더에서 <code>npx serve .</code> 등으로 여세요.</p>';
+      renderDetail(null);
+    } else {
+      renderDomainFilters();
+      renderTableGrid();
+      renderOverview();
+    }
+    initFirebaseSection();
+  </script>
+</body>
+</html>

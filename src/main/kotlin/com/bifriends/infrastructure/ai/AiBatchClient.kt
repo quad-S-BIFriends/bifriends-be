@@ -1,5 +1,7 @@
 package com.bifriends.infrastructure.ai
 
+import com.bifriends.infrastructure.ai.dto.AiBatchWeeklyReportRequest
+import com.bifriends.infrastructure.ai.dto.AiBatchWeeklyReportResponse
 import com.bifriends.infrastructure.ai.dto.AiBatchWeeklySafetyRequest
 import com.bifriends.infrastructure.ai.dto.AiBatchWeeklySafetyResponse
 import org.slf4j.LoggerFactory
@@ -36,7 +38,7 @@ class AiBatchClient(
         return try {
             restClient.post()
                 .uri(properties.batchWeeklySafetyPath)
-                .body(request)
+                .postJson(request)
                 .retrieve()
                 .body(AiBatchWeeklySafetyResponse::class.java)
             log.info(
@@ -48,6 +50,38 @@ class AiBatchClient(
             log.error(
                 "[AiBatchClient] 배치 트리거 실패 (memberId={}, weekStart={})",
                 request.memberId, request.weekStart, e
+            )
+            false
+        }
+    }
+
+    /**
+     * 특정 회원의 주간 성장 리포트(부모용) 배치를 AI에 트리거한다.
+     */
+    fun triggerWeeklyReport(request: AiBatchWeeklyReportRequest): Boolean {
+        if (!properties.enabled) {
+            log.info(
+                "[AiBatchClient] AI 연동 비활성화 — 성장 리포트 배치 스킵 (memberId={}, weekStart={})",
+                request.memberId, request.weekStart,
+            )
+            return false
+        }
+
+        return try {
+            restClient.post()
+                .uri(properties.batchWeeklyReportPath)
+                .postJson(request)
+                .retrieve()
+                .body(AiBatchWeeklyReportResponse::class.java)
+            log.info(
+                "[AiBatchClient] 성장 리포트 배치 트리거 성공 (memberId={}, weekStart={})",
+                request.memberId, request.weekStart,
+            )
+            true
+        } catch (e: Exception) {
+            log.error(
+                "[AiBatchClient] 성장 리포트 배치 트리거 실패 (memberId={}, weekStart={})",
+                request.memberId, request.weekStart, e,
             )
             false
         }

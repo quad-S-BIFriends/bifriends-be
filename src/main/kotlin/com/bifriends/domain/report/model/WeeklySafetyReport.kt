@@ -8,7 +8,7 @@ import java.time.LocalDateTime
 /**
  * 주간 채팅 안전 신호 (AI 배치 결과)
  *
- * 매주 금요일 저녁 AI 서버가 배치로 분석:
+ * 매주 월요일 01:00 KST BE 스케줄러가 AI 배치를 트리거해 분석:
  *   1. chat_messages 전체 조회
  *   2. 키워드 카운팅 (Python, Gemini 호출 없음)
  *   3. 점수 계산 → GREEN / YELLOW / RED 판정

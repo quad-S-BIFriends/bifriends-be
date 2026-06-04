@@ -18,15 +18,33 @@ data class AiBatchWeeklySafetyRequest(
     @JsonProperty("week_start")
     val weekStart: LocalDate,
 
-    /** 분석 주간 종료일 (금요일, KST) */
+    /** 분석 주간 종료일 (일요일, KST — 직전 완료 주) */
+    @JsonProperty("week_end")
+    val weekEnd: LocalDate,
+)
+
+/**
+ * BE 스케줄러 → AI 주간 성장 리포트(부모용) 배치 트리거 요청 (1인당 1건)
+ *
+ * AI는 [memberId]의 [weekStart] ~ [weekEnd] 데이터를 집계·생성 후
+ * POST /api/v1/weekly-report 로 결과를 콜백한다.
+ */
+data class AiBatchWeeklyReportRequest(
+    @JsonProperty("member_id")
+    val memberId: Long,
+
+    @JsonProperty("week_start")
+    val weekStart: LocalDate,
+
     @JsonProperty("week_end")
     val weekEnd: LocalDate,
 )
 
 /** AI 배치 트리거 응답 */
 data class AiBatchWeeklySafetyResponse(
-    /** 배치 접수 여부 */
     val accepted: Boolean = true,
-    /** AI 측 처리 메시지 (선택) */
     val message: String? = null,
 )
+
+/** 주간 성장 리포트 배치 트리거 응답 (안전 배치와 동일 형식) */
+typealias AiBatchWeeklyReportResponse = AiBatchWeeklySafetyResponse

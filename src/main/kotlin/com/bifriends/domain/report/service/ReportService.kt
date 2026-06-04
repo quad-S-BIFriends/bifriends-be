@@ -71,6 +71,8 @@ class ReportService(
         val toDateTime = to.atTime(23, 59, 59)
 
         return LearningSummaryResponse(
+            weekStart = from,
+            weekEnd = to,
             math = aggregateLearningSummary(memberId, LearningSubject.MATH, fromDateTime, toDateTime),
             korean = aggregateLearningSummary(memberId, LearningSubject.KOREAN, fromDateTime, toDateTime),
             todos = TodoSummaryResponse(

@@ -91,10 +91,7 @@ class HomeService(
             attendance = attendanceResult,
             todos = todos,
             equippedItems = EquippedItemsResponse(
-                hatId = member.equippedHatId,
-                glassesId = member.equippedGlassesId,
-                clothesId = member.equippedClothesId,
-                backgroundId = member.equippedBackgroundId,
+                outfitCode = member.equippedOutfitCode,
             ),
         )
     }

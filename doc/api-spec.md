@@ -223,7 +223,7 @@ Base path: `/api/v1/onboarding` · **JWT 필수**
 |-------|------|----------|-------------|
 | `itemType` | ItemType | O | 선택한 아이템 |
 
-`ItemType` 가능 값: `GIFT_1`, `GIFT_2`, `GIFT_3`, `GIFT_4`
+`ItemType` (= 상점 `itemCode`): `GIFT_1`(책), `GIFT_2`(리본), `GIFT_3`(꽃다발), `GIFT_4`(선글라스)
 
 ```json
 { "itemType": "GIFT_2" }
@@ -533,16 +533,13 @@ Base path: `/api/v1/members` · **JWT 필수**
 | `attendance.streakDays` | int | 연속 출석 일수 |
 | `attendance.reward` | RewardResult \| null | 지급된 보상 (이미 처리됐으면 null) |
 | `todos` | array\<TodoResponse\> | 오늘의 할 일 목록 |
-| `equippedItems` | EquippedItemsResponse | 상점 코스메틱 착용 현황 (카테고리별 `shop_item.id`) |
+| `equippedItems` | EquippedItemsResponse | 착용 중인 전체 의상 (`itemCode`) |
 
 `EquippedItemsResponse` 필드:
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `hatId` | long \| null | 착용 중인 모자 ID |
-| `glassesId` | long \| null | 착용 중인 안경 ID |
-| `clothesId` | long \| null | 착용 중인 옷 ID |
-| `backgroundId` | long \| null | 착용 중인 배경 ID |
+| `outfitCode` | string \| null | 착용 중 의상 코드 (예: `GIFT_3`, `OUTFIT_DEFAULT`) |
 
 `TodoResponse` 필드:
 
@@ -588,10 +585,7 @@ Base path: `/api/v1/members` · **JWT 필수**
       "source": "SYSTEM", "learningType": null, "assignedDate": "2026-06-01" }
   ],
   "equippedItems": {
-    "hatId": 1,
-    "glassesId": null,
-    "clothesId": 3,
-    "backgroundId": 5
+    "outfitCode": "GIFT_3"
   }
 }
 ```
@@ -602,14 +596,33 @@ Base path: `/api/v1/members` · **JWT 필수**
 
 Base path: `/api/v1/shop` · **JWT 필수** · 기능명세 **HOM-09**
 
-레오 꾸미기 **상점** — 풀을 사용해 코스메틱 아이템을 구매·착용합니다.
+레오 **전체 의상** 프리셋을 풀로 구매·착용합니다. FE 연동 ID는 **`itemCode`** (고정 문자열)를 사용합니다.
 
-| 구분 | 획득 방법 | 보유·표시 | 대표/착용 |
-|------|-----------|-----------|-----------|
-| 온보딩 선물 `GIFT_1`~`GIFT_4` | `POST /onboarding/gift` | `GET /members/me` → `items` | `PATCH /members/me/representative-item` |
-| 상점 코스메틱 | `POST /shop/items/{itemId}/purchase` | `GET /shop/my-items` | `PATCH /shop/items/{itemId}/equip` · 홈 `equippedItems` |
+| 구분 | 획득 방법 | 보유 판정 | 착용 |
+|------|-----------|-----------|------|
+| 기본 의상 `OUTFIT_DEFAULT` | 항상 보유 (0풀) | `owned: true` | `PATCH .../equip` |
+| 온보딩 선물 `GIFT_1`~`GIFT_4` | `POST /onboarding/gift` | 상점 목록에서도 `owned: true` | 동일 |
+| 그 외 의상 | `POST /shop/items/{itemCode}/purchase` | 구매 후 `owned: true` | 동일 |
 
-`ShopItemCategory`: `HAT` \| `GLASSES` \| `CLOTHES` \| `BACKGROUND`
+`ShopItemCategory`: `OUTFIT` (전체 의상만 노출)
+
+### 의상 카탈로그 (`itemCode` · 가격)
+
+| itemCode | 이름 | 풀 | 온보딩 선물 |
+|----------|------|-----|-------------|
+| `OUTFIT_DEFAULT` | 기본 | 0 | |
+| `GIFT_3` | 꽃다발 | 5 | O |
+| `GIFT_1` | 책 | 5 | O |
+| `GIFT_4` | 선글라스 | 10 | O |
+| `GIFT_2` | 리본 | 10 | O |
+| `GIFT_6` | 과학자 가운 | 15 | |
+| `GIFT_7` | 가수 | 15 | |
+| `GIFT_5` | 공룡 의상 | 15 | |
+| `OUTFIT_STUDYING` | 공부중 | 20 | |
+
+온보딩 매핑: `GIFT_1`=책, `GIFT_2`=리본, `GIFT_3`=꽃다발, `GIFT_4`=선글라스
+
+> 대표 아이템(나의 보물)은 `PATCH /members/me/representative-item` (`ItemType`) — 상점 착용과 별도.
 
 ---
 
@@ -617,154 +630,75 @@ Base path: `/api/v1/shop` · **JWT 필수** · 기능명세 **HOM-09**
 
 **GET** `/api/v1/shop/items`
 
-판매 중(`isActive=true`) 아이템 전체와, 회원별 **이미 구매 여부**(`owned`)를 반환합니다.
-
 **Response** `200 OK`
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `availablePool` | int | 현재 보유 풀 (구매 가능 여부 판단용) |
-| `items` | array\<ShopItemResponse\> | 상점 아이템 목록 |
+| `availablePool` | int | 현재 보유 풀 |
+| `items` | array | 의상 목록 (`category` = `OUTFIT`) |
 
-`ShopItemResponse` 필드:
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `id` | long | 아이템 ID |
-| `name` | string | 아이템 이름 |
-| `category` | ShopItemCategory | 카테고리 |
-| `price` | int | 구매 가격 (풀) |
-| `imageKey` | string | FE 에셋 로드 키 (예: `hat_cap_blue`) |
-| `owned` | boolean | 이미 구매했으면 `true` |
+`ShopItemResponse`: `{ itemCode, name, category, price, imageKey, owned }`
 
 ```json
 {
   "availablePool": 12,
   "items": [
-    { "id": 1, "name": "파란 모자", "category": "HAT", "price": 5, "imageKey": "hat_cap_blue", "owned": false },
-    { "id": 3, "name": "우주 배경", "category": "BACKGROUND", "price": 30, "imageKey": "background_space", "owned": true }
+    { "itemCode": "OUTFIT_DEFAULT", "name": "기본", "category": "OUTFIT", "price": 0, "imageKey": "outfit_default", "owned": true },
+    { "itemCode": "GIFT_3", "name": "꽃다발", "category": "OUTFIT", "price": 5, "imageKey": "outfit_flower", "owned": true },
+    { "itemCode": "GIFT_5", "name": "공룡 의상", "category": "OUTFIT", "price": 15, "imageKey": "outfit_dino", "owned": false }
   ]
 }
 ```
 
 ---
 
-### 7-2. 나의 서랍 — 보유 아이템 + 착용 현황
+### 7-2. 나의 서랍
 
 **GET** `/api/v1/shop/my-items`
 
-구매한 코스메틱 목록과 카테고리별 **현재 착용 ID**를 반환합니다.
-
-**Response** `200 OK`
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `items` | array\<OwnedShopItemResponse\> | 보유 아이템 목록 |
-| `equipped` | EquippedItemsResponse | 착용 중인 아이템 ID (홈 `equippedItems`와 동일 구조) |
-
-`OwnedShopItemResponse` 필드:
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `id` | long | 아이템 ID |
-| `name` | string | 아이템 이름 |
-| `category` | ShopItemCategory | 카테고리 |
-| `imageKey` | string | FE 에셋 키 |
-| `acquiredAt` | string (datetime) | 구매 시각 |
+보유 의상(기본·온보딩·구매) + 착용 코드.
 
 ```json
 {
   "items": [
-    { "id": 3, "name": "우주 배경", "category": "BACKGROUND", "imageKey": "background_space", "acquiredAt": "2026-06-01T15:30:00" }
+    { "itemCode": "OUTFIT_DEFAULT", "name": "기본", "category": "OUTFIT", "imageKey": "outfit_default", "acquiredAt": null },
+    { "itemCode": "GIFT_3", "name": "꽃다발", "category": "OUTFIT", "imageKey": "outfit_flower", "acquiredAt": null }
   ],
-  "equipped": { "hatId": 1, "glassesId": null, "clothesId": null, "backgroundId": 3 }
+  "equipped": { "outfitCode": "GIFT_3" }
 }
 ```
 
 ---
 
-### 7-3. 아이템 구매 (HOM-09-03/04)
+### 7-3. 아이템 구매
 
-**POST** `/api/v1/shop/items/{itemId}/purchase`
+**POST** `/api/v1/shop/items/{itemCode}/purchase`
 
-| Path | Type | Description |
-|------|------|-------------|
-| `itemId` | long | 구매할 상점 아이템 ID |
+- `price` > 0 만 구매 가능 (`OUTFIT_DEFAULT` 구매 불가)
+- 온보딩 선물·이미 구매한 `itemCode`는 거부
 
-- 보유 풀에서 `price`만큼 차감
-- `member_shop_items`에 소유 이력 저장 (동일 아이템 중복 구매 불가)
-- 자동 착용은 **하지 않음** — 구매 후 `7-4` 착용 API 호출
-
-**Response** `200 OK`
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `itemId` | long | 구매한 아이템 ID |
-| `itemName` | string | 아이템 이름 |
-| `category` | ShopItemCategory | 카테고리 |
-| `imageKey` | string | FE 에셋 키 |
-| `remainingPool` | int | 구매 후 남은 풀 |
-| `acquiredAt` | string (datetime) | 구매 시각 |
-
-```json
-{
-  "itemId": 1,
-  "itemName": "파란 모자",
-  "category": "HAT",
-  "imageKey": "hat_cap_blue",
-  "remainingPool": 7,
-  "acquiredAt": "2026-06-01T16:00:00"
-}
-```
-
-**에러** `400`
-
-| 상황 | 메시지 예시 |
-|------|-------------|
-| 이미 보유 | `이미 보유한 아이템입니다.` |
-| 풀 부족 | `풀이 부족합니다. 현재 availablePool=..., 필요=...` |
-| 비활성 아이템 | `현재 판매 중인 아이템이 아닙니다.` |
+**Response**: `{ itemCode, itemName, category, imageKey, remainingPool, acquiredAt }`
 
 ---
 
-### 7-4. 아이템 착용 (HOM-09-05)
+### 7-4. 아이템 착용
 
-**PATCH** `/api/v1/shop/items/{itemId}/equip`
+**PATCH** `/api/v1/shop/items/{itemCode}/equip`
 
-| Path | Type | Description |
-|------|------|-------------|
-| `itemId` | long | 착용할 아이템 ID (반드시 보유 중) |
-
-카테고리에 맞는 슬롯(`hatId` / `glassesId` / `clothesId` / `backgroundId`)에 저장됩니다. 같은 카테고리에 다른 아이템을 착용하면 **덮어씁니다**.
-
-**Response** `200 OK`
+보유한 의상만 착용. 홈 `equippedItems.outfitCode`와 동기화.
 
 ```json
-{
-  "equipped": { "hatId": 1, "glassesId": null, "clothesId": null, "backgroundId": null }
-}
+{ "equipped": { "outfitCode": "GIFT_5" } }
 ```
-
-**에러** `400` — `보유하지 않은 아이템입니다.`
 
 ---
 
-### 7-5. 아이템 해제 (카테고리 단위)
+### 7-5. 착용 해제
 
-**DELETE** `/api/v1/shop/items/{category}/equip`
-
-| Path | Type | Description |
-|------|------|-------------|
-| `category` | ShopItemCategory | 해제할 슬롯 (`HAT`, `GLASSES`, `CLOTHES`, `BACKGROUND`) |
-
-해당 카테고리 착용 ID를 `null`로 설정합니다.
-
-**Response** `200 OK`
+**DELETE** `/api/v1/shop/items/equip`
 
 ```json
-{
-  "equipped": { "hatId": null, "glassesId": null, "clothesId": null, "backgroundId": 3 }
-}
+{ "equipped": { "outfitCode": null } }
 ```
 
 ---
@@ -1420,21 +1354,84 @@ Base path: `/api/v1/mind` · **JWT 필수**
 
 ---
 
-### 13-11. 주간 안전 보고서 배치 트리거 (BE → AI)
+### 13-11. 학습 리포트 집계 (AI → BE)
 
-> **BE 내부 동작 — 외부 노출 없음**
+**GET** `/api/v1/report/learning-summary` · **X-Internal-Service 인증**
 
-매주 금요일 18:00 KST에 온보딩 완료 회원 1인당 1건씩 AI에 호출.
+주간 성장 리포트 생성 전, 해당 주간의 학습·할 일 집계를 조회합니다.
 
-**AI 엔드포인트**: `POST /api/v1/ai/batch/weekly-safety`
+> **주간 범위**: `week_start` / `week_end`는 **AI가 정한 기간**을 사용합니다.  
+> BE는 `weekly-report`·`weekly-safety-report` 콜백의 날짜를 그대로 저장하며, 별도로 주를 재계산하지 않습니다.  
+> 이 API도 AI가 정한 `from`·`to`(보통 콜백과 동일한 `week_start`·`week_end`)를 쿼리로 넘기면, 응답 `weekStart`·`weekEnd`에 **실제 집계에 쓴 inclusive 범위**(`yyyy-MM-dd`)를 돌려줍니다.
+
+#### Query
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `memberId` | long | O | 회원 ID |
+| `from` | string (date) | O | 집계 시작일 (`yyyy-MM-dd`, inclusive) |
+| `to` | string (date) | O | 집계 종료일 (`yyyy-MM-dd`, inclusive) |
+
+- `from`이 `to`보다 늦으면 **400**
+
+#### Response `200 OK`
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `weekStart` | string (date) | 집계 시작일 (`yyyy-MM-dd`) |
+| `weekEnd` | string (date) | 집계 종료일 (`yyyy-MM-dd`) |
+| `math` | array | 수학 개념별 집계 |
+| `korean` | array | 국어 개념별 집계 |
+| `todos` | object | 할 일 배정·완료 건수 |
+
+`math` / `korean` 항목: `{ concept, solved, avg_attempts, avg_hints }`  
+`todos`: `{ assigned, completed }`
 
 ```json
-{ "member_id": 1, "week_start": "2026-05-25", "week_end": "2026-05-29" }
+{
+  "weekStart": "2026-05-26",
+  "weekEnd": "2026-06-01",
+  "math": [
+    { "concept": "받아올림 없는 세 자리 덧셈", "solved": 5, "avg_attempts": 1.2, "avg_hints": 0.4 }
+  ],
+  "korean": [
+    { "concept": "낱말 익히기", "solved": 3, "avg_attempts": 2.0, "avg_hints": 1.7 }
+  ],
+  "todos": { "assigned": 15, "completed": 12 }
+}
 ```
 
 ---
 
-### 13-12. 주간 안전 보고서 수신 (AI → BE 콜백)
+### 13-12. 주간 배치 트리거 (BE → AI)
+
+> **BE 내부 동작 — 외부 노출 없음**  
+> 매주 **월요일 01:00 KST**에 온보딩 완료 회원 1인당 1건씩 AI에 호출.  
+> 집계 주간은 **직전 완료 주(월~일)** (`week_start`=그 주 월요일, `week_end`=그 주 일요일).
+
+#### 13-12-1. 주간 안전 보고서
+
+**AI 엔드포인트**: `POST /api/v1/ai/batch/weekly-safety`
+
+콜백: `POST /api/v1/weekly-safety-report`
+
+#### 13-12-2. 주간 성장 리포트 (부모용)
+
+**AI 엔드포인트**: `POST /api/v1/ai/report/weekly`
+
+콜백: `POST /api/v1/weekly-report`
+
+#### Request (공통, snake_case)
+
+```json
+{ "member_id": 1, "week_start": "2026-05-26", "week_end": "2026-06-01" }
+```
+
+> `AI_SERVICE_ENABLED=true`일 때만 실제 호출. 로컬 기본값은 `false`.
+
+---
+
+### 13-13. 주간 안전 보고서 수신 (AI → BE 콜백)
 
 **POST** `/api/v1/weekly-safety-report` · **X-Internal-Service 인증**
 
@@ -1468,7 +1465,7 @@ Base path: `/api/v1/mind` · **JWT 필수**
 
 ---
 
-### 13-13. 주간 성장 리포트 수신 (AI → BE 콜백)
+### 13-14. 주간 성장 리포트 수신 (AI → BE 콜백)
 
 **POST** `/api/v1/weekly-report` · **X-Internal-Service 인증**
 

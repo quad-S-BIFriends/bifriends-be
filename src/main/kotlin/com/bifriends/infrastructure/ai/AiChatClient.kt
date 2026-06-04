@@ -17,7 +17,7 @@ class AiChatClient(
         }
         return restClient.post()
             .uri(properties.chatPath)
-            .body(request)
+            .postJson(request)
             .retrieve()
             .body(AiChatResponse::class.java)
             ?: throw IllegalStateException("AI 채팅 응답이 비어 있습니다.")

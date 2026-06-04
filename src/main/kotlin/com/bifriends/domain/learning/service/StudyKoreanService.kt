@@ -4,6 +4,7 @@ import com.bifriends.domain.member.model.Member
 import com.bifriends.domain.member.repository.MemberRepository
 import com.bifriends.domain.learning.dto.*
 import com.bifriends.domain.learning.model.KoreanStep
+import com.bifriends.domain.learning.model.LearningSubject
 import com.bifriends.domain.learning.model.StepStatus
 import com.bifriends.domain.learning.model.UserKoreanProgress
 import com.bifriends.domain.learning.repository.KoreanStepRepository
@@ -22,6 +23,7 @@ class StudyKoreanService(
     private val memberRepository: MemberRepository,
     private val koreanStepRepository: KoreanStepRepository,
     private val userKoreanProgressRepository: UserKoreanProgressRepository,
+    private val learningAttemptService: LearningAttemptService,
 ) {
 
     // ───────────────────────────────────────────────────────────
@@ -146,6 +148,7 @@ class StudyKoreanService(
     // 4-4. 답안 검증 (Cycle 2~5)
     // ───────────────────────────────────────────────────────────
 
+    @Transactional
     fun validateAnswer(
         memberId: Long,
         stepId: Long,
@@ -165,6 +168,17 @@ class StudyKoreanService(
             ?: throw IllegalStateException("answer 필드가 없습니다. stepId=$stepId, cycle=$cycleNumber, q=$questionIndex")
 
         val isCorrect = correctAnswer.trim() == request.answer.trim()
+
+        learningAttemptService.recordValidation(
+            memberId = memberId,
+            subject = LearningSubject.KOREAN,
+            concept = step.concept,
+            stepId = stepId,
+            cycleNumber = cycleNumber,
+            questionIndex = questionIndex,
+            isCorrect = isCorrect,
+            hintsUsed = request.hintsUsed,
+        )
 
         return KoreanValidateAnswerResponse(correct = isCorrect)
     }
