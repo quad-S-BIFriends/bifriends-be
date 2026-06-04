@@ -38,7 +38,7 @@ class AiBatchClient(
         return try {
             restClient.post()
                 .uri(properties.batchWeeklySafetyPath)
-                .body(request)
+                .postJson(request)
                 .retrieve()
                 .body(AiBatchWeeklySafetyResponse::class.java)
             log.info(
@@ -70,7 +70,7 @@ class AiBatchClient(
         return try {
             restClient.post()
                 .uri(properties.batchWeeklyReportPath)
-                .body(request)
+                .postJson(request)
                 .retrieve()
                 .body(AiBatchWeeklyReportResponse::class.java)
             log.info(

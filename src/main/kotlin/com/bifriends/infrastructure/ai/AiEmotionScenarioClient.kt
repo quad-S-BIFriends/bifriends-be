@@ -45,7 +45,7 @@ class AiEmotionScenarioClient(
 
         return restClient.post()
             .uri(properties.emotionScenarioPath)
-            .body(request)
+            .postJson(request)
             .retrieve()
             .body(AiEmotionScenarioResponse::class.java)
             ?: throw IllegalStateException("AI 감정 시나리오 응답이 비어 있습니다.")
