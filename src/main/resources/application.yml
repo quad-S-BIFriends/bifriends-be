@@ -108,4 +108,5 @@ ai:
     base-url: ${AI_SERVICE_BASE_URL:http://bifriends-ai:8001}
     chat-path: ${AI_CHAT_PATH:/v1/ai/chat}
     batch-weekly-safety-path: ${AI_BATCH_WEEKLY_SAFETY_PATH:/api/v1/ai/batch/weekly-safety}
+    batch-weekly-report-path: ${AI_BATCH_WEEKLY_REPORT_PATH:/api/v1/ai/report/weekly}
     emotion-scenario-path: ${AI_EMOTION_SCENARIO_PATH:/api/v1/ai/content/scenario}

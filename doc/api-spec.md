@@ -1469,17 +1469,31 @@ Base path: `/api/v1/mind` · **JWT 필수**
 
 ---
 
-### 13-12. 주간 안전 보고서 배치 트리거 (BE → AI)
+### 13-12. 주간 배치 트리거 (BE → AI)
 
-> **BE 내부 동작 — 외부 노출 없음**
+> **BE 내부 동작 — 외부 노출 없음**  
+> 매주 **월요일 01:00 KST**에 온보딩 완료 회원 1인당 1건씩 AI에 호출.  
+> 집계 주간은 **직전 완료 주(월~일)** (`week_start`=그 주 월요일, `week_end`=그 주 일요일).
 
-매주 금요일 18:00 KST에 온보딩 완료 회원 1인당 1건씩 AI에 호출.
+#### 13-12-1. 주간 안전 보고서
 
 **AI 엔드포인트**: `POST /api/v1/ai/batch/weekly-safety`
 
+콜백: `POST /api/v1/weekly-safety-report`
+
+#### 13-12-2. 주간 성장 리포트 (부모용)
+
+**AI 엔드포인트**: `POST /api/v1/ai/report/weekly`
+
+콜백: `POST /api/v1/weekly-report`
+
+#### Request (공통, snake_case)
+
 ```json
-{ "member_id": 1, "week_start": "2026-05-25", "week_end": "2026-05-29" }
+{ "member_id": 1, "week_start": "2026-05-26", "week_end": "2026-06-01" }
 ```
+
+> `AI_SERVICE_ENABLED=true`일 때만 실제 호출. 로컬 기본값은 `false`.
 
 ---
 

@@ -468,6 +468,22 @@ Content-Type: application/json
 
 ---
 
+### 3.8-1. 주간 배치 트리거 (BE → AI) ✅
+
+매주 **월요일 01:00 KST** `WeeklySafetyScheduler` / `WeeklyReportScheduler`가 온보딩 완료 회원마다 AI를 1회씩 호출합니다.  
+집계 주간: **직전 완료 주(월~일)**.
+
+| 배치 | BE → AI | AI → BE 콜백 |
+|------|---------|--------------|
+| 안전 | `POST /api/v1/ai/batch/weekly-safety` | `POST /api/v1/weekly-safety-report` |
+| 성장(부모) | `POST /api/v1/ai/report/weekly` | `POST /api/v1/weekly-report` |
+
+```json
+{ "member_id": 1, "week_start": "2026-05-26", "week_end": "2026-06-01" }
+```
+
+---
+
 ### 3.9 주간 성장 리포트 저장 ✅
 
 ```http
@@ -649,7 +665,9 @@ Content-Type: application/json
 | 국어 학습 | `/api/v1/study/korean/**` | `/api/v1/learning/korean/**` |
 | 성장일기 리포트 | `GET/POST /api/v1/reports/**` | — |
 | 학습 리포트 집계 | — | `GET /api/v1/report/learning-summary` |
+| 주간 안전 배치 (BE→AI) | — | `POST /api/v1/ai/batch/weekly-safety` |
 | 주간 안전 콜백 | — | `POST /api/v1/weekly-safety-report` |
+| 주간 성장 배치 (BE→AI) | — | `POST /api/v1/ai/report/weekly` |
 | 주간 성장 콜백 | — | `POST /api/v1/weekly-report` |
 | 회원 프로필 | `GET /api/v1/members/me` | `GET /api/v1/members/{id}/profile` |
 | 채팅 전송 | `POST /api/v1/chat/messages` | — (BE가 AI 호출) |
@@ -668,6 +686,7 @@ Content-Type: application/json
 | `AI_SERVICE_BASE_URL` | `http://bifriends-ai:8000` | AI 서버 URL |
 | `AI_CHAT_PATH` | `/v1/ai/chat` | 채팅 path |
 | `AI_BATCH_WEEKLY_SAFETY_PATH` | `/api/v1/ai/batch/weekly-safety` | 안전 배치 트리거 |
+| `AI_BATCH_WEEKLY_REPORT_PATH` | `/api/v1/ai/report/weekly` | 성장(부모) 리포트 배치 트리거 |
 | `AI_EMOTION_SCENARIO_PATH` | `/api/v1/ai/content/scenario` | 감정 시나리오 생성 |
 
 ### bifriends-ai (권장)
