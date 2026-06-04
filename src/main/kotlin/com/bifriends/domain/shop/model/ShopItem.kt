@@ -14,6 +14,13 @@ class ShopItem(
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long = 0,
 
+    /**
+     * FE·온보딩 연동용 고정 코드.
+     * 예: OUTFIT_DEFAULT, GIFT_1(책), GIFT_3(꽃다발), OUTFIT_STUDYING(공부중)
+     */
+    @Column(nullable = false, unique = true, length = 32)
+    val itemCode: String,
+
     /** 아이템 이름 */
     @Column(nullable = false)
     val name: String,

@@ -2,9 +2,12 @@ package com.bifriends.domain.shop.service
 
 import com.bifriends.domain.home.repository.UserStatsRepository
 import com.bifriends.domain.member.repository.MemberRepository
+import com.bifriends.domain.onboarding.repository.MemberItemRepository
 import com.bifriends.domain.shop.dto.*
 import com.bifriends.domain.shop.model.MemberShopItem
+import com.bifriends.domain.shop.model.ShopItem
 import com.bifriends.domain.shop.model.ShopItemCategory
+import com.bifriends.domain.shop.model.ShopOutfitCodes
 import com.bifriends.domain.shop.repository.MemberShopItemRepository
 import com.bifriends.domain.shop.repository.ShopItemRepository
 import org.springframework.stereotype.Service
@@ -16,23 +19,20 @@ import java.time.LocalDateTime
 class ShopService(
     private val shopItemRepository: ShopItemRepository,
     private val memberShopItemRepository: MemberShopItemRepository,
+    private val memberItemRepository: MemberItemRepository,
     private val memberRepository: MemberRepository,
     private val userStatsRepository: UserStatsRepository,
 ) {
-
-    // ── 상점 아이템 목록 (HOM-09-01/03) ──────────────────────────────────────
 
     fun getShopItems(memberId: Long): ShopItemListResponse {
         val stats = userStatsRepository.findByMemberId(memberId)
             ?: throw IllegalStateException("사용자 통계 정보가 없습니다.")
 
-        val ownedIds = memberShopItemRepository
-            .findAllByMemberIdWithItem(memberId)
-            .map { it.shopItem.id }
-            .toSet()
+        val ownedCodes = resolveOwnedOutfitCodes(memberId)
 
-        val items = shopItemRepository.findAllByIsActiveTrue()
-            .map { ShopItemResponse.from(it, owned = it.id in ownedIds) }
+        val items = shopItemRepository.findAllByIsActiveTrueOrderByPriceAscIdAsc()
+            .filter { it.category == ShopItemCategory.OUTFIT }
+            .map { ShopItemResponse.from(it, owned = it.itemCode in ownedCodes) }
 
         return ShopItemListResponse(
             availablePool = stats.availablePool,
@@ -40,113 +40,120 @@ class ShopService(
         )
     }
 
-    // ── 나의 서랍 (보유 아이템 + 착용 현황) ─────────────────────────────────
-
     fun getMyItems(memberId: Long): MyShopItemsResponse {
         val member = findMember(memberId)
+        val ownedCodes = resolveOwnedOutfitCodes(memberId)
+        val catalogByCode = shopItemRepository.findAllByIsActiveTrueOrderByPriceAscIdAsc()
+            .filter { it.category == ShopItemCategory.OUTFIT }
+            .associateBy { it.itemCode }
 
-        val ownedItems = memberShopItemRepository
+        val purchasedAtByCode = memberShopItemRepository
             .findAllByMemberIdWithItem(memberId)
-            .map { msi ->
-                OwnedShopItemResponse(
-                    id = msi.shopItem.id,
-                    name = msi.shopItem.name,
-                    category = msi.shopItem.category,
-                    imageKey = msi.shopItem.imageKey,
-                    acquiredAt = msi.acquiredAt,
-                )
-            }
+            .associate { it.shopItem.itemCode to it.acquiredAt }
+
+        val items = ownedCodes.mapNotNull { code ->
+            val item = catalogByCode[code] ?: return@mapNotNull null
+            OwnedShopItemResponse(
+                itemCode = item.itemCode,
+                name = item.name,
+                category = item.category,
+                imageKey = item.imageKey,
+                acquiredAt = purchasedAtByCode[code],
+            )
+        }
 
         return MyShopItemsResponse(
-            items = ownedItems,
+            items = items,
             equipped = member.toEquippedResponse(),
         )
     }
 
-    // ── 아이템 구매 (HOM-09-03/04) ────────────────────────────────────────────
-
     @Transactional
-    fun purchaseItem(memberId: Long, itemId: Long): PurchaseItemResponse {
+    fun purchaseItem(memberId: Long, itemCode: String): PurchaseItemResponse {
         val member = findMember(memberId)
-        val item = shopItemRepository.findById(itemId)
-            .orElseThrow { IllegalArgumentException("아이템을 찾을 수 없습니다. id=$itemId") }
+        val item = findActiveOutfit(itemCode)
 
-        require(item.isActive) { "현재 판매 중인 아이템이 아닙니다." }
-
-        check(!memberShopItemRepository.existsByMemberIdAndShopItemId(memberId, itemId)) {
+        check(!isOwned(memberId, item)) {
             "이미 보유한 아이템입니다."
         }
+
+        require(item.price > 0) { "무료 의상은 구매할 수 없습니다." }
 
         val stats = userStatsRepository.findByMemberId(memberId)
             ?: throw IllegalStateException("사용자 통계 정보가 없습니다.")
 
-        // 풀 차감 (잔액 부족 시 UserStats.spendPool에서 예외 발생)
         stats.spendPool(item.price)
 
-        // 소유 이력 저장
-        memberShopItemRepository.save(
-            MemberShopItem(member = member, shopItem = item)
-        )
+        val acquiredAt = LocalDateTime.now()
+        memberShopItemRepository.save(MemberShopItem(member = member, shopItem = item))
 
         return PurchaseItemResponse(
-            itemId = item.id,
+            itemCode = item.itemCode,
             itemName = item.name,
             category = item.category,
             imageKey = item.imageKey,
             remainingPool = stats.availablePool,
-            acquiredAt = LocalDateTime.now(),
+            acquiredAt = acquiredAt,
         )
     }
 
-    // ── 아이템 착용 (HOM-09-05) ───────────────────────────────────────────────
-
     @Transactional
-    fun equipItem(memberId: Long, itemId: Long): EquipItemResponse {
+    fun equipItem(memberId: Long, itemCode: String): EquipItemResponse {
         val member = findMember(memberId)
-        val item = shopItemRepository.findById(itemId)
-            .orElseThrow { IllegalArgumentException("아이템을 찾을 수 없습니다. id=$itemId") }
+        val item = findActiveOutfit(itemCode)
 
-        check(memberShopItemRepository.existsByMemberIdAndShopItemId(memberId, itemId)) {
+        check(isOwned(memberId, item)) {
             "보유하지 않은 아이템입니다."
         }
 
-        // 카테고리에 맞는 필드에 저장
-        when (item.category) {
-            ShopItemCategory.HAT        -> member.equippedHatId = itemId
-            ShopItemCategory.GLASSES    -> member.equippedGlassesId = itemId
-            ShopItemCategory.CLOTHES    -> member.equippedClothesId = itemId
-            ShopItemCategory.BACKGROUND -> member.equippedBackgroundId = itemId
-        }
+        member.equippedOutfitCode = item.itemCode
+        member.equippedHatId = null
+        member.equippedGlassesId = null
+        member.equippedClothesId = null
+        member.equippedBackgroundId = null
 
         return EquipItemResponse(equipped = member.toEquippedResponse())
     }
-
-    // ── 아이템 해제 ───────────────────────────────────────────────────────────
 
     @Transactional
-    fun unequipItem(memberId: Long, category: ShopItemCategory): EquipItemResponse {
+    fun unequipOutfit(memberId: Long): EquipItemResponse {
         val member = findMember(memberId)
-
-        when (category) {
-            ShopItemCategory.HAT        -> member.equippedHatId = null
-            ShopItemCategory.GLASSES    -> member.equippedGlassesId = null
-            ShopItemCategory.CLOTHES    -> member.equippedClothesId = null
-            ShopItemCategory.BACKGROUND -> member.equippedBackgroundId = null
-        }
-
+        member.equippedOutfitCode = null
         return EquipItemResponse(equipped = member.toEquippedResponse())
     }
 
-    // ── 내부 유틸 ─────────────────────────────────────────────────────────────
+    private fun findActiveOutfit(itemCode: String): ShopItem {
+        val item = shopItemRepository.findByItemCode(itemCode)
+            ?: throw IllegalArgumentException("아이템을 찾을 수 없습니다. itemCode=$itemCode")
+        require(item.isActive && item.category == ShopItemCategory.OUTFIT) {
+            "현재 판매 중인 의상이 아닙니다."
+        }
+        return item
+    }
+
+    private fun resolveOwnedOutfitCodes(memberId: Long): Set<String> {
+        val purchased = memberShopItemRepository
+            .findAllByMemberIdWithItem(memberId)
+            .map { it.shopItem.itemCode }
+            .toSet()
+
+        val onboardingGifts = memberItemRepository
+            .findAllByMemberId(memberId)
+            .map { it.itemType.name }
+            .toSet()
+
+        return purchased + onboardingGifts + ShopOutfitCodes.DEFAULT
+    }
+
+    private fun isOwned(memberId: Long, item: ShopItem): Boolean {
+        return item.itemCode in resolveOwnedOutfitCodes(memberId)
+    }
 
     private fun findMember(memberId: Long) =
         memberRepository.findById(memberId)
             .orElseThrow { IllegalArgumentException("회원을 찾을 수 없습니다. id=$memberId") }
 
     private fun com.bifriends.domain.member.model.Member.toEquippedResponse() = EquippedItemsResponse(
-        hatId = equippedHatId,
-        glassesId = equippedGlassesId,
-        clothesId = equippedClothesId,
-        backgroundId = equippedBackgroundId,
+        outfitCode = equippedOutfitCode,
     )
 }

@@ -70,7 +70,11 @@ class Member(
     @Column
     var parentPassword: String? = null,
 
-    // ── 착용 아이템 (카테고리별 독립, ShopItem.id 참조) ──────────────────
+    /** 착용 중인 전체 의상 코드 (예: GIFT_3, OUTFIT_DEFAULT) */
+    @Column(name = "equipped_outfit_code", length = 32)
+    var equippedOutfitCode: String? = null,
+
+    // ── 레거시 카테고리별 착용 (구 시드; 신규는 equippedOutfitCode만 사용) ──
     @Column(name = "equipped_hat_id")
     var equippedHatId: Long? = null,
 

@@ -5,6 +5,7 @@ import com.bifriends.domain.shop.model.ShopItemCategory
 import org.springframework.data.jpa.repository.JpaRepository
 
 interface ShopItemRepository : JpaRepository<ShopItem, Long> {
-    fun findAllByIsActiveTrue(): List<ShopItem>
+    fun findAllByIsActiveTrueOrderByPriceAscIdAsc(): List<ShopItem>
+    fun findByItemCode(itemCode: String): ShopItem?
     fun findAllByCategoryAndIsActiveTrue(category: ShopItemCategory): List<ShopItem>
 }

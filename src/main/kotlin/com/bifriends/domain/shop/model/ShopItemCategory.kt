@@ -1,8 +1,10 @@
 package com.bifriends.domain.shop.model
 
 enum class ShopItemCategory {
-    HAT,         // 모자 — 5풀
-    GLASSES,     // 안경 — 10풀
-    CLOTHES,     // 옷  — 15풀
-    BACKGROUND,  // 배경 — 30풀
+    /** 레오 전체 의상 프리셋 (상점·착용) */
+    OUTFIT,
+    HAT,
+    GLASSES,
+    CLOTHES,
+    BACKGROUND,
 }
