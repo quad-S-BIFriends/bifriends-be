@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>BiFriends BE — ERD</title>
+  <style>
+    :root {
+      --bg: #eef2f6;
+      --card: #fff;
+      --text: #1a2332;
+      --muted: #5c6b7a;
+      --border: #c8d4e0;
+      --accent: #0969da;
+      --line: #1d4ed8;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: "Segoe UI", system-ui, sans-serif; background: var(--bg); color: var(--text); line-height: 1.5; }
+
+    .page-header {
+      background: var(--card);
+      border-bottom: 1px solid var(--border);
+      padding: 1rem 1.5rem;
+      position: sticky; top: 0; z-index: 20;
+    }
+    .page-header h1 { margin: 0; font-size: 1.35rem; }
+    .page-header p { margin: 0.3rem 0 0; color: var(--muted); font-size: 0.88rem; }
+
+    main { max-width: 1280px; margin: 0 auto; padding: 1.25rem 1.5rem 3rem; }
+
+    .section {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      margin-bottom: 1.5rem;
+      overflow: hidden;
+    }
+    .section-head {
+      padding: 0.85rem 1.15rem;
+      border-bottom: 1px solid var(--border);
+      background: #f8fafc;
+    }
+    .section-head h2 { margin: 0; font-size: 1.05rem; }
+    .section-head p { margin: 0.25rem 0 0; font-size: 0.82rem; color: var(--muted); }
+
+    .overview-body {
+      padding: 1rem;
+      overflow: auto;
+      max-height: min(70vh, 720px);
+      background: #fafbfc;
+    }
+    .overview-body svg { display: block; margin: 0 auto; min-width: 900px; }
+    .overview-body .entityBox { cursor: pointer; }
+    .overview-body .entityBox:hover { filter: brightness(0.92); }
+    .overview-body .entityBox.selected { stroke: var(--accent) !important; stroke-width: 3px !important; }
+    .overview-body .relationshipLine { stroke: var(--line) !important; stroke-width: 2px !important; opacity: 0.85; }
+
+    .browse-toolbar {
+      display: flex; flex-wrap: wrap; gap: 0.65rem; align-items: center;
+      padding: 1rem 1.15rem;
+      border-bottom: 1px solid var(--border);
+      background: #f8fafc;
+    }
+    .search-wrap { flex: 1; min-width: 200px; }
+    .search-wrap input {
+      width: 100%; padding: 0.55rem 0.75rem; border: 1px solid var(--border);
+      border-radius: 8px; font-size: 0.95rem;
+    }
+    .search-wrap input:focus { outline: 2px solid #93c5fd; border-color: var(--accent); }
+    .filter-chips { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+    .chip {
+      border: 1px solid var(--border); background: #fff; border-radius: 999px;
+      padding: 0.3rem 0.65rem; font-size: 0.78rem; cursor: pointer; white-space: nowrap;
+    }
+    .chip:hover { background: #eff6ff; }
+    .chip.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+    .result-count { font-size: 0.8rem; color: var(--muted); width: 100%; }
+
+    .table-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 0.55rem;
+      padding: 1rem 1.15rem;
+      border-bottom: 1px solid var(--border);
+      max-height: 280px;
+      overflow-y: auto;
+    }
+    .table-card {
+      text-align: left; border: 1px solid var(--border); border-radius: 8px;
+      padding: 0.55rem 0.65rem; background: #fff; cursor: pointer;
+      transition: border-color 0.12s, box-shadow 0.12s;
+    }
+    .table-card:hover { border-color: var(--accent); box-shadow: 0 2px 8px rgba(9,105,218,0.12); }
+    .table-card.active { border-color: var(--accent); background: #eff6ff; box-shadow: 0 0 0 2px #93c5fd; }
+    .table-card.hidden { display: none; }
+    .table-card code { font-size: 0.82rem; font-weight: 600; display: block; }
+    .table-card .card-label { font-size: 0.75rem; color: var(--muted); margin-top: 0.15rem; }
+    .table-card .card-domain {
+      display: inline-block; margin-top: 0.35rem; font-size: 0.68rem; font-weight: 600;
+      padding: 0.1rem 0.4rem; border-radius: 4px;
+    }
+
+    .detail-body { padding: 1.15rem 1.25rem 1.5rem; min-height: 200px; }
+    .detail-body h3 {
+      margin: 0 0 0.35rem; font-size: 1.25rem;
+      display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;
+    }
+    .badge { font-size: 0.72rem; padding: 0.15rem 0.45rem; border-radius: 4px; font-weight: 600; }
+    .purpose { color: var(--muted); margin: 0 0 0.85rem; }
+    .rel-list { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-bottom: 1rem; }
+    .rel-chip {
+      font-size: 0.78rem; padding: 0.2rem 0.5rem; border-radius: 999px;
+      background: #eff6ff; border: 1px solid #bfdbfe; cursor: pointer;
+    }
+    .rel-chip:hover { background: #dbeafe; }
+    .schema-table { width: 100%; border-collapse: collapse; font-size: 0.84rem; }
+    .schema-table th, .schema-table td { border: 1px solid var(--border); padding: 0.4rem 0.6rem; text-align: left; vertical-align: top; }
+    .schema-table th { background: #f6f8fa; }
+    .key { font-size: 0.68rem; padding: 0.08rem 0.3rem; border-radius: 3px; margin-right: 0.15rem; font-weight: 600; }
+    .key-pk { background: #fef3c7; color: #92400e; }
+    .key-fk { background: #dbeafe; color: #1e40af; }
+    .key-uk { background: #dcfce7; color: #166534; }
+    .notes { margin: 0.75rem 0 0; padding-left: 1.2rem; color: var(--muted); font-size: 0.84rem; }
+    .entity-path { margin-top: 0.65rem; font-size: 0.8rem; color: var(--muted); }
+    .empty { color: var(--muted); text-align: center; padding: 2.5rem 1rem; }
+    .loading { color: var(--muted); text-align: center; padding: 3rem; }
+    .err { color: #b91c1c; padding: 1rem; font-size: 0.9rem; }
+  </style>
+</head>
+<body>
+  <div class="page-header">
+    <h1>BiFriends BE — 데이터베이스 ERD</h1>
+    <p>위: 전체 테이블 관계도 · 아래: 검색 후 테이블 클릭 → 상세 설명</p>
+  </div>
+
+  <main>
+    <section class="section" id="section-overview">
+      <div class="section-head">
+        <h2>① 전체 관계도</h2>
+        <p>19개 PostgreSQL 테이블 FK 관계 (선으로 연결). 박스 클릭 시 아래 상세로 이동합니다.</p>
+      </div>
+      <div class="overview-body" id="overview-diagram">
+        <p class="loading">관계도 불러오는 중…</p>
+      </div>
+    </section>
+
+    <section class="section" id="section-detail">
+      <div class="section-head">
+        <h2>② 테이블 상세</h2>
+        <p>검색·기능 필터로 찾고, 카드를 클릭하면 이 영역에 스키마·설명이 표시됩니다.</p>
+      </div>
+
+      <div class="browse-toolbar">
+        <div class="search-wrap">
+          <input type="search" id="search-input" placeholder="테이블명 (todos), 기능 (홈, 채팅, 상점, 레오…) 검색" autocomplete="off" />
+        </div>
+        <div class="filter-chips" id="domain-filters"></div>
+        <span class="result-count" id="result-count"></span>
+      </div>
+
+      <div class="table-grid" id="table-grid"></div>
+
+      <div class="detail-body" id="detail-panel">
+        <p class="empty">테이블 카드 또는 위 관계도의 박스를 클릭하세요.</p>
+      </div>
+    </section>
+  </main>
+
+  <script type="module">
+    const DOMAINS = {
+      member: { label: "회원", color: "#3b82f6" },
+      onboarding: { label: "온보딩", color: "#8b5cf6" },
+      home: { label: "홈·보상", color: "#22c55e" },
+      chat: { label: "채팅", color: "#f97316" },
+      learning: { label: "학습", color: "#14b8a6" },
+      shop: { label: "상점", color: "#ec4899" },
+      report: { label: "리포트", color: "#ef4444" },
+    };
+
+    const TABLES = {
+      members: {
+        domain: "member",
+        label: "회원 (루트)",
+        purpose: "Google OAuth 계정·프로필·온보딩·부모 PIN·착용 상태의 중심. 대부분 테이블이 member_id로 연결됩니다.",
+        entity: "domain/member/model/Member.kt",
+        relations: [
+          { to: "user_stats", card: "||--o|", label: "1:1", desc: "성장 통계" },
+          { to: "todos", card: "||--o{", label: "1:N", desc: "일별 할 일" },
+          { to: "reward_history", card: "||--o{", label: "1:N", desc: "풀 보상 로그" },
+          { to: "chat_sessions", card: "||--o{", label: "1:N", desc: "레오 대화방" },
+          { to: "user_math_progress", card: "||--o{", label: "1:N", desc: "수학 진도" },
+          { to: "user_korean_progress", card: "||--o{", label: "1:N", desc: "국어 진도" },
+          { to: "learning_attempt", card: "||--o{", label: "1:N", desc: "문제 시도" },
+          { to: "member_interests", card: "||--o{", label: "1:N", desc: "관심사" },
+          { to: "member_items", card: "||--o{", label: "1:N", desc: "온보딩 선물" },
+          { to: "member_shop_items", card: "||--o{", label: "1:N", desc: "구매 의상" },
+          { to: "weekly_report", card: "||--o{", label: "1:N", desc: "주간 성장 리포트" },
+          { to: "weekly_safety_report", card: "||--o{", label: "1:N", desc: "주간 안전 리포트" },
+        ],
+        columns: [
+          { name: "id", type: "bigint", keys: ["PK"], desc: "회원 ID" },
+          { name: "email", type: "varchar", keys: ["UK"], desc: "로그인 이메일" },
+          { name: "provider_id", type: "varchar", keys: ["UK"], desc: "OAuth 제공자 ID" },
+          { name: "nickname", type: "varchar", keys: [], desc: "표시 이름" },
+          { name: "grade", type: "int", keys: [], desc: "학년" },
+          { name: "onboarding_completed", type: "boolean", keys: [], desc: "온보딩 완료" },
+          { name: "parent_password", type: "varchar", keys: [], desc: "부모 PIN (BCrypt)" },
+          { name: "equipped_outfit_code", type: "varchar(32)", keys: [], desc: "착용 의상 → shop_items.item_code" },
+        ],
+        notes: ["탈퇴 시 자식 테이블 삭제 후 마지막에 삭제"],
+      },
+      user_stats: {
+        domain: "home", label: "사용자 통계",
+        purpose: "레벨·풀·연속 출석. total_pool_earned(레벨) / available_pool(상점 차감).",
+        entity: "domain/home/model/UserStats.kt",
+        relations: [{ to: "members", card: "}|--||", label: "N:1", desc: "회원 1:1" }],
+        columns: [
+          { name: "member_id", type: "bigint", keys: ["FK", "UK"], desc: "회원" },
+          { name: "level", type: "int", keys: [], desc: "레벨" },
+          { name: "total_pool_earned", type: "int", keys: [], desc: "누적 풀" },
+          { name: "available_pool", type: "int", keys: [], desc: "사용 가능 풀" },
+          { name: "streak_days", type: "int", keys: [], desc: "연속 출석" },
+        ],
+      },
+      todos: {
+        domain: "home", label: "할 일",
+        purpose: "일별 할 일. SYSTEM 3개 + AGENT 최대 2개. assigned_date로 이력 유지.",
+        entity: "domain/home/model/Todo.kt",
+        relations: [{ to: "members", card: "}|--||", label: "N:1", desc: "회원" }],
+        columns: [
+          { name: "member_id", type: "bigint", keys: ["FK"], desc: "회원" },
+          { name: "type / status / source", type: "enum", keys: [], desc: "유형·상태·출처" },
+          { name: "assigned_date", type: "date", keys: [], desc: "할당일 (KST)" },
+        ],
+      },
+      reward_history: {
+        domain: "home", label: "보상 이력",
+        purpose: "풀 획득 로그 (append-only).",
+        entity: "domain/home/model/RewardHistory.kt",
+        relations: [{ to: "members", card: "}|--||", label: "N:1", desc: "회원" }],
+        columns: [
+          { name: "member_id", type: "bigint", keys: ["FK"], desc: "회원" },
+          { name: "source", type: "enum", keys: [], desc: "출처" },
+          { name: "amount", type: "int", keys: [], desc: "풀" },
+        ],
+      },
+      chat_sessions: {
+        domain: "chat", label: "채팅 세션",
+        purpose: "레오 대화방. session_key = FE UUID.",
+        entity: "domain/chat/model/ChatSession.kt",
+        relations: [
+          { to: "members", card: "}|--||", label: "N:1", desc: "회원" },
+          { to: "chat_messages", card: "||--o{", label: "1:N", desc: "메시지" },
+        ],
+        columns: [
+          { name: "session_key", type: "varchar", keys: ["UK"], desc: "외부 ID" },
+          { name: "member_id", type: "bigint", keys: ["FK"], desc: "회원" },
+        ],
+      },
+      chat_messages: {
+        domain: "chat", label: "채팅 메시지",
+        purpose: "USER/ASSISTANT 메시지. member_id 비정규화(기간 조회).",
+        entity: "domain/chat/model/ChatMessage.kt",
+        relations: [{ to: "chat_sessions", card: "}|--||", label: "N:1", desc: "세션" }],
+        columns: [
+          { name: "session_id", type: "bigint", keys: ["FK"], desc: "세션" },
+          { name: "member_id", type: "bigint", keys: [], desc: "비정규화" },
+          { name: "role / content", type: "enum/text", keys: [], desc: "역할·본문" },
+        ],
+        notes: ["주간 안전 배치 분석 원본"],
+      },
+      math_step: {
+        domain: "learning", label: "수학 스텝",
+        purpose: "수학 콘텐츠 마스터 (math_seed.sql).",
+        entity: "domain/learning/model/MathStep.kt",
+        relations: [{ to: "user_math_progress", card: "||--o{", label: "1:N", desc: "진도" }],
+        columns: [
+          { name: "grade / step_number", type: "int", keys: ["UK"], desc: "학년·스텝" },
+          { name: "content_json", type: "text", keys: [], desc: "학습 JSON" },
+        ],
+      },
+      korean_step: {
+        domain: "learning", label: "국어 스텝",
+        purpose: "국어 콘텐츠 마스터 (korean_seed.sql).",
+        entity: "domain/learning/model/KoreanStep.kt",
+        relations: [{ to: "user_korean_progress", card: "||--o{", label: "1:N", desc: "진도" }],
+        columns: [
+          { name: "grade / step_number", type: "int", keys: ["UK"], desc: "학년·스텝" },
+          { name: "content_json", type: "text", keys: [], desc: "학습 JSON" },
+        ],
+      },
+      user_math_progress: {
+        domain: "learning", label: "수학 진도",
+        purpose: "회원×수학 스텝 진행.",
+        entity: "domain/learning/model/UserMathProgress.kt",
+        relations: [
+          { to: "members", card: "}|--||", label: "N:1", desc: "회원" },
+          { to: "math_step", card: "}|--||", label: "N:1", desc: "스텝" },
+          { to: "user_math_progress_cycles", card: "||--o{", label: "1:N", desc: "사이클" },
+        ],
+        columns: [
+          { name: "member_id / math_step_id", type: "bigint", keys: ["FK", "UK"], desc: "복합 UK" },
+          { name: "is_step_completed", type: "boolean", keys: [], desc: "완료" },
+        ],
+      },
+      user_math_progress_cycles: {
+        domain: "learning", label: "수학 완료 사이클",
+        purpose: "완료 cycle_number 목록 (ElementCollection).",
+        entity: "domain/learning/model/UserMathProgress.kt",
+        relations: [{ to: "user_math_progress", card: "}|--||", label: "N:1", desc: "진도" }],
+        columns: [
+          { name: "progress_id", type: "bigint", keys: ["FK"], desc: "진도 ID" },
+          { name: "cycle_number", type: "int", keys: [], desc: "사이클 번호" },
+        ],
+      },
+      user_korean_progress: {
+        domain: "learning", label: "국어 진도",
+        purpose: "회원×국어 스텝 진행.",
+        entity: "domain/learning/model/UserKoreanProgress.kt",
+        relations: [
+          { to: "members", card: "}|--||", label: "N:1", desc: "회원" },
+          { to: "korean_step", card: "}|--||", label: "N:1", desc: "스텝" },
+          { to: "user_korean_progress_cycles", card: "||--o{", label: "1:N", desc: "사이클" },
+        ],
+        columns: [
+          { name: "member_id / korean_step_id", type: "bigint", keys: ["FK", "UK"], desc: "복합 UK" },
+        ],
+      },
+      user_korean_progress_cycles: {
+        domain: "learning", label: "국어 완료 사이클",
+        purpose: "완료 cycle_number 목록.",
+        entity: "domain/learning/model/UserKoreanProgress.kt",
+        relations: [{ to: "user_korean_progress", card: "}|--||", label: "N:1", desc: "진도" }],
+        columns: [
+          { name: "progress_id", type: "bigint", keys: ["FK"], desc: "진도 ID" },
+          { name: "cycle_number", type: "int", keys: [], desc: "사이클" },
+        ],
+      },
+      learning_attempt: {
+        domain: "learning", label: "학습 시도",
+        purpose: "문제별 시도·정답. AI learning-summary 원본.",
+        entity: "domain/learning/model/LearningAttempt.kt",
+        relations: [{ to: "members", card: "}|--||", label: "N:1", desc: "회원" }],
+        columns: [
+          { name: "member_id", type: "bigint", keys: ["FK"], desc: "회원" },
+          { name: "subject / step_id", type: "enum/bigint", keys: [], desc: "step_id는 FK 없음" },
+          { name: "solved / solved_at", type: "bool/ts", keys: [], desc: "정답" },
+        ],
+      },
+      member_interests: {
+        domain: "onboarding", label: "관심사",
+        purpose: "온보딩 관심사 (ANIMAL, SPACE…).",
+        entity: "domain/onboarding/model/MemberInterest.kt",
+        relations: [{ to: "members", card: "}|--||", label: "N:1", desc: "회원" }],
+        columns: [
+          { name: "member_id", type: "bigint", keys: ["FK"], desc: "회원" },
+          { name: "interest", type: "enum", keys: [], desc: "코드" },
+        ],
+      },
+      member_items: {
+        domain: "onboarding", label: "온보딩 선물",
+        purpose: "선물 1개 (GIFT_1~4). 풀 차감 없음.",
+        entity: "domain/onboarding/model/MemberItem.kt",
+        relations: [{ to: "members", card: "}|--||", label: "N:1", desc: "회원" }],
+        columns: [
+          { name: "member_id", type: "bigint", keys: ["FK"], desc: "회원" },
+          { name: "item_type", type: "enum", keys: [], desc: "= shop item_code" },
+        ],
+        notes: ["owned = DEFAULT ∪ member_items ∪ member_shop_items"],
+      },
+      shop_items: {
+        domain: "shop", label: "상점 카탈로그",
+        purpose: "의상 9종 (shop_seed.sql).",
+        entity: "domain/shop/model/ShopItem.kt",
+        relations: [{ to: "member_shop_items", card: "||--o{", label: "1:N", desc: "구매" }],
+        columns: [
+          { name: "item_code", type: "varchar", keys: ["UK"], desc: "GIFT_1, OUTFIT_*" },
+          { name: "price", type: "int", keys: [], desc: "풀 가격" },
+        ],
+      },
+      member_shop_items: {
+        domain: "shop", label: "구매 이력",
+        purpose: "풀 구매 의상.",
+        entity: "domain/shop/model/MemberShopItem.kt",
+        relations: [
+          { to: "members", card: "}|--||", label: "N:1", desc: "회원" },
+          { to: "shop_items", card: "}|--||", label: "N:1", desc: "상품" },
+        ],
+        columns: [
+          { name: "member_id / shop_item_id", type: "bigint", keys: ["FK", "UK"], desc: "복합 UK" },
+        ],
+      },
+      weekly_report: {
+        domain: "report", label: "주간 성장 리포트",
+        purpose: "AI 4섹션 JSON. mission_revealed = 부모 미션 수령.",
+        entity: "domain/report/model/WeeklyReport.kt",
+        relations: [{ to: "members", card: "}|--||", label: "N:1", desc: "회원" }],
+        columns: [
+          { name: "member_id / week_start", type: "bigint/date", keys: ["UK"], desc: "주당 1건" },
+          { name: "sections_json", type: "text", keys: [], desc: "AI JSON" },
+        ],
+      },
+      weekly_safety_report: {
+        domain: "report", label: "주간 안전 리포트",
+        purpose: "채팅 안전 신호 GREEN/YELLOW/RED.",
+        entity: "domain/report/model/WeeklySafetyReport.kt",
+        relations: [{ to: "members", card: "}|--||", label: "N:1", desc: "회원" }],
+        columns: [
+          { name: "member_id / week_start", type: "bigint/date", keys: ["UK"], desc: "주당 1건" },
+          { name: "safety_signal / score", type: "enum/int", keys: [], desc: "신호·점수" },
+        ],
+      },
+    };
+
+    const SEARCH_ALIASES = {
+      레오: "chat", 채팅: "chat", chat: "chat",
+      홈: "home", 할일: "home", 풀: "home", 보상: "home",
+      회원: "member", 온보딩: "onboarding", 선물: "onboarding",
+      학습: "learning", 수학: "learning", 국어: "learning",
+      상점: "shop", 의상: "shop", 구매: "shop",
+      리포트: "report", 안전: "report", 부모: "report",
+    };
+
+    let selectedTable = null;
+    let domainFilter = "all";
+    let mermaidApi = null;
+
+    function buildFullDiagram() {
+      const seen = new Set();
+      const lines = ["erDiagram"];
+      for (const [name, t] of Object.entries(TABLES)) {
+        for (const r of t.relations || []) {
+          if (!TABLES[r.to] || (r.card && r.card.includes(".."))) continue;
+          const key = [name, r.to].sort().join("-");
+          if (seen.has(key)) continue;
+          seen.add(key);
+          const card = r.card && !r.card.includes("..") ? r.card : "||--o{";
+          // Mermaid 11: 관계마다 ": 라벨" 필수 (없으면 Parse error)
+          lines.push(`    ${name} ${card} ${r.to} : rel`);
+        }
+      }
+      return lines.join("\n");
+    }
+
+    function searchBlob(name, t) {
+      const d = DOMAINS[t.domain];
+      return [name, t.label, t.purpose, d.label, d.label.replace("·", " ")].join(" ").toLowerCase();
+    }
+
+    function matchesSearch(name, t, query) {
+      if (!query) return true;
+      const q = query.toLowerCase().trim();
+      if (!q) return true;
+      if (searchBlob(name, t).includes(q)) return true;
+      for (const [alias, dom] of Object.entries(SEARCH_ALIASES)) {
+        if (q.includes(alias) && t.domain === dom) return true;
+      }
+      return false;
+    }
+
+    function matchesDomain(name, t) {
+      if (domainFilter === "all") return true;
+      return t.domain === domainFilter;
+    }
+
+    function renderDomainFilters() {
+      const el = document.getElementById("domain-filters");
+      const chips = [{ id: "all", label: "전체" }];
+      for (const [id, d] of Object.entries(DOMAINS)) {
+        chips.push({ id, label: d.label });
+      }
+      el.innerHTML = chips
+        .map((c) => `<button type="button" class="chip${domainFilter === c.id ? " active" : ""}" data-domain="${c.id}">${c.label}</button>`)
+        .join("");
+      el.querySelectorAll(".chip").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          domainFilter = btn.dataset.domain;
+          renderDomainFilters();
+          renderTableGrid();
+        });
+      });
+    }
+
+    function renderTableGrid() {
+      const grid = document.getElementById("table-grid");
+      const query = document.getElementById("search-input").value;
+      let visible = 0;
+      const sorted = Object.keys(TABLES).sort();
+      grid.innerHTML = sorted
+        .map((name) => {
+          const t = TABLES[name];
+          const show = matchesSearch(name, t, query) && matchesDomain(name, t);
+          if (show) visible++;
+          const d = DOMAINS[t.domain];
+          return `<button type="button" class="table-card${show ? "" : " hidden"}${name === selectedTable ? " active" : ""}" data-table="${name}">
+            <code>${name}</code>
+            <span class="card-label">${t.label}</span>
+            <span class="card-domain" style="background:${d.color}18;color:${d.color}">${d.label}</span>
+          </button>`;
+        })
+        .join("");
+      document.getElementById("result-count").textContent = `${visible}개 테이블 표시 (총 ${sorted.length}개)`;
+      grid.querySelectorAll(".table-card:not(.hidden)").forEach((card) => {
+        card.addEventListener("click", () => selectTable(card.dataset.table, true));
+      });
+    }
+
+    function renderDetail(name) {
+      const t = TABLES[name];
+      const panel = document.getElementById("detail-panel");
+      if (!t) {
+        panel.innerHTML = '<p class="empty">테이블을 찾을 수 없습니다.</p>';
+        return;
+      }
+      const dom = DOMAINS[t.domain];
+      const relHtml = (t.relations || [])
+        .filter((r) => TABLES[r.to])
+        .map((r) => `<button type="button" class="rel-chip" data-jump="${r.to}"><code>${name}</code> → <code>${r.to}</code> (${r.label}) ${r.desc || ""}</button>`)
+        .join("");
+      const colRows = (t.columns || [])
+        .map((c) => {
+          const keys = (c.keys || []).map((k) => `<span class="key key-${k.toLowerCase()}">${k}</span>`).join("");
+          return `<tr><td><code>${c.name}</code> ${keys}</td><td>${c.type}</td><td>${c.desc || ""}</td></tr>`;
+        })
+        .join("");
+      const notes = (t.notes || []).map((n) => `<li>${n}</li>`).join("");
+
+      panel.innerHTML = `
+        <h3>
+          <code>${name}</code>
+          <span class="badge" style="background:${dom.color}22;color:${dom.color}">${dom.label}</span>
+          <span style="font-weight:400;color:var(--muted);font-size:0.95rem">${t.label}</span>
+        </h3>
+        <p class="purpose">${t.purpose}</p>
+        ${relHtml ? `<div class="rel-list">${relHtml}</div>` : ""}
+        <table class="schema-table">
+          <thead><tr><th>컬럼</th><th>타입</th><th>설명</th></tr></thead>
+          <tbody>${colRows}</tbody>
+        </table>
+        ${notes ? `<ul class="notes">${notes}</ul>` : ""}
+        <div class="entity-path">엔티티: <code>src/main/kotlin/com/bifriends/${t.entity}</code></div>
+      `;
+      panel.querySelectorAll("[data-jump]").forEach((btn) => {
+        btn.addEventListener("click", () => selectTable(btn.dataset.jump, true));
+      });
+    }
+
+    function bindOverviewClicks() {
+      const host = document.getElementById("overview-diagram");
+      host.querySelectorAll(".entityBox").forEach((box) => {
+        const text = box.querySelector(".entityLabel")?.textContent?.trim();
+        if (!text || !TABLES[text]) return;
+        box.addEventListener("click", () => selectTable(text, true));
+      });
+    }
+
+    function highlightOverview(name) {
+      document.getElementById("overview-diagram").querySelectorAll(".entityBox").forEach((box) => {
+        const text = box.querySelector(".entityLabel")?.textContent?.trim();
+        box.classList.toggle("selected", text === name);
+      });
+    }
+
+    function selectTable(name, scroll) {
+      if (!TABLES[name]) return;
+      selectedTable = name;
+      renderTableGrid();
+      renderDetail(name);
+      highlightOverview(name);
+      if (scroll) {
+        document.getElementById("section-detail").scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    }
+
+    async function renderOverview() {
+      const host = document.getElementById("overview-diagram");
+      const source = buildFullDiagram();
+      try {
+        const { svg } = await mermaidApi.render("overview-erd", source);
+        host.innerHTML = svg;
+        bindOverviewClicks();
+        if (selectedTable) highlightOverview(selectedTable);
+      } catch (e) {
+        host.innerHTML = `<p class="err">관계도 오류: ${e.message}</p>`;
+      }
+    }
+
+    import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
+    mermaid.initialize({
+      startOnLoad: false,
+      theme: "base",
+      themeVariables: {
+        primaryColor: "#e0f2fe",
+        primaryBorderColor: "#1d4ed8",
+        primaryTextColor: "#0f172a",
+        lineColor: "#1d4ed8",
+        fontSize: "13px",
+      },
+      er: { layoutDirection: "TB", minEntityWidth: 100, entityPadding: 10, diagramPadding: 16 },
+    });
+    mermaidApi = mermaid;
+
+    document.getElementById("search-input").addEventListener("input", renderTableGrid);
+
+    renderDomainFilters();
+    renderTableGrid();
+    renderOverview();
+  </script>
+</body>
+</html>

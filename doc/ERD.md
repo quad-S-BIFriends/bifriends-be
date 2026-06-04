@@ -6,22 +6,22 @@ PostgreSQL(JPA) 테이블 관계·설명 문서입니다.
 
 ---
 
-## 문서 보는 방법 (배포·Docker 불필요)
+## 문서 보는 방법
 
-| 방법 | 설명 |
-|------|------|
-| **GitHub 링크 (권장)** | 이 파일을 `main`에 push하면 팀원이 브라우저에서 바로 볼 수 있습니다. GitHub가 Markdown + Mermaid 다이어그램을 렌더링합니다. |
-| **로컬** | VS Code / Cursor에서 `ERD.md` 열고 Markdown 미리보기 (`Ctrl+Shift+V`) |
-| **Mermaid Live** | 아래 [전체 ER 다이어그램](#전체-er-다이어그램) 코드 블록을 복사해 [mermaid.live](https://mermaid.live)에 붙여넣기 |
+| 방법 | 배포 필요? | 설명 |
+|------|------------|------|
+| **[ERD.html](./ERD.html) 로컬 열기 (인터랙티브)** | ❌ | 상단 전체 관계도 + 하단 검색·테이블 카드 클릭 → 상세 스키마 (인터넷 필요) |
+| **GitHub `ERD.md` 링크** | ❌ (push만) | GitHub가 Markdown을 **이미 HTML처럼** 렌더링 + Mermaid 지원 |
+| **GitHub Pages** | ⚙️ 한 번 설정 | 팀 공유용 고정 URL (`…github.io/…/ERD.html`). Docker·자체 서버 불필요 |
+| **Mermaid Live** | ❌ | 아래 다이어그램 코드를 [mermaid.live](https://mermaid.live)에 붙여넣기 |
 
-### 공유용 링크 (저장소 push 후)
+### 공유용 링크 (push 후)
 
-```
-https://github.com/quad-S-BIFriends/bifriends-be/blob/main/doc/ERD.md
-```
+- Markdown: `https://github.com/quad-S-BIFriends/bifriends-be/blob/main/doc/ERD.md`
+- HTML (Pages 설정 후 예시): `https://quad-S-BIFriends.github.io/bifriends-be/ERD.html`
 
-> private 저장소면 **저장소 접근 권한이 있는 사람만** 링크로 열 수 있습니다.  
-> public으로 두면 링크만 알면 누구나 볼 수 있습니다. 별도 HTML·Docker 배포는 필요 없습니다.
+> **주의**: GitHub 저장소에서 `.html` 파일 원본을 열면 **JavaScript가 비활성화**되어 다이어그램이 안 그려질 수 있습니다. HTML은 **로컬에서 열기** 또는 **GitHub Pages**를 사용하세요.  
+> private 저장소는 권한 있는 사람만 링크 접근 가능합니다.
 
 ---
 
@@ -29,24 +29,24 @@ https://github.com/quad-S-BIFriends/bifriends-be/blob/main/doc/ERD.md
 
 ```mermaid
 erDiagram
-    members ||--o| user_stats : "1:1"
-    members ||--o{ todos : "has"
-    members ||--o{ reward_history : "has"
-    members ||--o{ chat_sessions : "has"
-    chat_sessions ||--o{ chat_messages : "contains"
-    members ||--o{ user_math_progress : "tracks"
-    math_step ||--o{ user_math_progress : "for"
-    user_math_progress ||--o{ user_math_progress_cycles : "completed"
-    members ||--o{ user_korean_progress : "tracks"
-    korean_step ||--o{ user_korean_progress : "for"
-    user_korean_progress ||--o{ user_korean_progress_cycles : "completed"
-    members ||--o{ learning_attempt : "attempts"
-    members ||--o{ member_interests : "selects"
-    members ||--o{ member_items : "onboarding_gift"
-    members ||--o{ member_shop_items : "purchased"
-    shop_items ||--o{ member_shop_items : "catalog"
-    members ||--o{ weekly_report : "growth"
-    members ||--o{ weekly_safety_report : "safety"
+    members ||--o| user_stats : one_to_one
+    members ||--o{ todos : has
+    members ||--o{ reward_history : has
+    members ||--o{ chat_sessions : has
+    chat_sessions ||--o{ chat_messages : contains
+    members ||--o{ user_math_progress : tracks
+    math_step ||--o{ user_math_progress : for_step
+    user_math_progress ||--o{ user_math_progress_cycles : cycles
+    members ||--o{ user_korean_progress : tracks
+    korean_step ||--o{ user_korean_progress : for_step
+    user_korean_progress ||--o{ user_korean_progress_cycles : cycles
+    members ||--o{ learning_attempt : attempts
+    members ||--o{ member_interests : interests
+    members ||--o{ member_items : onboarding_gift
+    members ||--o{ member_shop_items : purchased
+    shop_items ||--o{ member_shop_items : catalog
+    members ||--o{ weekly_report : growth
+    members ||--o{ weekly_safety_report : safety
 
     members {
         bigint id PK
@@ -54,13 +54,13 @@ erDiagram
         string provider_id UK
         string nickname
         int grade
-        string equipped_outfit_code "논리적 itemCode"
+        string equipped_outfit_code
         boolean onboarding_completed
     }
 
     user_stats {
         bigint id PK
-        bigint member_id FK UK
+        bigint member_id FK
         int level
         int total_pool_earned
         int available_pool
@@ -93,7 +93,7 @@ erDiagram
     chat_messages {
         bigint id PK
         bigint session_id FK
-        bigint member_id "비정규화"
+        bigint member_id
         string role
         text content
     }
@@ -140,7 +140,7 @@ erDiagram
         bigint id PK
         bigint member_id FK
         string subject
-        bigint step_id "FK 없음"
+        bigint step_id
         int cycle_number
         int question_index
         boolean solved
@@ -155,7 +155,7 @@ erDiagram
     member_items {
         bigint id PK
         bigint member_id FK
-        string item_type "GIFT_1~4"
+        string item_type
     }
 
     shop_items {
@@ -174,7 +174,7 @@ erDiagram
     weekly_report {
         bigint id PK
         bigint member_id FK
-        date week_start UK
+        date week_start
         text sections_json
         boolean mission_revealed
     }
@@ -182,11 +182,13 @@ erDiagram
     weekly_safety_report {
         bigint id PK
         bigint member_id FK
-        date week_start UK
+        date week_start
         string safety_signal
         int score
     }
 ```
+
+> 컬럼 상세(PK/FK/UK, 논리 FK 등)는 아래 [테이블 상세](#테이블-상세) 참고. 다이어그램은 Mermaid 11 파서 호환을 위해 관계 위주로 단순화했습니다.
 
 ---
 
