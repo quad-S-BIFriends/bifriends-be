@@ -125,12 +125,48 @@
     .empty { color: var(--muted); text-align: center; padding: 2.5rem 1rem; }
     .loading { color: var(--muted); text-align: center; padding: 3rem; }
     .err { color: #b91c1c; padding: 1rem; font-size: 0.9rem; }
+    .summary-box {
+      background: #f0f7ff; border: 1px solid #bfdbfe; border-radius: 10px;
+      padding: 0.85rem 1rem; margin-bottom: 1rem; font-size: 0.9rem;
+    }
+    .summary-box p { margin: 0.35rem 0 0; }
+    .summary-box p:first-child { margin-top: 0; }
+    .summary-box strong { color: #1e40af; }
+    .detail-block { margin-bottom: 1rem; }
+    .detail-block h4 { margin: 0 0 0.45rem; font-size: 0.92rem; color: var(--text); }
+    .col-heading { margin: 1rem 0 0.45rem; font-size: 0.92rem; }
+    .flow-list, .api-list { margin: 0; padding-left: 1.25rem; font-size: 0.86rem; color: var(--text); }
+    .api-list li { margin: 0.2rem 0; }
+    .enum-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; margin-top: 0.35rem; }
+    .enum-table th, .enum-table td { border: 1px solid var(--border); padding: 0.35rem 0.5rem; text-align: left; }
+    .enum-table th { background: #f6f8fa; }
+    .enum-type { font-weight: 400; color: var(--muted); font-size: 0.8rem; }
+    .enum-note { margin: 0 0 0.35rem; font-size: 0.8rem; color: var(--muted); }
+    .path-tree {
+      margin: 0; padding: 0.85rem 1rem; font-size: 0.8rem; line-height: 1.55;
+      background: #1e293b; color: #e2e8f0; border-radius: 0 0 0 0;
+      overflow-x: auto; font-family: ui-monospace, Consolas, monospace;
+    }
+    .path-tree .pg { color: #93c5fd; }
+    .path-tree .fs { color: #fcd34d; }
+    .path-tree .st { color: #86efac; }
+    .kind-badge { font-size: 0.68rem; padding: 0.12rem 0.4rem; border-radius: 4px; font-weight: 600; }
+    .kind-firestore { background: #ffedd5; color: #c2410c; }
+    .kind-storage { background: #dcfce7; color: #166534; }
+    .kind-auth { background: #ede9fe; color: #5b21b6; }
+    .link-pg-chip {
+      font-size: 0.78rem; padding: 0.2rem 0.5rem; border-radius: 999px;
+      background: #f0fdf4; border: 1px solid #86efac; cursor: pointer;
+    }
+    .link-pg-chip:hover { background: #dcfce7; }
+    .firebase-diagram-wrap { padding: 1rem; border-bottom: 1px solid var(--border); background: #fafbfc; }
+    .firebase-diagram-wrap svg { display: block; margin: 0 auto; max-width: 100%; }
   </style>
 </head>
 <body>
   <div class="page-header">
     <h1>BiFriends BE — 데이터베이스 ERD</h1>
-    <p>위: 전체 테이블 관계도 · 아래: 검색 후 테이블 클릭 → 상세 설명</p>
+    <p>PostgreSQL 19테이블 + Firebase(감정 학습) · 검색·카드 클릭으로 상세 설명</p>
   </div>
 
   <main>
@@ -147,7 +183,7 @@
     <section class="section" id="section-detail">
       <div class="section-head">
         <h2>② 테이블 상세</h2>
-        <p>검색·기능 필터로 찾고, 카드를 클릭하면 이 영역에 스키마·설명이 표시됩니다.</p>
+        <p>검색·기능 필터로 찾고, 카드를 클릭하면 역할·흐름·API·enum·컬럼 설명이 표시됩니다.</p>
       </div>
 
       <div class="browse-toolbar">
@@ -164,8 +200,32 @@
         <p class="empty">테이블 카드 또는 위 관계도의 박스를 클릭하세요.</p>
       </div>
     </section>
+
+    <section class="section" id="section-firebase">
+      <div class="section-head">
+        <h2>③ Firebase (PostgreSQL 밖)</h2>
+        <p>친구랑 감정 학습(Mind) — Firestore 세션 + Storage 이미지. <code>members.id</code> = <code>users/{memberId}</code></p>
+      </div>
+      <pre class="path-tree" id="firebase-path-tree">경로 트리 불러오는 중…</pre>
+      <div class="firebase-diagram-wrap" id="firebase-diagram">
+        <p class="loading">Firebase 연동도 불러오는 중…</p>
+      </div>
+      <div class="browse-toolbar">
+        <div class="search-wrap">
+          <input type="search" id="firebase-search-input" placeholder="Firestore, Storage, mind, 감정, fallback, 로그인…" autocomplete="off" />
+        </div>
+        <div class="filter-chips" id="firebase-kind-filters"></div>
+        <span class="result-count" id="firebase-result-count"></span>
+      </div>
+      <div class="table-grid" id="firebase-grid"></div>
+      <div class="detail-body" id="firebase-detail-panel">
+        <p class="empty">Firebase 카드를 클릭하면 경로·역할·필드·PostgreSQL 연결이 표시됩니다.</p>
+      </div>
+    </section>
   </main>
 
+  <script src="erd-tables-enriched.js"></script>
+  <script src="erd-firebase-enriched.js"></script>
   <script type="module">
     const DOMAINS = {
       member: { label: "회원", color: "#3b82f6" },
@@ -177,255 +237,52 @@
       report: { label: "리포트", color: "#ef4444" },
     };
 
-    const TABLES = {
-      members: {
-        domain: "member",
-        label: "회원 (루트)",
-        purpose: "Google OAuth 계정·프로필·온보딩·부모 PIN·착용 상태의 중심. 대부분 테이블이 member_id로 연결됩니다.",
-        entity: "domain/member/model/Member.kt",
-        relations: [
-          { to: "user_stats", card: "||--o|", label: "1:1", desc: "성장 통계" },
-          { to: "todos", card: "||--o{", label: "1:N", desc: "일별 할 일" },
-          { to: "reward_history", card: "||--o{", label: "1:N", desc: "풀 보상 로그" },
-          { to: "chat_sessions", card: "||--o{", label: "1:N", desc: "레오 대화방" },
-          { to: "user_math_progress", card: "||--o{", label: "1:N", desc: "수학 진도" },
-          { to: "user_korean_progress", card: "||--o{", label: "1:N", desc: "국어 진도" },
-          { to: "learning_attempt", card: "||--o{", label: "1:N", desc: "문제 시도" },
-          { to: "member_interests", card: "||--o{", label: "1:N", desc: "관심사" },
-          { to: "member_items", card: "||--o{", label: "1:N", desc: "온보딩 선물" },
-          { to: "member_shop_items", card: "||--o{", label: "1:N", desc: "구매 의상" },
-          { to: "weekly_report", card: "||--o{", label: "1:N", desc: "주간 성장 리포트" },
-          { to: "weekly_safety_report", card: "||--o{", label: "1:N", desc: "주간 안전 리포트" },
-        ],
-        columns: [
-          { name: "id", type: "bigint", keys: ["PK"], desc: "회원 ID" },
-          { name: "email", type: "varchar", keys: ["UK"], desc: "로그인 이메일" },
-          { name: "provider_id", type: "varchar", keys: ["UK"], desc: "OAuth 제공자 ID" },
-          { name: "nickname", type: "varchar", keys: [], desc: "표시 이름" },
-          { name: "grade", type: "int", keys: [], desc: "학년" },
-          { name: "onboarding_completed", type: "boolean", keys: [], desc: "온보딩 완료" },
-          { name: "parent_password", type: "varchar", keys: [], desc: "부모 PIN (BCrypt)" },
-          { name: "equipped_outfit_code", type: "varchar(32)", keys: [], desc: "착용 의상 → shop_items.item_code" },
-        ],
-        notes: ["탈퇴 시 자식 테이블 삭제 후 마지막에 삭제"],
-      },
-      user_stats: {
-        domain: "home", label: "사용자 통계",
-        purpose: "레벨·풀·연속 출석. total_pool_earned(레벨) / available_pool(상점 차감).",
-        entity: "domain/home/model/UserStats.kt",
-        relations: [{ to: "members", card: "}|--||", label: "N:1", desc: "회원 1:1" }],
-        columns: [
-          { name: "member_id", type: "bigint", keys: ["FK", "UK"], desc: "회원" },
-          { name: "level", type: "int", keys: [], desc: "레벨" },
-          { name: "total_pool_earned", type: "int", keys: [], desc: "누적 풀" },
-          { name: "available_pool", type: "int", keys: [], desc: "사용 가능 풀" },
-          { name: "streak_days", type: "int", keys: [], desc: "연속 출석" },
-        ],
-      },
-      todos: {
-        domain: "home", label: "할 일",
-        purpose: "일별 할 일. SYSTEM 3개 + AGENT 최대 2개. assigned_date로 이력 유지.",
-        entity: "domain/home/model/Todo.kt",
-        relations: [{ to: "members", card: "}|--||", label: "N:1", desc: "회원" }],
-        columns: [
-          { name: "member_id", type: "bigint", keys: ["FK"], desc: "회원" },
-          { name: "type / status / source", type: "enum", keys: [], desc: "유형·상태·출처" },
-          { name: "assigned_date", type: "date", keys: [], desc: "할당일 (KST)" },
-        ],
-      },
-      reward_history: {
-        domain: "home", label: "보상 이력",
-        purpose: "풀 획득 로그 (append-only).",
-        entity: "domain/home/model/RewardHistory.kt",
-        relations: [{ to: "members", card: "}|--||", label: "N:1", desc: "회원" }],
-        columns: [
-          { name: "member_id", type: "bigint", keys: ["FK"], desc: "회원" },
-          { name: "source", type: "enum", keys: [], desc: "출처" },
-          { name: "amount", type: "int", keys: [], desc: "풀" },
-        ],
-      },
-      chat_sessions: {
-        domain: "chat", label: "채팅 세션",
-        purpose: "레오 대화방. session_key = FE UUID.",
-        entity: "domain/chat/model/ChatSession.kt",
-        relations: [
-          { to: "members", card: "}|--||", label: "N:1", desc: "회원" },
-          { to: "chat_messages", card: "||--o{", label: "1:N", desc: "메시지" },
-        ],
-        columns: [
-          { name: "session_key", type: "varchar", keys: ["UK"], desc: "외부 ID" },
-          { name: "member_id", type: "bigint", keys: ["FK"], desc: "회원" },
-        ],
-      },
-      chat_messages: {
-        domain: "chat", label: "채팅 메시지",
-        purpose: "USER/ASSISTANT 메시지. member_id 비정규화(기간 조회).",
-        entity: "domain/chat/model/ChatMessage.kt",
-        relations: [{ to: "chat_sessions", card: "}|--||", label: "N:1", desc: "세션" }],
-        columns: [
-          { name: "session_id", type: "bigint", keys: ["FK"], desc: "세션" },
-          { name: "member_id", type: "bigint", keys: [], desc: "비정규화" },
-          { name: "role / content", type: "enum/text", keys: [], desc: "역할·본문" },
-        ],
-        notes: ["주간 안전 배치 분석 원본"],
-      },
-      math_step: {
-        domain: "learning", label: "수학 스텝",
-        purpose: "수학 콘텐츠 마스터 (math_seed.sql).",
-        entity: "domain/learning/model/MathStep.kt",
-        relations: [{ to: "user_math_progress", card: "||--o{", label: "1:N", desc: "진도" }],
-        columns: [
-          { name: "grade / step_number", type: "int", keys: ["UK"], desc: "학년·스텝" },
-          { name: "content_json", type: "text", keys: [], desc: "학습 JSON" },
-        ],
-      },
-      korean_step: {
-        domain: "learning", label: "국어 스텝",
-        purpose: "국어 콘텐츠 마스터 (korean_seed.sql).",
-        entity: "domain/learning/model/KoreanStep.kt",
-        relations: [{ to: "user_korean_progress", card: "||--o{", label: "1:N", desc: "진도" }],
-        columns: [
-          { name: "grade / step_number", type: "int", keys: ["UK"], desc: "학년·스텝" },
-          { name: "content_json", type: "text", keys: [], desc: "학습 JSON" },
-        ],
-      },
-      user_math_progress: {
-        domain: "learning", label: "수학 진도",
-        purpose: "회원×수학 스텝 진행.",
-        entity: "domain/learning/model/UserMathProgress.kt",
-        relations: [
-          { to: "members", card: "}|--||", label: "N:1", desc: "회원" },
-          { to: "math_step", card: "}|--||", label: "N:1", desc: "스텝" },
-          { to: "user_math_progress_cycles", card: "||--o{", label: "1:N", desc: "사이클" },
-        ],
-        columns: [
-          { name: "member_id / math_step_id", type: "bigint", keys: ["FK", "UK"], desc: "복합 UK" },
-          { name: "is_step_completed", type: "boolean", keys: [], desc: "완료" },
-        ],
-      },
-      user_math_progress_cycles: {
-        domain: "learning", label: "수학 완료 사이클",
-        purpose: "완료 cycle_number 목록 (ElementCollection).",
-        entity: "domain/learning/model/UserMathProgress.kt",
-        relations: [{ to: "user_math_progress", card: "}|--||", label: "N:1", desc: "진도" }],
-        columns: [
-          { name: "progress_id", type: "bigint", keys: ["FK"], desc: "진도 ID" },
-          { name: "cycle_number", type: "int", keys: [], desc: "사이클 번호" },
-        ],
-      },
-      user_korean_progress: {
-        domain: "learning", label: "국어 진도",
-        purpose: "회원×국어 스텝 진행.",
-        entity: "domain/learning/model/UserKoreanProgress.kt",
-        relations: [
-          { to: "members", card: "}|--||", label: "N:1", desc: "회원" },
-          { to: "korean_step", card: "}|--||", label: "N:1", desc: "스텝" },
-          { to: "user_korean_progress_cycles", card: "||--o{", label: "1:N", desc: "사이클" },
-        ],
-        columns: [
-          { name: "member_id / korean_step_id", type: "bigint", keys: ["FK", "UK"], desc: "복합 UK" },
-        ],
-      },
-      user_korean_progress_cycles: {
-        domain: "learning", label: "국어 완료 사이클",
-        purpose: "완료 cycle_number 목록.",
-        entity: "domain/learning/model/UserKoreanProgress.kt",
-        relations: [{ to: "user_korean_progress", card: "}|--||", label: "N:1", desc: "진도" }],
-        columns: [
-          { name: "progress_id", type: "bigint", keys: ["FK"], desc: "진도 ID" },
-          { name: "cycle_number", type: "int", keys: [], desc: "사이클" },
-        ],
-      },
-      learning_attempt: {
-        domain: "learning", label: "학습 시도",
-        purpose: "문제별 시도·정답. AI learning-summary 원본.",
-        entity: "domain/learning/model/LearningAttempt.kt",
-        relations: [{ to: "members", card: "}|--||", label: "N:1", desc: "회원" }],
-        columns: [
-          { name: "member_id", type: "bigint", keys: ["FK"], desc: "회원" },
-          { name: "subject / step_id", type: "enum/bigint", keys: [], desc: "step_id는 FK 없음" },
-          { name: "solved / solved_at", type: "bool/ts", keys: [], desc: "정답" },
-        ],
-      },
-      member_interests: {
-        domain: "onboarding", label: "관심사",
-        purpose: "온보딩 관심사 (ANIMAL, SPACE…).",
-        entity: "domain/onboarding/model/MemberInterest.kt",
-        relations: [{ to: "members", card: "}|--||", label: "N:1", desc: "회원" }],
-        columns: [
-          { name: "member_id", type: "bigint", keys: ["FK"], desc: "회원" },
-          { name: "interest", type: "enum", keys: [], desc: "코드" },
-        ],
-      },
-      member_items: {
-        domain: "onboarding", label: "온보딩 선물",
-        purpose: "선물 1개 (GIFT_1~4). 풀 차감 없음.",
-        entity: "domain/onboarding/model/MemberItem.kt",
-        relations: [{ to: "members", card: "}|--||", label: "N:1", desc: "회원" }],
-        columns: [
-          { name: "member_id", type: "bigint", keys: ["FK"], desc: "회원" },
-          { name: "item_type", type: "enum", keys: [], desc: "= shop item_code" },
-        ],
-        notes: ["owned = DEFAULT ∪ member_items ∪ member_shop_items"],
-      },
-      shop_items: {
-        domain: "shop", label: "상점 카탈로그",
-        purpose: "의상 9종 (shop_seed.sql).",
-        entity: "domain/shop/model/ShopItem.kt",
-        relations: [{ to: "member_shop_items", card: "||--o{", label: "1:N", desc: "구매" }],
-        columns: [
-          { name: "item_code", type: "varchar", keys: ["UK"], desc: "GIFT_1, OUTFIT_*" },
-          { name: "price", type: "int", keys: [], desc: "풀 가격" },
-        ],
-      },
-      member_shop_items: {
-        domain: "shop", label: "구매 이력",
-        purpose: "풀 구매 의상.",
-        entity: "domain/shop/model/MemberShopItem.kt",
-        relations: [
-          { to: "members", card: "}|--||", label: "N:1", desc: "회원" },
-          { to: "shop_items", card: "}|--||", label: "N:1", desc: "상품" },
-        ],
-        columns: [
-          { name: "member_id / shop_item_id", type: "bigint", keys: ["FK", "UK"], desc: "복합 UK" },
-        ],
-      },
-      weekly_report: {
-        domain: "report", label: "주간 성장 리포트",
-        purpose: "AI 4섹션 JSON. mission_revealed = 부모 미션 수령.",
-        entity: "domain/report/model/WeeklyReport.kt",
-        relations: [{ to: "members", card: "}|--||", label: "N:1", desc: "회원" }],
-        columns: [
-          { name: "member_id / week_start", type: "bigint/date", keys: ["UK"], desc: "주당 1건" },
-          { name: "sections_json", type: "text", keys: [], desc: "AI JSON" },
-        ],
-      },
-      weekly_safety_report: {
-        domain: "report", label: "주간 안전 리포트",
-        purpose: "채팅 안전 신호 GREEN/YELLOW/RED.",
-        entity: "domain/report/model/WeeklySafetyReport.kt",
-        relations: [{ to: "members", card: "}|--||", label: "N:1", desc: "회원" }],
-        columns: [
-          { name: "member_id / week_start", type: "bigint/date", keys: ["UK"], desc: "주당 1건" },
-          { name: "safety_signal / score", type: "enum/int", keys: [], desc: "신호·점수" },
-        ],
-      },
-    };
+    const TABLES = window.ERD_TABLES;
+    if (!TABLES) {
+      console.error('ERD_TABLES missing: load erd-tables-enriched.js from the same folder as ERD.html');
+    }
 
     const SEARCH_ALIASES = {
-      레오: "chat", 채팅: "chat", chat: "chat",
-      홈: "home", 할일: "home", 풀: "home", 보상: "home",
-      회원: "member", 온보딩: "onboarding", 선물: "onboarding",
-      학습: "learning", 수학: "learning", 국어: "learning",
-      상점: "shop", 의상: "shop", 구매: "shop",
-      리포트: "report", 안전: "report", 부모: "report",
+      레오: "chat", 채팅: "chat", chat: "chat", 대화: "chat",
+      홈: "home", 할일: "home", 풀: "home", 보상: "home", todo: "home",
+      회원: "member", member: "member", 로그인: "member", google: "member",
+      온보딩: "onboarding", 선물: "onboarding", 관심사: "onboarding", pin: "onboarding",
+      학습: "learning", 수학: "learning", 국어: "learning", 문제: "learning",
+      상점: "shop", 의상: "shop", 구매: "shop", 착용: "shop", outfit: "shop",
+      리포트: "report", 안전: "report", 부모: "report", 주간: "report",
     };
+
+    const FIREBASE_ITEMS = window.ERD_FIREBASE;
+    const FIREBASE_KINDS = {
+      all: { label: "전체", color: "#64748b" },
+      firestore: { label: "Firestore", color: "#ea580c" },
+      storage: { label: "Storage", color: "#16a34a" },
+      auth: { label: "Auth", color: "#7c3aed" },
+    };
+    const FIREBASE_SEARCH_ALIASES = {
+      firebase: "firestore", firestore: "firestore", 마음: "firestore", mind: "firestore",
+      감정: "firestore", mindsession: "firestore", 히스토리: "firestore", 세션: "firestore",
+      storage: "storage", 이미지: "storage", 만화: "storage", comic: "storage",
+      fallback: "storage", 폴백: "storage",
+      auth: "auth", 로그인: "auth", token: "auth", google: "auth",
+    };
+    const FIREBASE_PATH_TREE = `PostgreSQL  members.id  (bigint)
+    │
+    └── Firestore  users/{memberId}     ← memberId = members.id 문자열
+            └── mindSessions/{setId}   ← step4 완료 후만 저장
+
+Storage (같은 버킷)
+    ├── fallback/{감정}/step1.png …     ← AI 폴백 (사전 업로드)
+    └── mindSessions/{setId}/comic/*.png ← POST /mind/scenario 시 BE 업로드`;
 
     let selectedTable = null;
     let domainFilter = "all";
+    let selectedFirebase = null;
+    let firebaseKindFilter = "all";
     let mermaidApi = null;
 
     function buildFullDiagram() {
+      if (!TABLES) return "erDiagram";
       const seen = new Set();
       const lines = ["erDiagram"];
       for (const [name, t] of Object.entries(TABLES)) {
@@ -444,7 +301,8 @@
 
     function searchBlob(name, t) {
       const d = DOMAINS[t.domain];
-      return [name, t.label, t.purpose, d.label, d.label.replace("·", " ")].join(" ").toLowerCase();
+      const extra = [t.role, t.whenUsed, ...(t.flows || []), ...(t.apis || [])].filter(Boolean).join(" ");
+      return [name, t.label, t.purpose, extra, d.label, d.label.replace("·", " ")].join(" ").toLowerCase();
     }
 
     function matchesSearch(name, t, query) {
@@ -483,6 +341,12 @@
 
     function renderTableGrid() {
       const grid = document.getElementById("table-grid");
+      if (!TABLES) {
+        grid.innerHTML = "";
+        document.getElementById("result-count").textContent = "";
+        renderDetail(null);
+        return;
+      }
       const query = document.getElementById("search-input").value;
       let visible = 0;
       const sorted = Object.keys(TABLES).sort();
@@ -505,9 +369,36 @@
       });
     }
 
+    function kindBadge(kind) {
+      const k = FIREBASE_KINDS[kind] || FIREBASE_KINDS.all;
+      return `<span class="kind-badge kind-${kind}">${k.label}</span>`;
+    }
+
+    function renderEnums(enums) {
+      if (!enums || !enums.length) return "";
+      return enums
+        .map((e) => {
+          const rows = (e.values || [])
+            .map((v) => `<tr><td><code>${v.v}</code></td><td>${v.d || ""}</td></tr>`)
+            .join("");
+          const note = e.note ? `<p class="enum-note">${e.note}</p>` : "";
+          const typeLabel = e.type ? `<span class="enum-type">(${e.type})</span>` : "";
+          return `<div class="detail-block">
+            <h4>정해진 값 · <code>${e.field}</code> ${typeLabel}</h4>
+            ${note}
+            <table class="enum-table"><thead><tr><th>코드</th><th>설명</th></tr></thead><tbody>${rows}</tbody></table>
+          </div>`;
+        })
+        .join("");
+    }
+
     function renderDetail(name) {
-      const t = TABLES[name];
       const panel = document.getElementById("detail-panel");
+      if (!TABLES) {
+        panel.innerHTML = '<p class="err">테이블 데이터를 불러오지 못했습니다. <code>erd-tables-enriched.js</code>가 <code>ERD.html</code>과 같은 폴더에 있는지 확인하고, 로컬에서는 파일을 직접 열거나 간단한 HTTP 서버로 여세요.</p>';
+        return;
+      }
+      const t = TABLES[name];
       if (!t) {
         panel.innerHTML = '<p class="empty">테이블을 찾을 수 없습니다.</p>';
         return;
@@ -524,6 +415,8 @@
         })
         .join("");
       const notes = (t.notes || []).map((n) => `<li>${n}</li>`).join("");
+      const flows = (t.flows || []).map((f) => `<li>${f}</li>`).join("");
+      const apis = (t.apis || []).map((a) => `<li>${a}</li>`).join("");
 
       panel.innerHTML = `
         <h3>
@@ -531,14 +424,22 @@
           <span class="badge" style="background:${dom.color}22;color:${dom.color}">${dom.label}</span>
           <span style="font-weight:400;color:var(--muted);font-size:0.95rem">${t.label}</span>
         </h3>
-        <p class="purpose">${t.purpose}</p>
-        ${relHtml ? `<div class="rel-list">${relHtml}</div>` : ""}
+        <div class="summary-box">
+          <p><strong>한 줄 요약</strong> — ${t.purpose || ""}</p>
+          ${t.role ? `<p><strong>역할</strong> — ${t.role}</p>` : ""}
+          ${t.whenUsed ? `<p><strong>언제 쓰이나요</strong> — ${t.whenUsed}</p>` : ""}
+        </div>
+        ${flows ? `<div class="detail-block"><h4>데이터가 만들어지는 흐름</h4><ol class="flow-list">${flows}</ol></div>` : ""}
+        ${apis ? `<div class="detail-block"><h4>관련 API (백엔드)</h4><ul class="api-list">${apis}</ul></div>` : ""}
+        ${renderEnums(t.enums)}
+        ${relHtml ? `<div class="detail-block"><h4>연결된 테이블</h4><div class="rel-list">${relHtml}</div></div>` : ""}
+        <h4 class="col-heading">컬럼</h4>
         <table class="schema-table">
           <thead><tr><th>컬럼</th><th>타입</th><th>설명</th></tr></thead>
           <tbody>${colRows}</tbody>
         </table>
         ${notes ? `<ul class="notes">${notes}</ul>` : ""}
-        <div class="entity-path">엔티티: <code>src/main/kotlin/com/bifriends/${t.entity}</code></div>
+        ${t.entity ? `<div class="entity-path">엔티티: <code>src/main/kotlin/com/bifriends/${t.entity}</code></div>` : ""}
       `;
       panel.querySelectorAll("[data-jump]").forEach((btn) => {
         btn.addEventListener("click", () => selectTable(btn.dataset.jump, true));
@@ -572,6 +473,188 @@
       }
     }
 
+    function firebaseSearchBlob(name, t) {
+      const k = FIREBASE_KINDS[t.kind];
+      return [name, t.label, t.path, t.purpose, t.role, k?.label, ...(t.flows || []), ...(t.apis || [])].join(" ").toLowerCase();
+    }
+
+    function matchesFirebaseSearch(name, t, query) {
+      if (!query) return true;
+      const q = query.toLowerCase().trim();
+      if (!q) return true;
+      if (firebaseSearchBlob(name, t).includes(q)) return true;
+      for (const [alias, kind] of Object.entries(FIREBASE_SEARCH_ALIASES)) {
+        if (q.includes(alias) && t.kind === kind) return true;
+      }
+      return false;
+    }
+
+    function matchesFirebaseKind(name, t) {
+      if (firebaseKindFilter === "all") return true;
+      return t.kind === firebaseKindFilter;
+    }
+
+    function renderFirebaseKindFilters() {
+      const el = document.getElementById("firebase-kind-filters");
+      const chips = [{ id: "all", label: "전체" }];
+      for (const [id, k] of Object.entries(FIREBASE_KINDS)) {
+        if (id === "all") continue;
+        chips.push({ id, label: k.label });
+      }
+      el.innerHTML = chips
+        .map((c) => `<button type="button" class="chip${firebaseKindFilter === c.id ? " active" : ""}" data-fb-kind="${c.id}">${c.label}</button>`)
+        .join("");
+      el.querySelectorAll(".chip").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          firebaseKindFilter = btn.dataset.fbKind;
+          renderFirebaseKindFilters();
+          renderFirebaseGrid();
+        });
+      });
+    }
+
+    function renderFirebaseGrid() {
+      const grid = document.getElementById("firebase-grid");
+      if (!FIREBASE_ITEMS) {
+        grid.innerHTML = "";
+        document.getElementById("firebase-result-count").textContent = "";
+        renderFirebaseDetail(null);
+        return;
+      }
+      const query = document.getElementById("firebase-search-input").value;
+      let visible = 0;
+      const sorted = Object.keys(FIREBASE_ITEMS).sort();
+      grid.innerHTML = sorted
+        .map((name) => {
+          const t = FIREBASE_ITEMS[name];
+          const show = matchesFirebaseSearch(name, t, query) && matchesFirebaseKind(name, t);
+          if (show) visible++;
+          const k = FIREBASE_KINDS[t.kind] || FIREBASE_KINDS.all;
+          return `<button type="button" class="table-card${show ? "" : " hidden"}${name === selectedFirebase ? " active" : ""}" data-fb="${name}">
+            <code>${name}</code>
+            <span class="card-label">${t.label}</span>
+            <span class="card-domain" style="background:${k.color}18;color:${k.color}">${k.label}</span>
+          </button>`;
+        })
+        .join("");
+      document.getElementById("firebase-result-count").textContent =
+        `${visible}개 항목 표시 (총 ${sorted.length}개)`;
+      grid.querySelectorAll(".table-card:not(.hidden)").forEach((card) => {
+        card.addEventListener("click", () => selectFirebase(card.dataset.fb, true));
+      });
+    }
+
+    function renderFirebaseDetail(name) {
+      const panel = document.getElementById("firebase-detail-panel");
+      if (!FIREBASE_ITEMS) {
+        panel.innerHTML =
+          '<p class="err"><code>erd-firebase-enriched.js</code>를 불러오지 못했습니다. <code>ERD.html</code>과 같은 폴더에서 열어 주세요.</p>';
+        return;
+      }
+      const t = FIREBASE_ITEMS[name];
+      if (!t) {
+        panel.innerHTML = '<p class="empty">Firebase 항목을 찾을 수 없습니다.</p>';
+        return;
+      }
+      const relHtml = (t.relations || [])
+        .map((r) => {
+          if (r.target === "pg" && TABLES?.[r.to]) {
+            return `<button type="button" class="link-pg-chip" data-jump-pg="${r.to}">PostgreSQL <code>${r.to}</code> (${r.label}) ${r.desc || ""}</button>`;
+          }
+          if (FIREBASE_ITEMS[r.to]) {
+            return `<button type="button" class="rel-chip" data-jump-fb="${r.to}"><code>${name}</code> → <code>${r.to}</code> (${r.label}) ${r.desc || ""}</button>`;
+          }
+          return `<span class="rel-chip" style="cursor:default"><code>${name}</code> → <code>${r.to}</code> (${r.label})</span>`;
+        })
+        .join("");
+      const colRows = (t.columns || [])
+        .map((c) => {
+          const keys = (c.keys || []).map((k) => `<span class="key key-${k.toLowerCase()}">${k}</span>`).join("");
+          return `<tr><td><code>${c.name}</code> ${keys}</td><td>${c.type}</td><td>${c.desc || ""}</td></tr>`;
+        })
+        .join("");
+      const notes = (t.notes || []).map((n) => `<li>${n}</li>`).join("");
+      const flows = (t.flows || []).map((f) => `<li>${f}</li>`).join("");
+      const apis = (t.apis || []).map((a) => `<li>${a}</li>`).join("");
+
+      panel.innerHTML = `
+        <h3>
+          ${kindBadge(t.kind)}
+          <code>${name}</code>
+          <span style="font-weight:400;color:var(--muted);font-size:0.95rem">${t.label}</span>
+        </h3>
+        <p class="purpose"><strong>경로</strong> — <code>${t.path || ""}</code></p>
+        <div class="summary-box">
+          <p><strong>한 줄 요약</strong> — ${t.purpose || ""}</p>
+          ${t.role ? `<p><strong>역할</strong> — ${t.role}</p>` : ""}
+          ${t.whenUsed ? `<p><strong>언제 쓰이나요</strong> — ${t.whenUsed}</p>` : ""}
+        </div>
+        ${flows ? `<div class="detail-block"><h4>데이터가 만들어지는 흐름</h4><ol class="flow-list">${flows}</ol></div>` : ""}
+        ${apis ? `<div class="detail-block"><h4>관련 API (백엔드)</h4><ul class="api-list">${apis}</ul></div>` : ""}
+        ${renderEnums(t.enums)}
+        ${relHtml ? `<div class="detail-block"><h4>연결</h4><div class="rel-list">${relHtml}</div></div>` : ""}
+        <h4 class="col-heading">필드 · 설정</h4>
+        <table class="schema-table">
+          <thead><tr><th>이름</th><th>타입</th><th>설명</th></tr></thead>
+          <tbody>${colRows}</tbody>
+        </table>
+        ${notes ? `<ul class="notes">${notes}</ul>` : ""}
+        ${t.entity ? `<div class="entity-path">코드: <code>src/main/kotlin/com/bifriends/${t.entity}</code></div>` : ""}
+      `;
+      panel.querySelectorAll("[data-jump-fb]").forEach((btn) => {
+        btn.addEventListener("click", () => selectFirebase(btn.dataset.jumpFb, true));
+      });
+      panel.querySelectorAll("[data-jump-pg]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          selectTable(btn.dataset.jumpPg, true);
+        });
+      });
+    }
+
+    function selectFirebase(name, scroll) {
+      if (!FIREBASE_ITEMS?.[name]) return;
+      selectedFirebase = name;
+      renderFirebaseGrid();
+      renderFirebaseDetail(name);
+      if (scroll) {
+        document.getElementById("section-firebase").scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    }
+
+    async function renderFirebaseOverview() {
+      const host = document.getElementById("firebase-diagram");
+      if (!mermaidApi) return;
+      const source = `flowchart LR
+  members[(PostgreSQL members)]
+  users[Firestore users/memberId]
+  ms[mindSessions/setId]
+  fb[fallback/감정/]
+  comic[mindSessions/setId/comic/]
+  members -->|"id 문자열"| users
+  users --> ms
+  ms -.->|"step3 imageUrl"| comic
+  fb -.->|"isFallback"| ms`;
+      try {
+        const { svg } = await mermaidApi.render("firebase-flow", source);
+        host.innerHTML = svg;
+      } catch (e) {
+        host.innerHTML = `<p class="err">Firebase 연동도 오류: ${e.message}</p>`;
+      }
+    }
+
+    function initFirebaseSection() {
+      document.getElementById("firebase-path-tree").textContent = FIREBASE_PATH_TREE;
+      if (!FIREBASE_ITEMS) {
+        document.getElementById("firebase-diagram").innerHTML =
+          '<p class="err"><code>erd-firebase-enriched.js</code>가 필요합니다.</p>';
+        renderFirebaseDetail(null);
+        return;
+      }
+      renderFirebaseKindFilters();
+      renderFirebaseGrid();
+      renderFirebaseOverview();
+    }
+
     async function renderOverview() {
       const host = document.getElementById("overview-diagram");
       const source = buildFullDiagram();
@@ -601,10 +684,18 @@
     mermaidApi = mermaid;
 
     document.getElementById("search-input").addEventListener("input", renderTableGrid);
+    document.getElementById("firebase-search-input").addEventListener("input", renderFirebaseGrid);
 
-    renderDomainFilters();
-    renderTableGrid();
-    renderOverview();
+    if (!TABLES) {
+      document.getElementById("overview-diagram").innerHTML =
+        '<p class="err">관계도를 그리려면 <code>erd-tables-enriched.js</code>가 필요합니다. <code>bifriends-be/doc/</code>에서 ERD.html을 열거나, 해당 폴더에서 <code>npx serve .</code> 등으로 여세요.</p>';
+      renderDetail(null);
+    } else {
+      renderDomainFilters();
+      renderTableGrid();
+      renderOverview();
+    }
+    initFirebaseSection();
   </script>
 </body>
 </html>

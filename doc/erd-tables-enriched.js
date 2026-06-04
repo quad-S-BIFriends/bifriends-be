@@ -1,0 +1,625 @@
+/**
+ * ERD.html 테이블 상세 데이터 (erd-tables-enriched.js)
+ * ERD.html과 같은 폴더에 두고 <script src="erd-tables-enriched.js"> 로 로드
+ */
+window.ERD_TABLES = {
+  members: {
+    domain: "member",
+    label: "회원 (루트)",
+    purpose: "앱에 로그인한 아동 계정의 중심 테이블입니다. 다른 거의 모든 테이블이 여기의 id를 가리킵니다.",
+    role: "BiFriends에서 '누구'인지 정의하는 마스터 데이터입니다. Google 로그인 정보, 온보딩에서 정한 닉네임·학년, 부모 모드 PIN, 레오 의상 착용 상태가 모두 이 행에 모입니다. PostgreSQL의 FK 루트이며, Firestore에서는 같은 숫자 ID가 users/{memberId} 경로로 쓰입니다.",
+    whenUsed: "최초 Google OAuth 로그인 성공 시 1행이 생성되고, 이후 프로필·온보딩·설정 변경 시 갱신됩니다. 탈퇴 시 연결된 자식 데이터를 모두 지운 뒤 마지막에 삭제됩니다.",
+    apis: [
+      "POST /api/v1/members/auth/firebase — 로그인·JWT 발급",
+      "GET /api/v1/members/me — 내 프로필",
+      "PATCH /api/v1/members/me — 닉네임·학년·알림 등",
+      "온보딩 API들 — 약관·관심사·선물·PIN",
+    ],
+    flows: [
+      "Google에서 id_token 전달 → BE가 email, provider_id 저장",
+      "온보딩 단계마다 nickname, grade, 약관 동의 필드 채움",
+      "상점에서 의상 착용 시 equipped_outfit_code 갱신",
+      "탈퇴 시 WithdrawalService가 자식 테이블부터 순서대로 삭제",
+    ],
+    enums: [
+      {
+        field: "role",
+        type: "Role",
+        values: [
+          { v: "ROLE_USER", d: "일반 아동 사용자 (기본)" },
+          { v: "ROLE_ADMIN", d: "운영·관리용 (일반 FE 흐름과 분리)" },
+        ],
+      },
+      {
+        field: "representative_item_type",
+        type: "ItemType (선택)",
+        note: "대표 아이템 표시용. 온보딩 선물 코드와 동일 enum",
+        values: [
+          { v: "GIFT_1", d: "책" },
+          { v: "GIFT_2", d: "리본" },
+          { v: "GIFT_3", d: "꽃다발" },
+          { v: "GIFT_4", d: "선글라스" },
+        ],
+      },
+    ],
+    relations: [
+      { to: "user_stats", card: "||--o|", label: "1:1", desc: "성장 통계" },
+      { to: "todos", card: "||--o{", label: "1:N", desc: "일별 할 일" },
+      { to: "reward_history", card: "||--o{", label: "1:N", desc: "풀 보상 로그" },
+      { to: "chat_sessions", card: "||--o{", label: "1:N", desc: "레오 대화방" },
+      { to: "user_math_progress", card: "||--o{", label: "1:N", desc: "수학 진도" },
+      { to: "user_korean_progress", card: "||--o{", label: "1:N", desc: "국어 진도" },
+      { to: "learning_attempt", card: "||--o{", label: "1:N", desc: "문제 시도" },
+      { to: "member_interests", card: "||--o{", label: "1:N", desc: "관심사" },
+      { to: "member_items", card: "||--o{", label: "1:N", desc: "온보딩 선물" },
+      { to: "member_shop_items", card: "||--o{", label: "1:N", desc: "구매 의상" },
+      { to: "weekly_report", card: "||--o{", label: "1:N", desc: "주간 성장 리포트" },
+      { to: "weekly_safety_report", card: "||--o{", label: "1:N", desc: "주간 안전 리포트" },
+    ],
+    columns: [
+      { name: "id", type: "bigint", keys: ["PK"], desc: "회원 고유 번호 (자동 증가)" },
+      { name: "email", type: "varchar", keys: ["UK"], desc: "Google 계정 이메일" },
+      { name: "provider_id", type: "varchar", keys: ["UK"], desc: "OAuth 제공자 쪽 사용자 ID" },
+      { name: "provider", type: "varchar", keys: [], desc: "기본 google" },
+      { name: "nickname", type: "varchar", keys: [], desc: "앱에 표시되는 이름" },
+      { name: "grade", type: "int", keys: [], desc: "학년 (온보딩)" },
+      { name: "onboarding_completed", type: "boolean", keys: [], desc: "온보딩 완료 여부" },
+      { name: "parent_password", type: "varchar", keys: [], desc: "부모 모드 PIN (BCrypt 해시)" },
+      { name: "equipped_outfit_code", type: "varchar(32)", keys: [], desc: "착용 중 의상 → shop_items.item_code (DB FK 없음)" },
+      { name: "terms_agreed / privacy_agreed / marketing_agreed", type: "boolean", keys: [], desc: "약관·마케팅 동의" },
+      { name: "profile_image_url", type: "varchar", keys: [], desc: "주로 Google 프로필 사진 URL" },
+    ],
+    notes: [
+      "equipped_hat_id 등 레거시 코스메틱 ID 컬럼은 남아 있으나 신규는 equipped_outfit_code만 사용",
+      "Firestore users/{memberId}의 memberId와 동일 숫자 — 감정 학습은 ERD.html §③ Firebase 참고",
+    ],
+    entity: "domain/member/model/Member.kt",
+  },
+
+  user_stats: {
+    domain: "home",
+    label: "사용자 통계 (레벨·풀)",
+    purpose: "홈 화면의 레벨, 풀 잔액, 연속 출석을 저장합니다. 회원당 반드시 1행입니다.",
+    role: "게임처럼 쌓이는 '성장 수치' 저장소입니다. 아이가 활동해서 풀을 얻으면 여기가 바뀌고, 상점에서 쓰면 available_pool만 줄어듭니다. 레벨은 한번 오른 뒤 풀을 써도 내려가지 않도록 total_pool_earned 기준으로 계산합니다.",
+    whenUsed: "회원 가입·첫 홈 진입 시 1행 생성. 출석·학습·할 일·감정 학습 완료 시 earnPool(), 상점 구매 시 spendPool()이 호출됩니다.",
+    apis: ["GET /api/v1/home — 레벨·풀·할 일·인사말에 사용", "상점 구매 시 spendPool() 내부 호출"],
+    flows: [
+      "홈 진입 → recordAttendance()로 출석일·streak 갱신 → 출석 풀 지급",
+      "학습/할 일/감정 보상 → earnPool() → reward_history에도 기록",
+      "상점 구매 → spendPool() (total_pool_earned·level은 유지)",
+    ],
+    enums: [],
+    relations: [{ to: "members", card: "}|--||", label: "N:1", desc: "회원 1명당 1행" }],
+    columns: [
+      { name: "member_id", type: "bigint", keys: ["FK", "UK"], desc: "회원 (1:1)" },
+      { name: "level", type: "int", keys: [], desc: "현재 레벨 (total_pool_earned에서 자동 계산)" },
+      { name: "total_pool_earned", type: "int", keys: [], desc: "누적 획득 풀 — 절대 감소 안 함, 레벨 기준" },
+      { name: "available_pool", type: "int", keys: [], desc: "지금 쓸 수 있는 풀 — 상점에서 차감" },
+      { name: "streak_days", type: "int", keys: [], desc: "연속 출석 일수" },
+      { name: "last_attendance_date", type: "date", keys: [], desc: "마지막 출석일 (KST)" },
+    ],
+    notes: ["LevelPolicy: 레벨업 필요 풀 = 10 + (레벨-1)×5"],
+    entity: "domain/home/model/UserStats.kt",
+  },
+
+  todos: {
+    domain: "home",
+    label: "오늘의 할 일",
+    purpose: "홈에 보이는 '오늘 해야 할 일' 목록입니다. 날짜별로 쌓여 이력·성장일기에 활용됩니다.",
+    role: "아이의 하루 루틴을 체크리스트로 보여 줍니다. 완료하면 풀 보상과 연결되고, LEARNING 타입은 공부방으로 이동하는 링크 역할을 합니다. SYSTEM 할 일은 매일 자동 생성되며 삭제·수정이 불가하고, AI가 추가한 AGENT 할 일만 수정 가능합니다.",
+    whenUsed: "매일 스케줄러가 SYSTEM 할 일 3개 생성. AI가 추가 시 AGENT 행 추가. 완료 시 status=COMPLETED, completedAt 기록.",
+    apis: [
+      "GET /api/v1/home — 오늘 할 일 목록",
+      "PATCH /api/v1/todos/{id}/complete — 완료 + 풀",
+      "AI 내부 API — 할 일 생성/수정/삭제 (AGENT만)",
+    ],
+    flows: [
+      "자정 스케줄러 → 당일 SYSTEM 할 일 3개 INSERT",
+      "아이가 완료 → complete() → reward_history (TODO_SINGLE 등)",
+      "과거 assigned_date 행은 삭제하지 않음",
+    ],
+    enums: [
+      {
+        field: "type",
+        type: "TodoType",
+        values: [
+          { v: "CHAT", d: "레오랑 이야기하기" },
+          { v: "LEARNING", d: "오늘의 문제 풀기 (learning_type으로 수학/국어)" },
+          { v: "EMOTION", d: "친구 기분 알아보기 (감정 학습)" },
+          { v: "CUSTOM", d: "AI가 만든 맞춤 할 일" },
+        ],
+      },
+      {
+        field: "status",
+        type: "TodoStatus",
+        values: [
+          { v: "PENDING", d: "미완료" },
+          { v: "COMPLETED", d: "완료" },
+        ],
+      },
+      {
+        field: "source",
+        type: "TodoSource",
+        values: [
+          { v: "SYSTEM", d: "매일 자동 생성, 수정·삭제 불가" },
+          { v: "AGENT", d: "AI 생성, 제목 수정·삭제 가능" },
+        ],
+      },
+      {
+        field: "learning_type",
+        type: "LearningType (nullable)",
+        note: "type=LEARNING 일 때만. null이면 일요일 등 전체 공부방",
+        values: [
+          { v: "MATH", d: "생각하는 힘(수학) — 월·수·금" },
+          { v: "LANGUAGE", d: "말하는 힘(국어) — 화·목·토" },
+          { v: "(null)", d: "요일 무관·전체 공부방 목록" },
+        ],
+      },
+    ],
+    relations: [{ to: "members", card: "}|--||", label: "N:1", desc: "소유 회원" }],
+    columns: [
+      { name: "member_id", type: "bigint", keys: ["FK"], desc: "회원" },
+      { name: "title", type: "varchar", keys: [], desc: "할 일 제목" },
+      { name: "assigned_date", type: "date", keys: [], desc: "그날 할 일로 지정된 날짜 (KST)" },
+      { name: "completed_at", type: "timestamp", keys: [], desc: "완료 시각" },
+    ],
+    notes: ["하루 최대 5개: SYSTEM 3 + AGENT 2"],
+    entity: "domain/home/model/Todo.kt",
+  },
+
+  reward_history: {
+    domain: "home",
+    label: "풀 보상 이력",
+    purpose: "풀을 '왜' 얼마나 받았는지 남기는 감사 로그입니다. 수정하지 않습니다.",
+    role: "통계·디버깅·나중 분석용 영수증입니다. user_stats.available_pool이 실제 잔액이고, 이 테이블은 그 변화의 출처를 기록합니다.",
+    whenUsed: "earnPool() 성공할 때마다 1행 추가 (출석, 정답, 할 일 완료, 감정 학습 등).",
+    apis: ["직접 API 없음 — 홈·학습·할 일 완료 시 내부 기록"],
+    flows: ["보상 지급 로직 → UserStats.earnPool() + RewardHistory INSERT"],
+    enums: [
+      {
+        field: "source",
+        type: "RewardSource",
+        values: [
+          { v: "ATTENDANCE", d: "연속 출석 보상" },
+          { v: "LEARNING_CORRECT", d: "문제 정답" },
+          { v: "LEARNING_SET_COMPLETE", d: "3문제 세트 완료 보너스" },
+          { v: "EMOTION", d: "마음(감정) 시나리오 완료" },
+          { v: "TODO_SINGLE", d: "할 일 1개 완료" },
+          { v: "TODO_ALL_COMPLETE", d: "오늘 할 일 전부 완료 보너스" },
+        ],
+      },
+    ],
+    relations: [{ to: "members", card: "}|--||", label: "N:1", desc: "회원" }],
+    columns: [
+      { name: "member_id", type: "bigint", keys: ["FK"], desc: "회원" },
+      { name: "source", type: "varchar(30)", keys: [], desc: "RewardSource enum 문자열" },
+      { name: "amount", type: "int", keys: [], desc: "획득 풀 양" },
+      { name: "ref_id", type: "bigint", keys: [], desc: "연관 ID (예: todo.id)" },
+    ],
+    entity: "domain/home/model/RewardHistory.kt",
+  },
+
+  chat_sessions: {
+    domain: "chat",
+    label: "채팅 세션 (대화방)",
+    purpose: "레오와의 대화 '방' 하나를 나타냅니다. FE가 만든 UUID가 외부에서 쓰는 ID입니다.",
+    role: "카카오톡 방과 비슷합니다. 한 세션 안에 여러 chat_messages가 쌓입니다. AI 배치(주간 안전 리포트)는 이 세션들의 메시지를 모아 분석합니다.",
+    whenUsed: "아이가 레오 채팅을 시작할 때 FE가 session_key(UUID)로 생성. 제목은 첫 대화 후 AI가 채울 수 있음.",
+    apis: [
+      "POST /api/v1/chat/messages — 메시지 전송·세션 생성",
+      "GET /api/v1/chat/sessions — 세션 목록",
+    ],
+    flows: [
+      "FE가 session_key 생성 → 첫 메시지와 함께 세션 row 생성",
+      "이후 메시지는 session_id FK로 연결",
+    ],
+    enums: [
+      {
+        field: "status",
+        type: "SessionStatus",
+        values: [
+          { v: "ACTIVE", d: "진행 중" },
+          { v: "CLOSED", d: "종료됨" },
+        ],
+      },
+    ],
+    relations: [
+      { to: "members", card: "}|--||", label: "N:1", desc: "회원" },
+      { to: "chat_messages", card: "||--o{", label: "1:N", desc: "메시지" },
+    ],
+    columns: [
+      { name: "session_key", type: "varchar(100)", keys: ["UK"], desc: "FE UUID — API에서 이 ID 사용" },
+      { name: "member_id", type: "bigint", keys: ["FK"], desc: "회원" },
+      { name: "title", type: "varchar", keys: [], desc: "대화 제목 (선택)" },
+    ],
+    entity: "domain/chat/model/ChatSession.kt",
+  },
+
+  chat_messages: {
+    domain: "chat",
+    label: "채팅 메시지",
+    purpose: "레오 채팅의 실제 말풍선 내용(사용자·레오)을 저장합니다.",
+    role: "대화 기록 본문입니다. member_id를 세션과 별도로 또 저장해, '이 회원의 지난주 메시지 전부' 같은 조회를 chat_sessions JOIN 없이 빠르게 합니다.",
+    whenUsed: "매 채팅 발화·응답마다 INSERT. 주간 안전 배치가 기간별로 읽어 감.",
+    apis: [
+      "POST /api/v1/chat/messages",
+      "GET /api/v1/chat/messages?memberId&from&to — AI·내부용 기간 조회",
+    ],
+    flows: ["사용자 메시지 저장 → AI 호출 → ASSISTANT 응답 저장"],
+    enums: [
+      {
+        field: "role",
+        type: "MessageRole",
+        values: [
+          { v: "USER", d: "아이(사용자) 발화" },
+          { v: "ASSISTANT", d: "레오(AI) 응답" },
+        ],
+      },
+    ],
+    relations: [{ to: "chat_sessions", card: "}|--||", label: "N:1", desc: "세션" }],
+    columns: [
+      { name: "session_id", type: "bigint", keys: ["FK"], desc: "소속 세션" },
+      { name: "member_id", type: "bigint", keys: [], desc: "비정규화 — 기간별 조회용" },
+      { name: "content", type: "text", keys: [], desc: "메시지 본문" },
+      { name: "created_at", type: "timestamp", keys: [], desc: "작성 시각" },
+    ],
+    notes: ["weekly_safety_report 분석의 원본 데이터"],
+    entity: "domain/chat/model/ChatMessage.kt",
+  },
+
+  math_step: {
+    domain: "learning",
+    label: "수학 스텝 (콘텐츠)",
+    purpose: "수학 공부방에 있는 '단원/스텝' 전체 목록(교재)입니다. 모든 회원이 공유합니다.",
+    role: "Netflix 카탈로그처럼 '어떤 수업이 있는지' 정의만 합니다. 실제 아이가 어디까지 했는지는 user_math_progress에 있습니다. content_json에 슬라이드·문제가 들어 있습니다.",
+    whenUsed: "배포 시 math_seed.sql로 적재. 앱에서 학년·스텝 번호로 조회.",
+    apis: [
+      "GET /api/v1/learning/math/steps",
+      "GET /api/v1/learning/math/... — 스텝별 학습 API",
+    ],
+    flows: ["시드 SQL → 고정 콘텐츠 → 회원 진도는 별도 테이블"],
+    enums: [],
+    relations: [{ to: "user_math_progress", card: "||--o{", label: "1:N", desc: "회원별 진도" }],
+    columns: [
+      { name: "grade", type: "int", keys: ["UK"], desc: "학년 (UK with step_number)" },
+      { name: "step_number", type: "int", keys: ["UK"], desc: "스텝 순서" },
+      { name: "step_title", type: "varchar", keys: [], desc: "표시 제목" },
+      { name: "concept", type: "varchar", keys: [], desc: "개념명 (집계용)" },
+      { name: "content_json", type: "text", keys: [], desc: "사이클·문제 JSON 전체" },
+    ],
+    notes: ["회원 FK 없음 — 마스터 데이터"],
+    entity: "domain/learning/model/MathStep.kt",
+  },
+
+  korean_step: {
+    domain: "learning",
+    label: "국어 스텝 (콘텐츠)",
+    purpose: "국어 공부방 스텝 마스터 데이터입니다.",
+    role: "math_step과 동일한 역할이지만 국어 과목용입니다.",
+    whenUsed: "korean_seed.sql 적재.",
+    apis: ["GET /api/v1/learning/korean/steps", "국어 학습 API"],
+    flows: ["시드 → user_korean_progress에 진도 연결"],
+    enums: [],
+    relations: [{ to: "user_korean_progress", card: "||--o{", label: "1:N", desc: "회원별 진도" }],
+    columns: [
+      { name: "grade / step_number", type: "int", keys: ["UK"], desc: "학년·스텝" },
+      { name: "content_json", type: "text", keys: [], desc: "학습 JSON" },
+    ],
+    entity: "domain/learning/model/KoreanStep.kt",
+  },
+
+  user_math_progress: {
+    domain: "learning",
+    label: "수학 진도",
+    purpose: "특정 회원이 특정 수학 스텝에서 어디까지 했는지 1행으로 표현합니다.",
+    role: "진도표입니다. 스텝을 처음 열면 행이 생기고, 사이클을 끝낼 때마다 user_math_progress_cycles에 번호가 추가됩니다.",
+    whenUsed: "해당 스텝 학습 시작 시 INSERT/조회. 완료 시 is_step_completed=true.",
+    apis: ["수학 validate·진도 API 내부"],
+    flows: [
+      "스텝 진입 → progress 행 생성",
+      "사이클 완료 → cycles 테이블에 cycle_number 추가",
+    ],
+    enums: [],
+    relations: [
+      { to: "members", card: "}|--||", label: "N:1", desc: "회원" },
+      { to: "math_step", card: "}|--||", label: "N:1", desc: "스텝" },
+      { to: "user_math_progress_cycles", card: "||--o{", label: "1:N", desc: "완료 사이클" },
+    ],
+    columns: [
+      { name: "member_id", type: "bigint", keys: ["FK", "UK"], desc: "회원" },
+      { name: "math_step_id", type: "bigint", keys: ["FK", "UK"], desc: "스텝" },
+      { name: "is_step_completed", type: "boolean", keys: [], desc: "스텝 전체 완료" },
+      { name: "last_accessed_at", type: "timestamp", keys: [], desc: "마지막 접근" },
+    ],
+    notes: ["(member_id, math_step_id) 복합 UK"],
+    entity: "domain/learning/model/UserMathProgress.kt",
+  },
+
+  user_math_progress_cycles: {
+    domain: "learning",
+    label: "수학 완료 사이클",
+    purpose: "한 progress 행에서 '몇 번 사이클을 끝냈는지' 번호만 모아 둔 보조 테이블입니다.",
+    role: "JPA @ElementCollection 때문에 별도 테이블로 펼쳐집니다. 본질은 user_math_progress의 completedCycles 집합입니다.",
+    whenUsed: "사이클 클리어 시 cycle_number INSERT.",
+    apis: ["학습 진행 API 내부"],
+    flows: ["progress_id + cycle_number 행 추가"],
+    enums: [],
+    relations: [{ to: "user_math_progress", card: "}|--||", label: "N:1", desc: "진도 행" }],
+    columns: [
+      { name: "progress_id", type: "bigint", keys: ["FK"], desc: "user_math_progress.id" },
+      { name: "cycle_number", type: "int", keys: [], desc: "완료한 사이클 번호 (1,2,3…)" },
+    ],
+    entity: "domain/learning/model/UserMathProgress.kt",
+  },
+
+  user_korean_progress: {
+    domain: "learning",
+    label: "국어 진도",
+    purpose: "회원×국어 스텝 진행 상태입니다.",
+    role: "user_math_progress와 동일 구조, 국어용.",
+    whenUsed: "국어 스텝 학습 시",
+    apis: ["국어 학습 API"],
+    flows: ["math 진도와 동일 패턴"],
+    enums: [],
+    relations: [
+      { to: "members", card: "}|--||", label: "N:1", desc: "회원" },
+      { to: "korean_step", card: "}|--||", label: "N:1", desc: "스텝" },
+      { to: "user_korean_progress_cycles", card: "||--o{", label: "1:N", desc: "사이클" },
+    ],
+    columns: [
+      { name: "member_id", type: "bigint", keys: ["FK", "UK"], desc: "회원" },
+      { name: "korean_step_id", type: "bigint", keys: ["FK", "UK"], desc: "스텝" },
+      { name: "is_step_completed", type: "boolean", keys: [], desc: "완료 여부" },
+    ],
+    entity: "domain/learning/model/UserKoreanProgress.kt",
+  },
+
+  user_korean_progress_cycles: {
+    domain: "learning",
+    label: "국어 완료 사이클",
+    purpose: "국어 progress의 완료 사이클 번호 목록.",
+    role: "user_math_progress_cycles와 동일.",
+    whenUsed: "국어 사이클 완료 시",
+    apis: ["국어 학습 API 내부"],
+    flows: [],
+    enums: [],
+    relations: [{ to: "user_korean_progress", card: "}|--||", label: "N:1", desc: "진도" }],
+    columns: [
+      { name: "progress_id", type: "bigint", keys: ["FK"], desc: "진도 ID" },
+      { name: "cycle_number", type: "int", keys: [], desc: "사이클 번호" },
+    ],
+    entity: "domain/learning/model/UserKoreanProgress.kt",
+  },
+
+  learning_attempt: {
+    domain: "learning",
+    label: "학습 시도 (문제 로그)",
+    purpose: "문제 한 개에 대해 몇 번 시도했는지, 힌트를 썼는지, 맞혔는지 기록합니다.",
+    role: "공부방 '풀이 로그'입니다. 주간 AI 리포트(learning-summary)가 이 데이터를 집계합니다. step_id는 math/korean 스텝 ID지만 DB FK는 없고 subject로 구분합니다.",
+    whenUsed: "validate API 호출 시 오답·정답마다 갱신.",
+    apis: [
+      "POST .../learning/math/validate",
+      "POST .../learning/korean/validate",
+      "GET /api/v1/report/learning-summary (AI)",
+    ],
+    flows: [
+      "오답 → attempts++",
+      "정답 확정 → solved=true, solved_at, hints_used 저장",
+    ],
+    enums: [
+      {
+        field: "subject",
+        type: "LearningSubject",
+        values: [
+          { v: "MATH", d: "수학 step_id" },
+          { v: "KOREAN", d: "국어 step_id" },
+        ],
+      },
+    ],
+    relations: [{ to: "members", card: "}|--||", label: "N:1", desc: "회원" }],
+    columns: [
+      { name: "concept", type: "varchar", keys: [], desc: "개념명 (주간 집계)" },
+      { name: "step_id", type: "bigint", keys: [], desc: "math_step.id 또는 korean_step.id" },
+      { name: "cycle_number", type: "int", keys: [], desc: "사이클" },
+      { name: "question_index", type: "int", keys: [], desc: "문항 인덱스" },
+      { name: "attempts", type: "int", keys: [], desc: "시도 횟수" },
+      { name: "hints_used", type: "int", keys: [], desc: "사용한 힌트 단계 (0~3)" },
+      { name: "solved", type: "boolean", keys: [], desc: "정답 확정 여부" },
+      { name: "solved_at", type: "timestamp", keys: [], desc: "정답 시각 (주간 필터)" },
+    ],
+    notes: ["(member, subject, step_id, cycle, question_index)로 문제 1개 식별"],
+    entity: "domain/learning/model/LearningAttempt.kt",
+  },
+
+  member_interests: {
+    domain: "onboarding",
+    label: "회원 관심사",
+    purpose: "온보딩에서 고른 관심사(최대 3개)를 저장합니다.",
+    role: "레오 꾸미기·대화 개인화에 쓰일 수 있는 '좋아하는 것' 목록입니다. 회원당 여러 행 가능.",
+    whenUsed: "온보딩 관심사 선택 완료 시 INSERT.",
+    apis: ["POST /api/v1/onboarding/interests", "GET 프로필·홈"],
+    flows: ["온보딩 → interest enum별 1행"],
+    enums: [
+      {
+        field: "interest",
+        type: "Interest",
+        values: [
+          { v: "DINOSAUR", d: "공룡" },
+          { v: "ANIMAL", d: "동물" },
+          { v: "SPACE", d: "우주" },
+          { v: "SPORTS", d: "스포츠" },
+          { v: "KPOP_MUSIC", d: "K-POP·음악" },
+          { v: "GAME", d: "게임" },
+          { v: "COOKING", d: "요리" },
+          { v: "CRAFTING", d: "만들기" },
+          { v: "SCIENCE", d: "과학" },
+        ],
+      },
+    ],
+    relations: [{ to: "members", card: "}|--||", label: "N:1", desc: "회원" }],
+    columns: [
+      { name: "member_id", type: "bigint", keys: ["FK"], desc: "회원" },
+      { name: "interest", type: "varchar", keys: [], desc: "Interest enum" },
+    ],
+    notes: ["최대 3개까지 선택 (비즈니스 규칙)"],
+    entity: "domain/onboarding/model/MemberInterest.kt",
+  },
+
+  member_items: {
+    domain: "onboarding",
+    label: "온보딩 선물",
+    purpose: "온보딩 마지막에 고른 '레오 선물' 1개를 저장합니다. 돈(풀) 안 씁니다.",
+    role: "상점에서 파는 GIFT_1~4와 같은 코드지만, 구매 이력(member_shop_items)과는 별도입니다. 앱에서 '이미 가지고 있음' 처리에 포함됩니다.",
+    whenUsed: "온보딩 선물 선택 API 1회.",
+    apis: ["POST /api/v1/onboarding/gift"],
+    flows: [
+      "선물 선택 → member_items 1행",
+      "상점 owned = OUTFIT_DEFAULT + member_items + member_shop_items",
+    ],
+    enums: [
+      {
+        field: "item_type",
+        type: "ItemType",
+        note: "shop_items.item_code와 동일 문자열",
+        values: [
+          { v: "GIFT_1", d: "책 (5풀 상점가)" },
+          { v: "GIFT_2", d: "리본 (10풀)" },
+          { v: "GIFT_3", d: "꽃다발 (5풀)" },
+          { v: "GIFT_4", d: "선글라스 (10풀)" },
+        ],
+      },
+    ],
+    relations: [{ to: "members", card: "}|--||", label: "N:1", desc: "회원" }],
+    columns: [
+      { name: "member_id", type: "bigint", keys: ["FK"], desc: "회원" },
+      { name: "item_type", type: "varchar", keys: [], desc: "GIFT_1 ~ GIFT_4" },
+      { name: "acquired_at", type: "timestamp", keys: [], desc: "수령 시각" },
+    ],
+    notes: ["같은 item_code를 member_shop_items에서 또 사려 하면 거부"],
+    entity: "domain/onboarding/model/MemberItem.kt",
+  },
+
+  shop_items: {
+    domain: "shop",
+    label: "상점 카탈로그",
+    purpose: "팔 수 있는 레오 의상 전체 목록(가격·이미지 키)입니다.",
+    role: "상점 메뉴판입니다. 모든 유저가 같은 행을 봅니다. 실제로 샀는지는 member_shop_items에 있습니다.",
+    whenUsed: "shop_seed.sql로 9종 적재. is_active=false면 목록에서 숨김.",
+    apis: ["GET /api/v1/shop/items"],
+    flows: ["시드 적재 → 상점 API가 목록 반환"],
+    enums: [
+      {
+        field: "category",
+        type: "ShopItemCategory",
+        note: "현재 판매는 OUTFIT만",
+        values: [
+          { v: "OUTFIT", d: "전체 의상 프리셋 (사용 중)" },
+          { v: "HAT / GLASSES / CLOTHES / BACKGROUND", d: "레거시 (비활성)" },
+        ],
+      },
+      {
+        field: "item_code (고정)",
+        type: "시드 문자열",
+        values: [
+          { v: "OUTFIT_DEFAULT", d: "기본 (0풀, 항상 보유)" },
+          { v: "GIFT_3", d: "꽃다발 5풀" },
+          { v: "GIFT_1", d: "책 5풀" },
+          { v: "GIFT_4", d: "선글라스 10풀" },
+          { v: "GIFT_2", d: "리본 10풀" },
+          { v: "GIFT_6~7, GIFT_5", d: "15풀 의상" },
+          { v: "OUTFIT_STUDYING", d: "공부중 20풀" },
+        ],
+      },
+    ],
+    relations: [{ to: "member_shop_items", card: "||--o{", label: "1:N", desc: "구매 이력" }],
+    columns: [
+      { name: "item_code", type: "varchar(32)", keys: ["UK"], desc: "FE·API 경로 ID" },
+      { name: "name", type: "varchar", keys: [], desc: "표시 이름" },
+      { name: "price", type: "int", keys: [], desc: "풀 가격" },
+      { name: "image_key", type: "varchar", keys: ["UK"], desc: "FE 에셋 키" },
+      { name: "is_active", type: "boolean", keys: [], desc: "판매 중 여부" },
+    ],
+    entity: "domain/shop/model/ShopItem.kt",
+  },
+
+  member_shop_items: {
+    domain: "shop",
+    label: "상점 구매 이력",
+    purpose: "풀을 써서 산 의상 기록입니다.",
+    role: "영수증 + 소유권입니다. 같은 의상 중복 구매를 막습니다.",
+    whenUsed: "POST /shop/items/{itemCode}/purchase 성공 시.",
+    apis: ["POST /api/v1/shop/items/{itemCode}/purchase", "GET /shop/my-items"],
+    flows: [
+      "available_pool 차감",
+      "member_shop_items INSERT",
+      "members.equipped_outfit_code는 equip API에서 별도 설정",
+    ],
+    enums: [],
+    relations: [
+      { to: "members", card: "}|--||", label: "N:1", desc: "회원" },
+      { to: "shop_items", card: "}|--||", label: "N:1", desc: "상품" },
+    ],
+    columns: [
+      { name: "member_id", type: "bigint", keys: ["FK", "UK"], desc: "회원" },
+      { name: "shop_item_id", type: "bigint", keys: ["FK", "UK"], desc: "상품" },
+      { name: "acquired_at", type: "timestamp", keys: [], desc: "구매 시각" },
+    ],
+    notes: ["(member_id, shop_item_id) UK"],
+    entity: "domain/shop/model/MemberShopItem.kt",
+  },
+
+  weekly_report: {
+    domain: "report",
+    label: "주간 성장 리포트",
+    purpose: "부모가 보는 AI 주간 리포트 본문(JSON)입니다.",
+    role: "지난주 학습·성장을 4섹션 JSON으로 저장합니다. parent_mission은 처음엔 숨기고, 부모가 '미션 받기'를 누르면 mission_revealed=true.",
+    whenUsed: "월요일 배치 후 AI가 POST /weekly-report 콜백. 회원×week_start당 1건.",
+    apis: [
+      "GET /api/v1/report/weekly — 부모 조회",
+      "POST /api/v1/report/weekly/.../parent-mission — 미션 공개",
+      "POST /api/v1/weekly-report — AI 콜백",
+    ],
+    flows: [
+      "BE 스케줄러 → AI 배치",
+      "AI → sections_json 저장",
+      "부모 미션 수령 → mission_revealed=true",
+    ],
+    enums: [],
+    relations: [{ to: "members", card: "}|--||", label: "N:1", desc: "회원" }],
+    columns: [
+      { name: "week_start / week_end", type: "date", keys: ["UK"], desc: "분석 주(월~일)" },
+      { name: "sections_json", type: "text", keys: [], desc: "growth_summary, math, korean, parent_mission" },
+      { name: "mission_revealed", type: "boolean", keys: [], desc: "부모가 미션 받았는지" },
+    ],
+    notes: ["sections_json 내부 키는 AI 스펙 따름"],
+    entity: "domain/report/model/WeeklyReport.kt",
+  },
+
+  weekly_safety_report: {
+    domain: "report",
+    label: "주간 안전 리포트",
+    purpose: "지난주 레오 채팅을 분석한 '안전 신호' 결과입니다.",
+    role: "부모 대시보드용 위험도입니다. chat_messages를 AI가 키워드·점수로 판정합니다.",
+    whenUsed: "주간 배치 후 AI 콜백. 회원×week_start UK.",
+    apis: ["GET /api/v1/report/safety — 부모", "POST /api/v1/weekly-safety-report — AI"],
+    flows: ["chat_messages 조회 → AI 분석 → GREEN/YELLOW/RED 저장"],
+    enums: [
+      {
+        field: "safety_signal",
+        type: "SafetySignal",
+        note: "score 기준: 0~3 GREEN, 4~7 YELLOW, 8+ RED",
+        values: [
+          { v: "GREEN", d: "정상" },
+          { v: "YELLOW", d: "주의" },
+          { v: "RED", d: "보호자 확인 필요" },
+        ],
+      },
+    ],
+    relations: [{ to: "members", card: "}|--||", label: "N:1", desc: "회원" }],
+    columns: [
+      { name: "score", type: "int", keys: [], desc: "위험 점수" },
+      { name: "reason_summary", type: "varchar", keys: [], desc: "요약 문장 (선택)" },
+    ],
+    entity: "domain/report/model/WeeklySafetyReport.kt",
+  },
+};

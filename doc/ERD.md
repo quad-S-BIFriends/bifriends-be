@@ -371,14 +371,68 @@ owned = OUTFIT_DEFAULT (코드상 기본)
 
 ---
 
-## PostgreSQL 밖 저장소
+## Firebase (PostgreSQL 밖)
 
-| 저장소 | 경로 / 용도 |
-|--------|-------------|
-| **Firestore** | `users/{memberId}/mindSessions/{setId}` — 감정·마음챙김 (JPA 없음) |
-| **Firebase Storage** | 프로필 이미지 (`members.profile_image_url`) |
+> 인터랙티브 정리: [ERD.html §③ Firebase](./ERD.html#section-firebase) · 상세 운영: [mind/README.md](./mind/README.md)
+
+PostgreSQL `members.id`와 Firestore `users/{memberId}`는 **같은 회원 ID(문자열)** 로 연결됩니다.  
+BE가 Firebase에 쓰는 데이터는 **친구랑 감정 학습(Mind)** 중심입니다.
+
+### Firestore
+
+| 항목 | 값 |
+|------|-----|
+| Database ID | `FIRESTORE_DATABASE_ID` (기본 `(default)`, 운영 예: `bifriends`) |
+| 루트 경로 | `users/{memberId}/mindSessions/{setId}` |
+| 저장 시점 | 아이가 **step4 완료** 후 `POST /api/v1/mind/sessions` (시나리오 생성만으로는 미저장) |
+
+```
+users/{memberId}                    ← members.id
+└── mindSessions/{setId}          ← AI setId (문서 ID)
+    ├── setId, emotion, situation, learnedExpression
+    ├── isFallback, completedAt     ← 목록 정렬·인덱스(completedAt DESC)
+    └── step1, step2, step3, step4  ← Map (imageUrl만, base64 미저장)
+```
+
+| API | 용도 |
+|-----|------|
+| `POST /api/v1/mind/sessions` | 완료 세션 저장 + 풀 보상 |
+| `GET /api/v1/mind/sessions` | 히스토리 목록 |
+| `GET /api/v1/mind/sessions/{sessionId}` | 다시보기 |
+| `getLearnedExpressions()` | `learnedExpression` 중복 방지 (내부) |
+
+장애 시 조회·저장 API는 **503** (빈 배열로 숨기지 않음).
+
+### Firebase Storage
+
+| 항목 | 값 |
+|------|-----|
+| Bucket | `FIREBASE_STORAGE_BUCKET` (예: `bifriends-5df72.firebasestorage.app`) |
+| URL 형식 | `https://firebasestorage.googleapis.com/v0/b/{bucket}/o/{path}?alt=media&token={uuid}` |
+
+| 경로 (객체 prefix) | 용도 | BE 업로드 |
+|-------------------|------|-----------|
+| `fallback/{감정명}/step1.png` 등 | AI 폴백 시나리오 고정 이미지 | ❌ 사전 업로드 |
+| `mindSessions/{setId}/comic/{uuid}.png` | step3 만화 컷 | ✅ `POST /mind/scenario` 시 |
+| `members.profile_image_url` | 프로필 | ❌ 주로 Google OAuth URL → **PostgreSQL**만 |
+
+감정 폴백 URL 목록: [emotion/fallback-image-urls.md](./emotion/fallback-image-urls.md)
+
+### PostgreSQL ↔ Firebase 요약
+
+```mermaid
+flowchart LR
+  members[(members)]
+  users[Firestore users/memberId]
+  ms[mindSessions/setId]
+  storage[(Storage comic/)]
+  members -->|"id 문자열"| users
+  users --> ms
+  ms -.->|"step3 imageUrl"| storage
+```
 
 ---
+
 
 ## FK 없이 논리적으로만 연결되는 것
 
