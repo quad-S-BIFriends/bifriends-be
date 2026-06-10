@@ -4,8 +4,10 @@ import com.bifriends.domain.member.service.MemberService
 import com.bifriends.infrastructure.security.FirebaseTokenVerifier
 import com.bifriends.infrastructure.security.JwtProvider
 import com.bifriends.infrastructure.security.PrincipalDetails
+import com.google.firebase.auth.FirebaseAuthException
 import jakarta.validation.Valid
 import jakarta.validation.constraints.NotBlank
+import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.GetMapping
@@ -29,7 +31,12 @@ class OAuthController(
      */
     @PostMapping("/auth/google")
     fun googleLogin(@Valid @RequestBody request: GoogleLoginRequest): ResponseEntity<LoginResponse> {
-        val firebaseToken = firebaseTokenVerifier.verifyIdToken(request.idToken)
+        val firebaseToken = try {
+            firebaseTokenVerifier.verifyIdToken(request.idToken)
+        } catch (e: FirebaseAuthException) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(null)
+        }
 
         val providerId = firebaseToken.uid
         val email = firebaseToken.email ?: throw IllegalArgumentException("이메일 정보가 없습니다.")
@@ -63,6 +70,10 @@ class OAuthController(
             )
         )
     }
+
+    /** 로그아웃 — 자녀/부모 모드 공통. JWT는 Stateless이므로 클라이언트가 토큰을 폐기한다. */
+    @PostMapping("/auth/logout")
+    fun logout(): ResponseEntity<Void> = ResponseEntity.noContent().build()
 
     @GetMapping("/auth/login/success")
     fun loginSuccess(@AuthenticationPrincipal principalDetails: PrincipalDetails): ResponseEntity<LoginResponse> {

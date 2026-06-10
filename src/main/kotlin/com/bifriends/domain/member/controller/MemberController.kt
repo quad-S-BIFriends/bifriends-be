@@ -5,10 +5,14 @@ import com.bifriends.domain.member.dto.MemberSettingsRequest
 import com.bifriends.domain.member.dto.MemberSettingsResponse
 import com.bifriends.domain.member.dto.RepresentativeItemRequest
 import com.bifriends.domain.member.dto.RepresentativeItemResponse
+import com.bifriends.domain.member.dto.WithdrawRequest
 import com.bifriends.domain.member.service.MemberService
 import com.bifriends.domain.member.service.WithdrawalService
+import com.bifriends.domain.parent.dto.VerifyParentPasswordRequest
+import com.bifriends.domain.parent.service.ParentService
 import com.bifriends.infrastructure.security.JwtProvider
 import jakarta.validation.Valid
+import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 
@@ -17,6 +21,7 @@ import org.springframework.web.bind.annotation.*
 class MemberController(
     private val memberService: MemberService,
     private val withdrawalService: WithdrawalService,
+    private val parentService: ParentService,
     private val jwtProvider: JwtProvider,
 ) {
 
@@ -44,12 +49,18 @@ class MemberController(
         return ResponseEntity.ok(memberService.updateRepresentativeItem(extractMemberId(token), request.itemType!!))
     }
 
-    /** RPT-11 — 회원 탈퇴 */
+    /** RPT-11 — 회원 탈퇴 (부모 모드에서만 가능 — 부모 PIN 확인 필요) */
     @DeleteMapping("/me")
     fun withdraw(
         @RequestHeader("Authorization") token: String,
+        @Valid @RequestBody request: WithdrawRequest,
     ): ResponseEntity<Void> {
-        withdrawalService.withdraw(extractMemberId(token))
+        val memberId = extractMemberId(token)
+        val verified = parentService.verifyParentPassword(memberId, VerifyParentPasswordRequest(request.parentPassword))
+        if (!verified.verified) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build()
+        }
+        withdrawalService.withdraw(memberId)
         return ResponseEntity.noContent().build()
     }
 

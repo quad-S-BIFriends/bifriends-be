@@ -4,6 +4,7 @@ import com.bifriends.domain.learning.dto.KoreanStepsResponse
 import com.bifriends.domain.learning.dto.MathStepsResponse
 import com.bifriends.domain.onboarding.model.Interest
 import com.bifriends.domain.onboarding.model.ItemType
+import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotNull
 
 /** AI 내부 호출용 — nickname / grade / interests 만 반환 */
@@ -61,6 +62,13 @@ data class MemberSettingsResponse(
 
 data class RepresentativeItemResponse(
     val representativeItemType: ItemType
+)
+
+// ── RPT-11. 회원 탈퇴 (부모 모드에서만 가능) ────────────────────────────────────
+
+data class WithdrawRequest(
+    @field:NotBlank(message = "부모 비밀번호를 입력해주세요.")
+    val parentPassword: String,
 )
 
 // ───────────────────────────────────────────────────────────────
