@@ -38,6 +38,9 @@ data class AiBatchWeeklyReportRequest(
 
     @JsonProperty("week_end")
     val weekEnd: LocalDate,
+
+    @JsonProperty("grade")
+    val grade: Int?,
 )
 
 /** AI 배치 트리거 응답 */

@@ -44,6 +44,7 @@ class WeeklyReportScheduler(
                     memberId = member.id,
                     weekStart = weekStart,
                     weekEnd = weekEnd,
+                    grade = member.grade,
                 ),
             )
             if (success) successCount++ else failCount++
