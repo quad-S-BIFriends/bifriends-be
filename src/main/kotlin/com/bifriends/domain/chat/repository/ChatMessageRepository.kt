@@ -2,6 +2,7 @@ package com.bifriends.domain.chat.repository
 
 import com.bifriends.domain.chat.model.ChatMessage
 import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param
 import java.time.LocalDateTime
@@ -29,6 +30,10 @@ interface ChatMessageRepository : JpaRepository<ChatMessage, Long> {
         @Param("from") from: LocalDateTime,
         @Param("to") to: LocalDateTime,
     ): List<ChatMessage>
+
+    @Modifying
+    @Query("DELETE FROM ChatMessage m WHERE m.session.sessionKey = :sessionKey")
+    fun deleteAllBySessionKey(@Param("sessionKey") sessionKey: String)
 
     fun deleteAllByMemberId(memberId: Long)
 }

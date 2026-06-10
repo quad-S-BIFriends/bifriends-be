@@ -9,8 +9,10 @@ import com.bifriends.domain.chat.repository.ChatSessionRepository
 import com.bifriends.domain.member.repository.MemberRepository
 import com.bifriends.infrastructure.ai.AiChatClient
 import com.bifriends.infrastructure.ai.dto.AiChatRequest
+import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import org.springframework.web.server.ResponseStatusException
 import java.time.LocalDateTime
 
 @Service
@@ -80,6 +82,35 @@ class ChatService(
             cta = aiResponse.cta,
             todosCreated = aiResponse.todosCreated,
         )
+    }
+
+    // ── FE API — 세션 목록·상세·삭제 ─────────────────────────────────────────
+
+    /** 내 채팅 세션 목록 — 최근 활동 순 */
+    fun getMySessions(memberId: Long): ChatSessionListResponse {
+        val sessions = chatSessionRepository.findByMemberIdOrderByUpdatedAtDesc(memberId)
+        return ChatSessionListResponse(sessions = sessions.map { ChatSessionSummary.from(it) })
+    }
+
+    /** 세션 내 메시지 목록 (FE용) — 본인 세션만 조회 가능 */
+    fun getMySessionMessages(memberId: Long, sessionKey: String): ChatSessionMessagesResponse {
+        val session = chatSessionRepository.findBySessionKey(sessionKey)
+            ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "세션을 찾을 수 없습니다.")
+        if (session.member.id != memberId)
+            throw ResponseStatusException(HttpStatus.FORBIDDEN, "본인의 세션만 조회할 수 있습니다.")
+        val messages = chatMessageRepository.findBySessionKeyOrderByCreatedAtAsc(sessionKey)
+        return ChatSessionMessagesResponse.from(session, messages)
+    }
+
+    /** 세션 삭제 — 메시지 먼저 삭제 후 세션 삭제 */
+    @Transactional
+    fun deleteSession(memberId: Long, sessionKey: String) {
+        val session = chatSessionRepository.findBySessionKey(sessionKey)
+            ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "세션을 찾을 수 없습니다.")
+        if (session.member.id != memberId)
+            throw ResponseStatusException(HttpStatus.FORBIDDEN, "본인의 세션만 삭제할 수 있습니다.")
+        chatMessageRepository.deleteAllBySessionKey(sessionKey)
+        chatSessionRepository.deleteBySessionKey(sessionKey)
     }
 
     // ── Leo 내부 API ──────────────────────────────────────────────────────────

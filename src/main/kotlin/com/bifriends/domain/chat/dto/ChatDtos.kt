@@ -13,6 +13,30 @@ import jakarta.validation.constraints.NotEmpty
 import jakarta.validation.constraints.Size
 import java.time.LocalDateTime
 
+// ── FE — 세션 목록 조회 ───────────────────────────────────────────────────────
+
+data class ChatSessionListResponse(
+    val sessions: List<ChatSessionSummary>,
+)
+
+data class ChatSessionSummary(
+    val sessionId: String,
+    val title: String?,
+    val status: SessionStatus,
+    val createdAt: LocalDateTime,
+    val updatedAt: LocalDateTime,
+) {
+    companion object {
+        fun from(session: com.bifriends.domain.chat.model.ChatSession) = ChatSessionSummary(
+            sessionId = session.sessionKey,
+            title = session.title,
+            status = session.status,
+            createdAt = session.createdAt,
+            updatedAt = session.updatedAt,
+        )
+    }
+}
+
 // ── FE ↔ BE ──────────────────────────────────────────────────────────────────
 
 /** FE → BE 채팅 메시지 전송 (프로필은 FE가 /members/me 등에서 이미 보유한 값) */
