@@ -1256,6 +1256,104 @@ Base path: `/api/v1/mind` · **JWT 필수**
 }
 ```
 
+### 12-2. 내 채팅 세션 목록 조회
+
+**GET** `/api/v1/chat/sessions` · **JWT 필수**
+
+내 세션을 최근 활동 순으로 반환합니다.
+
+**Response** `200 OK`
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `sessions` | array | 세션 목록 |
+| `sessions[].sessionId` | string | 채팅 세션 ID (UUID) |
+| `sessions[].title` | string \| null | 세션 제목 (Leo가 자동 생성) |
+| `sessions[].status` | string | `ACTIVE` \| `CLOSED` |
+| `sessions[].createdAt` | string (ISO-8601) | 생성 시각 |
+| `sessions[].updatedAt` | string (ISO-8601) | 마지막 활동 시각 |
+
+```json
+{
+  "sessions": [
+    {
+      "sessionId": "550e8400-e29b-41d4-a716-446655440000",
+      "title": "수학 공부 도움 요청",
+      "status": "ACTIVE",
+      "createdAt": "2026-06-10T10:00:00",
+      "updatedAt": "2026-06-10T10:30:00"
+    }
+  ]
+}
+```
+
+---
+
+### 12-3. 채팅 세션 상세 조회 (메시지 목록)
+
+**GET** `/api/v1/chat/sessions/{sessionId}` · **JWT 필수**
+
+본인 세션의 전체 메시지를 오래된 순으로 반환합니다.
+
+**Path Parameter**
+
+| Parameter | Description |
+|-----------|-------------|
+| `sessionId` | 채팅 세션 ID (UUID) |
+
+**Response** `200 OK`
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `sessionId` | string | 채팅 세션 ID |
+| `memberId` | long | 회원 ID |
+| `messages` | array | 메시지 목록 (오래된 순) |
+| `messages[].id` | long | 메시지 ID |
+| `messages[].role` | string | `USER` \| `ASSISTANT` |
+| `messages[].content` | string | 메시지 내용 |
+| `messages[].createdAt` | string (ISO-8601) | 생성 시각 |
+
+```json
+{
+  "sessionId": "550e8400-e29b-41d4-a716-446655440000",
+  "memberId": 1,
+  "messages": [
+    { "id": 1, "role": "USER", "content": "수학 어떻게 해?", "createdAt": "2026-06-10T10:00:00" },
+    { "id": 2, "role": "ASSISTANT", "content": "같이 풀어보자!", "createdAt": "2026-06-10T10:00:05" }
+  ]
+}
+```
+
+**Error**
+
+| Code | Description |
+|------|-------------|
+| `404` | 세션 없음 |
+| `403` | 본인 세션이 아님 |
+
+---
+
+### 12-4. 채팅 세션 삭제
+
+**DELETE** `/api/v1/chat/sessions/{sessionId}` · **JWT 필수**
+
+세션과 세션 내 모든 메시지를 영구 삭제합니다.
+
+**Path Parameter**
+
+| Parameter | Description |
+|-----------|-------------|
+| `sessionId` | 채팅 세션 ID (UUID) |
+
+**Response** `204 No Content`
+
+**Error**
+
+| Code | Description |
+|------|-------------|
+| `404` | 세션 없음 |
+| `403` | 본인 세션이 아님 |
+
 ---
 
 ## 13. 내부 전용 API (Internal — Leo)

@@ -58,6 +58,7 @@ class SecurityConfig(
                 auth
                     .requestMatchers(
                         AntPathRequestMatcher("/health"),
+                        AntPathRequestMatcher("/error"),
                         AntPathRequestMatcher("/actuator/health"),
                         AntPathRequestMatcher("/actuator/health/**"),
                         AntPathRequestMatcher("/api/v1/members/auth/**"),
