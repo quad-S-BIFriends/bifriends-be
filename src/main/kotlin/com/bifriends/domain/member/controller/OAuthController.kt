@@ -3,14 +3,11 @@ package com.bifriends.domain.member.controller
 import com.bifriends.domain.member.service.MemberService
 import com.bifriends.infrastructure.security.FirebaseTokenVerifier
 import com.bifriends.infrastructure.security.JwtProvider
-import com.bifriends.infrastructure.security.PrincipalDetails
 import com.google.firebase.auth.FirebaseAuthException
 import jakarta.validation.Valid
 import jakarta.validation.constraints.NotBlank
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
-import org.springframework.security.core.annotation.AuthenticationPrincipal
-import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
@@ -74,33 +71,6 @@ class OAuthController(
     /** 로그아웃 — 자녀/부모 모드 공통. JWT는 Stateless이므로 클라이언트가 토큰을 폐기한다. */
     @PostMapping("/auth/logout")
     fun logout(): ResponseEntity<Void> = ResponseEntity.noContent().build()
-
-    @GetMapping("/auth/login/success")
-    fun loginSuccess(@AuthenticationPrincipal principalDetails: PrincipalDetails): ResponseEntity<LoginResponse> {
-        val member = principalDetails.getMember()
-
-        val accessToken = jwtProvider.generateAccessToken(
-            memberId = member.id,
-            email = member.email,
-            role = member.role.name
-        )
-        val refreshToken = jwtProvider.generateRefreshToken(
-            memberId = member.id,
-            email = member.email,
-            role = member.role.name
-        )
-
-        return ResponseEntity.ok(
-            LoginResponse(
-                accessToken = accessToken,
-                refreshToken = refreshToken,
-                email = member.email,
-                nickname = member.nickname,
-                profileImageUrl = member.profileImageUrl,
-                onboardingCompleted = member.onboardingCompleted
-            )
-        )
-    }
 
     data class GoogleLoginRequest(
         @field:NotBlank(message = "ID 토큰은 필수입니다.")

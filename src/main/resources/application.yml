@@ -24,17 +24,6 @@ spring:
       mode: always
       data-locations: classpath:db/math_seed.sql,classpath:db/korean_seed.sql,classpath:db/shop_seed.sql
 
-  security:
-    oauth2:
-      client:
-        registration:
-          google:
-            client-id: ${GOOGLE_CLIENT_ID}
-            client-secret: ${GOOGLE_CLIENT_SECRET}
-            scope:
-              - email
-              - profile
-
 server:
   port: 8080
 

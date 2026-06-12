@@ -1,13 +1,10 @@
 package com.bifriends.global.config
 
-import com.bifriends.domain.member.service.CustomOAuth2UserService
 import com.bifriends.infrastructure.security.InternalServiceAuthenticationFilter
 import com.bifriends.infrastructure.security.InternalServicePaths
 import com.bifriends.infrastructure.security.JwtAuthenticationFilter
 import com.bifriends.infrastructure.security.JwtProvider
-import com.bifriends.infrastructure.security.PrincipalDetails
 import com.fasterxml.jackson.databind.ObjectMapper
-import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import org.springframework.boot.web.servlet.FilterRegistrationBean
 import org.springframework.context.annotation.Bean
@@ -16,18 +13,15 @@ import org.springframework.http.HttpStatus
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
 import org.springframework.security.config.http.SessionCreationPolicy
-import org.springframework.security.core.Authentication
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.security.web.SecurityFilterChain
-import org.springframework.security.web.authentication.AuthenticationSuccessHandler
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher
 
 @Configuration
 @EnableWebSecurity
 class SecurityConfig(
-    private val customOAuth2UserService: CustomOAuth2UserService,
     private val jwtProvider: JwtProvider,
     private val jwtAuthenticationFilter: JwtAuthenticationFilter,
     private val internalServiceAuthenticationFilter: InternalServiceAuthenticationFilter,
@@ -75,20 +69,10 @@ class SecurityConfig(
             }
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter::class.java)
             .addFilterBefore(internalServiceAuthenticationFilter, JwtAuthenticationFilter::class.java)
-            .oauth2Login { oauth2 ->
-                oauth2
-                    .userInfoEndpoint { it.userService(customOAuth2UserService) }
-                    .successHandler(oAuth2AuthenticationSuccessHandler())
-            }
 
         return http.build()
     }
 
-    /**
-     * [로그인 성공 후 JWT 발급 핸들러]
-     * OAuth2 로그인 성공 시 호출되어 accessToken + refreshToken을 JSON으로 응답.
-     * 클라이언트(Flutter)는 이 토큰을 저장하고 이후 API 요청에 사용.
-     */
     @Bean
     fun passwordEncoder(): PasswordEncoder = BCryptPasswordEncoder()
 
@@ -104,35 +88,4 @@ class SecurityConfig(
         return FilterRegistrationBean(filter).apply { isEnabled = false }
     }
 
-    @Bean
-    fun oAuth2AuthenticationSuccessHandler(): AuthenticationSuccessHandler {
-        return AuthenticationSuccessHandler { _: HttpServletRequest, response: HttpServletResponse, authentication: Authentication ->
-            val principal = authentication.principal as PrincipalDetails
-            val member = principal.getMember()
-
-            val accessToken = jwtProvider.generateAccessToken(
-                memberId = member.id,
-                email = member.email,
-                role = member.role.name
-            )
-            val refreshToken = jwtProvider.generateRefreshToken(
-                memberId = member.id,
-                email = member.email,
-                role = member.role.name
-            )
-
-            val tokenResponse = mapOf(
-                "accessToken" to accessToken,
-                "refreshToken" to refreshToken,
-                "email" to member.email,
-                "nickname" to member.nickname,
-                "profileImageUrl" to member.profileImageUrl,
-                "onboardingCompleted" to member.onboardingCompleted
-            )
-
-            response.contentType = "application/json;charset=UTF-8"
-            response.status = HttpServletResponse.SC_OK
-            response.writer.write(objectMapper.writeValueAsString(tokenResponse))
-        }
-    }
 }
