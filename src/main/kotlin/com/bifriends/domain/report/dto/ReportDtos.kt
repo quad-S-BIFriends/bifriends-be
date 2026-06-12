@@ -101,6 +101,8 @@ data class LearningSummaryResponse(
     val weekStart: LocalDate,
     /** 집계에 사용한 주 종료일 (요청 to, inclusive) */
     val weekEnd: LocalDate,
+    val nickname: String?,
+    val learnedExpressions: List<String>,
     val math: List<LearningConceptSummaryItem>,
     val korean: List<LearningConceptSummaryItem>,
     val todos: TodoSummaryResponse,

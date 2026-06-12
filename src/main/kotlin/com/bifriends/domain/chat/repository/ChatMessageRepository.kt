@@ -1,3 +1,4 @@
+
 package com.bifriends.domain.chat.repository
 
 import com.bifriends.domain.chat.model.ChatMessage

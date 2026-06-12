@@ -4,11 +4,13 @@ import com.bifriends.domain.home.model.TodoType
 import com.bifriends.domain.home.repository.TodoRepository
 import com.bifriends.domain.learning.model.LearningSubject
 import com.bifriends.domain.learning.repository.LearningAttemptRepository
+import com.bifriends.domain.member.service.MemberService
 import com.bifriends.domain.report.dto.*
 import com.bifriends.domain.report.model.SafetySignal
 import com.bifriends.domain.report.model.WeeklyReport
 import com.bifriends.domain.report.repository.WeeklyReportRepository
 import com.bifriends.domain.report.repository.WeeklySafetyReportRepository
+import com.bifriends.infrastructure.firebase.FirestoreService
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.stereotype.Service
@@ -22,6 +24,8 @@ class ReportService(
     private val weeklySafetyReportRepository: WeeklySafetyReportRepository,
     private val todoRepository: TodoRepository,
     private val learningAttemptRepository: LearningAttemptRepository,
+    private val memberService: MemberService,
+    private val firestoreService: FirestoreService,
     private val objectMapper: ObjectMapper,
 ) {
 
@@ -70,9 +74,14 @@ class ReportService(
         val fromDateTime = from.atStartOfDay()
         val toDateTime = to.atTime(23, 59, 59)
 
+        val nickname = memberService.findById(memberId).nickname
+        val learnedExpressions = firestoreService.getLearnedExpressions(memberId)
+
         return LearningSummaryResponse(
             weekStart = from,
             weekEnd = to,
+            nickname = nickname,
+            learnedExpressions = learnedExpressions,
             math = aggregateLearningSummary(memberId, LearningSubject.MATH, fromDateTime, toDateTime),
             korean = aggregateLearningSummary(memberId, LearningSubject.KOREAN, fromDateTime, toDateTime),
             todos = TodoSummaryResponse(
