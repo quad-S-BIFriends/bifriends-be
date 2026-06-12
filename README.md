@@ -1,42 +1,74 @@
 # BiFriends Backend
 
-Spring Boot 기반 백엔드 API 서버.
+느린학습자(경계선 지능) 아동용 앱의 **Spring Boot 기반 백엔드 API 서버**입니다.
+
+> 팀 노션: [TEAM 5 — BIFriend](https://gdg-sookmyung-25-26.notion.site/TEAM-5-BIFriend-33733fc61813816795abe94d93cef0ef)
+
+---
 
 ## 기술 스택
 
 | 구분 | 기술 |
 |------|------|
-| Language | Kotlin 2.1, JDK 21 |
+| Language | Kotlin 2.1 / JDK 21 |
 | Framework | Spring Boot 3.4 |
 | Database | PostgreSQL 17 |
-| ORM | Spring Data JPA |
-| Auth | Spring Security + OAuth2 (Google) + JWT |
+| ORM | Spring Data JPA (Hibernate) |
+| Auth | Firebase Admin SDK (ID Token 검증) + JWT |
+| BaaS | Firebase Admin SDK (Auth + Firestore + Storage) |
+| API Docs | springdoc-openapi 2.8.6 (Swagger UI) |
 | Build | Gradle (Kotlin DSL) |
 | Container | Docker, Docker Compose |
+
+---
 
 ## 실행 방법
 
 ```bash
-# Docker Compose (DB + App)
-docker-compose up -d
-
-# 로컬 개발 (DB만 Docker, 앱은 직접 실행)
+# 1. DB만 Docker로 띄우고 앱은 로컬 실행 (개발 권장)
 docker-compose up -d db
 ./gradlew bootRun
+# → App: http://localhost:8080
+# → Swagger: http://localhost:8080/swagger-ui/index.html
+
+# 2. DB + App 전체 Docker 실행
+docker-compose up -d
+# → App: http://localhost:18080
+
+# DB 직접 접속
+psql -h localhost -p 15432 -U bifriends -d bifriends
 ```
 
-### 환경변수
+---
+
+## 환경변수
+
+`application.yml`에서 참조하는 환경변수 목록입니다. 기본값이 없는 항목은 반드시 설정해야 합니다.
+
+### 필수
+
+| 변수 | 설명 |
+|------|------|
+| `FIREBASE_CONFIG_PATH` | Firebase 서비스 계정 JSON 경로 (기본: `classpath:firebase-service-account.json`) |
+| `FIREBASE_STORAGE_BUCKET` | Firebase Storage 버킷명 (기본: `bifriends-5df72.firebasestorage.app`) |
+| `INTERNAL_SERVICE_TOKEN` | AI 서비스 내부 인증 토큰 (기본: `bifriends-ai`) |
+
+### 선택 (기본값 있음)
 
 | 변수 | 설명 | 기본값 |
 |------|------|--------|
 | `DB_HOST` | DB 호스트 | `localhost` |
-| `DB_PORT` | DB 포트 | `5432` |
+| `DB_PORT` | DB 포트 | `15432` |
 | `DB_NAME` | DB 이름 | `bifriends` |
 | `DB_USERNAME` | DB 사용자 | `bifriends` |
 | `DB_PASSWORD` | DB 비밀번호 | `bifriends` |
-| `GOOGLE_CLIENT_ID` | Google OAuth 클라이언트 ID | (필수) |
-| `GOOGLE_CLIENT_SECRET` | Google OAuth 클라이언트 시크릿 | (필수) |
-| `JWT_SECRET` | JWT 서명 키 (256bit 이상) | 개발용 기본값 |
+| `JWT_SECRET` | JWT 서명 키 (256bit 이상 권장) | 개발용 기본값 |
+| `AI_SERVICE_BASE_URL` | AI 서비스 주소 | `http://bifriends-ai:8001` |
+| `AI_SERVICE_ENABLED` | AI 연동 활성화 여부 | `false` |
+
+> `firebase-service-account.json`은 절대 커밋하지 않습니다. 팀 채널에서 파일을 받아 `bifriends-be/src/main/resources/`에 배치하세요.
+
+---
 
 ## 프로젝트 구조
 
@@ -44,157 +76,144 @@ docker-compose up -d db
 src/main/kotlin/com/bifriends/
 ├── BiFriendsApplication.kt
 ├── controller/
-│   └── HealthController.kt
+│   └── HealthController.kt              # GET /health
 ├── global/
-│   └── config/
-│       └── SecurityConfig.kt
+│   ├── config/
+│   │   ├── SecurityConfig.kt            # Spring Security 필터 체인
+│   │   ├── FirebaseConfig.kt            # Firebase Admin SDK 초기화
+│   │   ├── InternalServiceConfig.kt     # AI 내부 서비스 설정
+│   │   └── SchedulingConfig.kt
+│   └── exception/
 ├── domain/
-│   ├── member/                      # 회원/인증 도메인
+│   ├── member/                          # 회원/인증
 │   │   ├── controller/
-│   │   │   └── OAuthController.kt
-│   │   ├── service/
-│   │   │   ├── MemberService.kt
-│   │   │   └── CustomOAuth2UserService.kt
-│   │   ├── model/
-│   │   │   ├── Member.kt
-│   │   │   └── Role.kt
-│   │   └── repository/
-│   │       └── MemberRepository.kt
-│   └── onboarding/                  # 온보딩 도메인
-│       ├── controller/
-│       │   └── OnboardingController.kt
-│       ├── service/
-│       │   └── OnboardingService.kt
-│       ├── dto/
-│       │   └── OnboardingDtos.kt
-│       ├── model/
-│       │   ├── Interest.kt
-│       │   ├── ItemType.kt
-│       │   ├── MemberInterest.kt
-│       │   └── MemberItem.kt
-│       └── repository/
-│           ├── MemberInterestRepository.kt
-│           └── MemberItemRepository.kt
+│   │   │   ├── OAuthController.kt       # POST /auth/google, POST /auth/logout
+│   │   │   ├── MemberController.kt      # 회원 정보 CRUD
+│   │   │   └── InternalMemberController.kt  # Leo 전용 (프로필, 학습 진도)
+│   │   ├── service/  model/  repository/
+│   │   └── event/
+│   │       └── MemberRegisteredEvent.kt
+│   ├── onboarding/                      # 온보딩 6단계
+│   ├── home/                            # 홈 화면 (할 일, 보상, 레벨, 인사말)
+│   │   ├── controller/
+│   │   │   ├── HomeController.kt
+│   │   │   └── TodoController.kt
+│   │   └── service/  model/  repository/
+│   ├── learning/                        # 학습 (수학 / 국어)
+│   │   ├── controller/
+│   │   │   ├── StudyMathController.kt
+│   │   │   └── StudyKoreanController.kt
+│   │   └── service/  model/  repository/
+│   ├── chat/                            # Leo AI 대화
+│   │   ├── controller/
+│   │   │   ├── ChatController.kt
+│   │   │   └── InternalChatController.kt  # Leo 전용
+│   │   └── service/  model/  repository/
+│   ├── emotion/                         # 감정 시나리오 (친구랑 탭)
+│   ├── mind/                            # 마음 세션 (마음이랑 탭)
+│   ├── report/                          # 주간 성장 리포트
+│   │   ├── controller/
+│   │   │   ├── ReportController.kt          # 부모 모드 리포트 조회
+│   │   │   ├── InternalReportController.kt  # Leo 전용 학습 집계
+│   │   │   └── WeeklyReportCallbackController.kt  # AI 콜백
+│   │   └── service/  model/  repository/
+│   ├── safety/                          # 챗 안전 신호
+│   ├── parent/                          # 부모 모드 (PIN, 대시보드)
+│   └── shop/                            # 아이템 상점
 └── infrastructure/
-    └── security/
-        ├── JwtProvider.kt
-        ├── PrincipalDetails.kt
-        └── GoogleTokenVerifier.kt
+    ├── security/
+    │   ├── JwtProvider.kt
+    │   ├── JwtAuthenticationFilter.kt
+    │   ├── FirebaseTokenVerifier.kt      # Firebase ID Token 검증
+    │   ├── InternalServiceAuthenticationFilter.kt
+    │   └── InternalServicePaths.kt       # Leo 전용 API 경로 목록
+    ├── firebase/
+    │   ├── FirestoreService.kt           # Firestore 감정 세션 데이터
+    │   └── FirebaseStorageService.kt     # Firebase Storage 이미지
+    └── ai/
+        └── dto/                          # AI 서비스 요청/응답 DTO
 ```
 
-## API 명세
+---
 
-### 인증 (Member)
+## 인증 구조
 
-| Method | Path | 설명 | 인증 |
-|--------|------|------|------|
-| `POST` | `/api/v1/members/auth/google` | Google ID 토큰으로 로그인/가입 → JWT 발급 | X |
+### Flutter 앱 (일반 사용자)
 
-### 온보딩 (Onboarding)
+```
+Flutter 앱
+ └─ Google Sign-In → Firebase 인증 → Firebase ID Token 획득
+    └─ POST /api/v1/members/auth/google  { idToken: "..." }
+       └─ FirebaseTokenVerifier.verifyIdToken()
+          └─ Member 조회/생성 → JWT(accessToken + refreshToken) 반환
+```
 
-| Method | Path | 설명 | 인증 |
-|--------|------|------|------|
-| `POST` | `/api/v1/onboarding/guardian` | 보호자 전화번호 저장 | O |
-| `PATCH` | `/api/v1/onboarding/profile` | 이름/학년 저장 (부분 업데이트) | O |
-| `PUT` | `/api/v1/onboarding/interests` | 관심사 저장 (최대 3개) | O |
-| `POST` | `/api/v1/onboarding/gift` | 선물 아이템 선택 | O |
-| `PATCH` | `/api/v1/onboarding/permissions` | 알림/마이크 권한 상태 저장 | O |
-| `POST` | `/api/v1/onboarding/complete` | 온보딩 완료 처리 | O |
+이후 모든 API 요청에 `Authorization: Bearer {accessToken}` 헤더를 포함합니다.
 
-### 기능 명세 → API 매핑
+### AI 서비스 (Leo, 내부망)
 
-| 기능 | API | 백엔드 동작 |
-|------|-----|------------|
-| 앱 진입 (구글 로그인) | `POST /api/v1/members/auth/google` | ID 토큰 검증 → 회원 생성/로그인 → JWT + `onboardingCompleted` 응답 |
-| 보호자 인증 | `POST /api/v1/onboarding/guardian` | 전화번호를 `members.guardian_phone`에 저장 |
-| 레오 소개 | 백엔드 API 없음 | 클라이언트 전용 화면 |
-| 이름 입력 | `PATCH /api/v1/onboarding/profile` | `nickname` 저장 |
-| 인사 화면 | 백엔드 API 없음 | 클라이언트 전용 화면 |
-| 학년 선택 | `PATCH /api/v1/onboarding/profile` | `grade` 저장 (같은 엔드포인트, 부분 업데이트) |
-| 관심사 선택 | `PUT /api/v1/onboarding/interests` | `member_interests` 테이블에 최대 3개 저장 |
-| 선물 선택 | `POST /api/v1/onboarding/gift` | `member_items` 테이블에 아이템 저장 |
-| 부모 안내 메시지 | 백엔드 API 없음 | 클라이언트 전용 화면 |
-| 권한 요청 | `PATCH /api/v1/onboarding/permissions` | 알림/마이크 권한 상태 저장 |
-| 온보딩 완료 | `POST /api/v1/onboarding/complete` | `onboarding_completed = true` 설정 |
+Docker 내부망에서 `X-Internal-Service: {token}` 헤더로 인증합니다. JWT 없음.  
+허용된 경로 목록은 `InternalServicePaths.kt`에서 관리합니다.
 
-## DB 스키마
+---
 
-### members
+## API 도메인 요약
 
-| 컬럼 | 타입 | 설명 |
-|------|------|------|
-| `id` | BIGINT PK | 자동 생성 |
-| `email` | VARCHAR UNIQUE | Google 이메일 |
-| `name` | VARCHAR | Google 이름 |
-| `profile_image_url` | VARCHAR NULL | Google 프로필 이미지 |
-| `provider_id` | VARCHAR UNIQUE | Google 고유 ID (sub) |
-| `provider` | VARCHAR | `"google"` |
-| `role` | VARCHAR | `ROLE_USER` / `ROLE_ADMIN` |
-| `nickname` | VARCHAR NULL | 온보딩에서 입력한 이름 |
-| `grade` | INTEGER NULL | 학년 (3~6) |
-| `guardian_phone` | VARCHAR NULL | 보호자 전화번호 |
-| `notification_enabled` | BOOLEAN | 알림 권한 |
-| `microphone_enabled` | BOOLEAN | 마이크 권한 |
-| `onboarding_completed` | BOOLEAN | 온보딩 완료 여부 |
-| `created_at` | TIMESTAMP | 가입 시간 |
-| `last_login_at` | TIMESTAMP | 마지막 로그인 |
+상세 명세는 Swagger UI에서 확인하세요: `http://localhost:8080/swagger-ui/index.html`
 
-### member_interests
+| 도메인 | Base Path | 주요 기능 |
+|--------|-----------|-----------|
+| 인증 | `/api/v1/members/auth` | Google 로그인 (Firebase), 로그아웃 |
+| 회원 | `/api/v1/members` | 프로필 조회/수정, 설정 변경 |
+| 온보딩 | `/api/v1/onboarding` | 6단계 온보딩 (약관, 프로필, 관심사, 선물, 완료) |
+| 홈 | `/api/v1/home`, `/api/v1/todos` | 홈 정보, 할 일 CRUD, 보상 |
+| 학습 | `/api/v1/study/math`, `/api/v1/study/korean` | 수학/국어 학습 진행 |
+| 대화 | `/api/v1/chat` | Leo AI 채팅 세션 및 메시지 |
+| 감정 | `/api/v1/emotion` | 감정 시나리오 생성 및 조회 |
+| 마음 | `/api/v1/mind` | 마음 세션 생성 및 조회 |
+| 리포트 | `/api/v1/reports` | 주간 성장 리포트 목록/상세, 보호자 미션 |
+| 안전 | `/api/v1/weekly-safety-report` | 챗 안전 신호 |
+| 부모 | `/api/v1/parent` | 부모 모드 PIN 설정/검증, 대시보드 |
+| 상점 | `/api/v1/shop` | 아이템 구매 및 착용 |
+| 내부(Leo) | `/api/v1/report/learning-summary`<br>`/api/v1/members/{id}/profile` 등 | AI 서비스 전용 (X-Internal-Service 인증) |
 
-| 컬럼 | 타입 | 설명 |
-|------|------|------|
-| `id` | BIGINT PK | 자동 생성 |
-| `member_id` | BIGINT FK → members | 회원 ID |
-| `interest` | VARCHAR | 관심사 Enum |
-
-### member_items
-
-| 컬럼 | 타입 | 설명 |
-|------|------|------|
-| `id` | BIGINT PK | 자동 생성 |
-| `member_id` | BIGINT FK → members | 회원 ID |
-| `item_type` | VARCHAR | 아이템 Enum |
-| `acquired_at` | TIMESTAMP | 획득 시간 |
+---
 
 ## 설계 규칙
 
-### API
+### 패키지 구조
 
-- **base path**: `/api/v1`
-- **네이밍**: 명사형 복수 (ex: `/api/v1/members`, `/api/v1/posts`)
-- **HTTP Method**: REST 표준 준수
-  - `GET` 조회 / `POST` 생성 / `PUT` 전체 수정 / `PATCH` 부분 수정 / `DELETE` 삭제
-- **응답**: JSON
-
-### DDD 패키지 구조
-
-새 도메인 추가 시 아래 구조를 따른다:
+새 도메인 추가 시 아래 구조를 따릅니다:
 
 ```
 domain/{도메인명}/
-├── controller/     # @RestController — 요청/응답 처리만 담당
-├── service/        # @Service — 비즈니스 로직, 트랜잭션 경계
-├── model/          # @Entity, enum, VO — 도메인 모델
-└── repository/     # JpaRepository interface
+├── controller/   # @RestController — 요청/응답 처리만 담당
+├── service/      # @Service — 비즈니스 로직, 트랜잭션 경계
+├── dto/          # 요청·응답 DTO
+├── model/        # @Entity, enum, VO — 도메인 모델 (data class 금지)
+└── repository/   # JpaRepository interface
 ```
 
-- **controller** → service만 의존. 다른 도메인의 controller를 직접 호출하지 않는다.
-- **service** → 같은 도메인의 repository 의존. 다른 도메인은 해당 도메인의 service를 통해 접근한다.
-- **model** → 순수 도메인 객체. 다른 레이어에 의존하지 않는다.
-- **repository** → Spring Data JPA interface만 선언한다.
+- `domain/{name}/event/` — 해당 도메인이 **발행**하는 이벤트 클래스
+- 이벤트 **리스너**는 처리하는 도메인의 `service/`에 위치
+- 도메인 간 의존: controller → 타 domain controller 직접 호출 금지, service를 통해 접근
+
+### 주요 컨벤션
+
+| 항목 | 규칙 |
+|------|------|
+| Entity | `data class` 금지 (JPA 프록시 이슈) |
+| Base path | 모든 API `/api/v1` 접두어 |
+| 시간대 | 날짜/시간 계산 시 `ZoneId.of("Asia/Seoul")` 명시 |
+| 새 도메인 추가 | `SecurityConfig.kt` 경로 허용 여부 반드시 업데이트 |
+| 환경 설정값 | `application.yml`에서 `${VAR}` 방식으로 관리, 하드코딩 금지 |
+| 도메인 이벤트 | 실패가 발행자 롤백으로 번지면 안 될 때 → `AFTER_COMMIT`, 원자성 필요 시 → `@EventListener` |
 
 ### global vs infrastructure
 
-| 패키지 | 용도 | 예시 |
-|--------|------|------|
-| `global/config` | Spring 전역 설정 | SecurityConfig, WebConfig, CorsConfig |
-| `global/exception` | 공통 예외 처리 | GlobalExceptionHandler, ErrorResponse |
-| `global/common` | 공통 DTO, 유틸 | BaseEntity, PageResponse |
-| `infrastructure/` | 외부 기술 구현체 | JWT, S3, Redis, 외부 API 클라이언트 |
-
-### 컨벤션
-
-- Entity 클래스에 `data class` 사용 금지 — JPA 프록시 호환 이슈
-- Repository는 `JpaRepository<Entity, Long>` 상속
-- REST Controller에는 `@RequestMapping("/api/v1/{도메인}")` prefix 사용
-- 환경 설정값은 `application.yml`에 환경변수(`${VAR}`)로 관리 — 하드코딩 금지
+| 패키지 | 용도 |
+|--------|------|
+| `global/config` | Spring 전역 설정 (SecurityConfig 등) |
+| `global/exception` | 공통 예외 처리 |
+| `global/common` | 공통 DTO, 유틸 |
+| `infrastructure/` | 외부 기술 구현체 (JWT, Firebase, AI 클라이언트) |
