@@ -21,26 +21,27 @@ class WeeklySafetyService(
         val member = memberRepository.findById(request.memberId)
             .orElseThrow { IllegalArgumentException("회원을 찾을 수 없습니다. id=${request.memberId}") }
 
-        // 같은 주차 중복 수신 시 덮어쓰기
-        weeklySafetyReportRepository.findByMemberIdAndWeekStart(member.id, request.weekStart)
-            ?.let { weeklySafetyReportRepository.delete(it) }
-
         val safetySignal = try {
             SafetySignal.valueOf(request.safetySignal.uppercase())
         } catch (e: IllegalArgumentException) {
             SafetySignal.fromScore(request.score)
         }
 
-        weeklySafetyReportRepository.save(
-            WeeklySafetyReport(
-                member = member,
-                weekStart = request.weekStart,
-                weekEnd = request.weekEnd,
-                safetySignal = safetySignal,
-                score = request.score,
-                reasonSummary = request.reasonSummary,
+        val existing = weeklySafetyReportRepository.findByMemberIdAndWeekStart(member.id, request.weekStart)
+        if (existing != null) {
+            existing.update(safetySignal, request.score, request.reasonSummary)
+        } else {
+            weeklySafetyReportRepository.save(
+                WeeklySafetyReport(
+                    member = member,
+                    weekStart = request.weekStart,
+                    weekEnd = request.weekEnd,
+                    safetySignal = safetySignal,
+                    score = request.score,
+                    reasonSummary = request.reasonSummary,
+                )
             )
-        )
+        }
 
         log.info(
             "[WeeklySafety] 안전 신호 저장 — memberId={}, weekStart={}, signal={}",

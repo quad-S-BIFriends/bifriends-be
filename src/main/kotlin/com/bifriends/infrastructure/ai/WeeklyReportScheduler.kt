@@ -1,6 +1,7 @@
 package com.bifriends.infrastructure.ai
 
 import com.bifriends.domain.member.repository.MemberRepository
+import com.bifriends.domain.report.service.ReportService
 import com.bifriends.infrastructure.ai.dto.AiBatchWeeklyReportRequest
 import org.slf4j.LoggerFactory
 import org.springframework.scheduling.annotation.Scheduled
@@ -21,6 +22,7 @@ import org.springframework.stereotype.Component
 class WeeklyReportScheduler(
     private val aiBatchClient: AiBatchClient,
     private val memberRepository: MemberRepository,
+    private val reportService: ReportService,
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
 
@@ -39,12 +41,24 @@ class WeeklyReportScheduler(
         var failCount = 0
 
         for (member in members) {
+            val learningSummary = try {
+                reportService.getLearningSummary(member.id, weekStart, weekEnd)
+            } catch (e: Exception) {
+                log.error(
+                    "[WeeklyReportScheduler] 학습 요약 조회 실패 — memberId={}, weekStart={}",
+                    member.id, weekStart, e,
+                )
+                failCount++
+                continue
+            }
+
             val success = aiBatchClient.triggerWeeklyReport(
                 AiBatchWeeklyReportRequest(
                     memberId = member.id,
                     weekStart = weekStart,
                     weekEnd = weekEnd,
                     grade = member.grade,
+                    learningSummary = learningSummary,
                 ),
             )
             if (success) successCount++ else failCount++

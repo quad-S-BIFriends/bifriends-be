@@ -26,6 +26,10 @@ spring:
 
 server:
   port: 8080
+  tomcat:
+    accesslog:
+      enabled: true
+      pattern: "%t %m %U%q %s"
 
 jwt:
   secret: ${JWT_SECRET:defaultSecretKeyForDevelopmentOnlyMustBeAtLeast256Bits!!}

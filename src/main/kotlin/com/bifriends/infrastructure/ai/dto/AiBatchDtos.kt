@@ -1,5 +1,7 @@
 package com.bifriends.infrastructure.ai.dto
 
+import com.bifriends.domain.report.dto.LearningSummaryResponse
+import com.fasterxml.jackson.annotation.JsonFormat
 import com.fasterxml.jackson.annotation.JsonProperty
 import java.time.LocalDate
 
@@ -16,10 +18,12 @@ data class AiBatchWeeklySafetyRequest(
 
     /** 분석 주간 시작일 (월요일, KST) */
     @JsonProperty("week_start")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
     val weekStart: LocalDate,
 
     /** 분석 주간 종료일 (일요일, KST — 직전 완료 주) */
     @JsonProperty("week_end")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
     val weekEnd: LocalDate,
 )
 
@@ -34,13 +38,18 @@ data class AiBatchWeeklyReportRequest(
     val memberId: Long,
 
     @JsonProperty("week_start")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
     val weekStart: LocalDate,
 
     @JsonProperty("week_end")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
     val weekEnd: LocalDate,
 
     @JsonProperty("grade")
     val grade: Int?,
+
+    @JsonProperty("learning_summary")
+    val learningSummary: LearningSummaryResponse,
 )
 
 /** AI 배치 트리거 응답 */
