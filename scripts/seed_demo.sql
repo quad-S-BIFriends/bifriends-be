@@ -36,8 +36,6 @@ DECLARE
     v_session3_id        BIGINT;
     v_gift3_shop_id      BIGINT;
     v_parent_pin_hash    TEXT := '$2b$10$racwlTFPROeVhtoBu2TuY.uZ6YsCIgQ0q2qw6AZ/UIYGG7uy/BNoi';
-    v_sections_last_week TEXT;
-    v_sections_this_week TEXT;
 BEGIN
     -- ── 회원 조회 ────────────────────────────────────────────────────────
     SELECT id, COALESCE(nickname, '민준')
@@ -165,20 +163,15 @@ BEGIN
 
     -- ── 학습 진도 ────────────────────────────────────────────────────────
     INSERT INTO user_math_progress (member_id, math_step_id, is_step_completed, last_accessed_at)
-    VALUES (v_member_id, v_math_step1_id, FALSE, v_today - 2)
+    VALUES (v_member_id, v_math_step1_id, TRUE, v_today - 2)
     RETURNING id INTO v_math_progress1_id;
 
     INSERT INTO user_math_progress_cycles (progress_id, cycle_number) VALUES
         (v_math_progress1_id, 1),
         (v_math_progress1_id, 2),
-        (v_math_progress1_id, 3);
-
-    INSERT INTO user_math_progress (member_id, math_step_id, is_step_completed, last_accessed_at)
-    VALUES (v_member_id, v_math_step2_id, FALSE, v_today - 1)
-    RETURNING id INTO v_math_progress2_id;
-
-    INSERT INTO user_math_progress_cycles (progress_id, cycle_number) VALUES
-        (v_math_progress2_id, 1);
+        (v_math_progress1_id, 3),
+        (v_math_progress1_id, 4),
+        (v_math_progress1_id, 5);
 
     INSERT INTO user_korean_progress (member_id, korean_step_id, is_step_completed, last_accessed_at)
     VALUES (v_member_id, v_korean_step1_id, TRUE, v_today - 3)
@@ -219,9 +212,9 @@ BEGIN
         (v_today - (gs.n % 10)) + TIME '17:30'
     FROM (
         SELECT n,
-               2 + ((n - 1) / 3) AS cycle_num,
+               1 + ((n - 1) / 3) AS cycle_num,
                ((n - 1) % 3) + 1 AS q_idx
-        FROM generate_series(1, 12) AS n
+        FROM generate_series(1, 15) AS n
     ) gs;
 
     INSERT INTO learning_attempt (
@@ -294,28 +287,7 @@ BEGIN
         VALUES (v_member_id, v_gift3_shop_id, v_today - 5 + TIME '12:00');
     END IF;
 
-    -- ── 주간 리포트 JSON ───────────────────────────────────────────────────
-    v_sections_last_week := format(
-        '{"growth_summary":"%s님은 지난주에도 꾸준히 학습에 참여했어요. 수학과 국어 모두 스스로 문제를 풀어보려는 태도가 좋았습니다.","math":{"well_done":"세 자리 수 덧셈·뺄셈 문제를 차분히 풀었어요.","struggled":"받아올림이 있는 문제에서 실수가 조금 있었어요."},"korean":{"well_done":"맞춤법 문제를 정확하게 풀었어요.","struggled":"긴 문장 읽기에서 시간이 조금 걸렸어요."},"parent_mission":{"praise":"%s님이 이번 주도 열심히 공부했어요!","activity":"오늘 저녁에 이번 주 배운 내용을 함께 이야기해 보세요."}}',
-        v_nickname, v_nickname
-    );
-
-    v_sections_this_week := format(
-        '{"growth_summary":"이번 주 %s님은 매일 할 일을 챙기며 학습 습관을 잘 유지하고 있어요.","math":{"well_done":"뛰어세기 개념을 잘 이해하고 문제를 풀었어요.","struggled":"큰 수의 크기 비교에서 헷갈리는 부분이 있었어요."},"korean":{"well_done":"받침 있는 낱말을 정확히 썼어요.","struggled":"문장 부호 사용에서 연습이 더 필요해요."},"parent_mission":{"praise":"%s님, 이번 주도 정말 잘했어요!","activity":"주말에 좋아하는 동물 이야기를 함께 읽어 보세요."}}',
-        v_nickname, v_nickname
-    );
-
-    INSERT INTO weekly_report (member_id, week_start, week_end, sections_json, mission_revealed, created_at, updated_at)
-    VALUES
-        (v_member_id, v_last_week_start, v_last_week_end, v_sections_last_week, TRUE,  NOW(), NOW()),
-        (v_member_id, v_this_week_start, v_this_week_end, v_sections_this_week, FALSE, NOW(), NOW());
-
-    INSERT INTO weekly_safety_report (member_id, week_start, week_end, safety_signal, score, reason_summary, created_at)
-    VALUES
-        (v_member_id, v_last_week_start, v_last_week_end, 'GREEN',  12, NULL, NOW()),
-        (v_member_id, v_this_week_start, v_this_week_end, 'YELLOW', 35, '가끔 힘들다는 표현이 있었지만 전반적으로 안전한 대화였어요.', NOW());
-
-    RAISE NOTICE '데모 시드 완료 — member_id=%, nickname=%, available_pool=30, learning_attempt=22건, reports=2건', v_member_id, v_nickname;
+    RAISE NOTICE '데모 시드 완료 — member_id=%, nickname=%, available_pool=30, learning_attempt=25건', v_member_id, v_nickname;
     RAISE NOTICE '부모 모드 PIN: 1234';
 END
 $seed$;

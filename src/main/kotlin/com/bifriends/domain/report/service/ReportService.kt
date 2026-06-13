@@ -10,6 +10,9 @@ import com.bifriends.domain.report.model.SafetySignal
 import com.bifriends.domain.report.model.WeeklyReport
 import com.bifriends.domain.report.repository.WeeklyReportRepository
 import com.bifriends.domain.report.repository.WeeklySafetyReportRepository
+import com.bifriends.infrastructure.ai.AiBatchClient
+import com.bifriends.infrastructure.ai.dto.AiBatchWeeklyReportRequest
+import com.bifriends.infrastructure.ai.dto.AiBatchWeeklySafetyRequest
 import com.bifriends.infrastructure.firebase.FirestoreService
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -27,6 +30,7 @@ class ReportService(
     private val memberService: MemberService,
     private val firestoreService: FirestoreService,
     private val objectMapper: ObjectMapper,
+    private val aiBatchClient: AiBatchClient,
 ) {
 
     // ── RPT-02 리포트 목록 ─────────────────────────────────────────────────
@@ -88,6 +92,36 @@ class ReportService(
                 assigned = todoRepository.countAssignedBetween(memberId, from, to),
                 completed = todoRepository.countCompletedBetween(memberId, from, to),
             ),
+        )
+    }
+
+    // ── 리포트 수동 생성 트리거 ────────────────────────────────────────────────
+
+    fun generateReport(memberId: Long, weekStart: LocalDate): GenerateReportResponse {
+        val weekEnd = weekStart.plusDays(6)
+        val member = memberService.findById(memberId)
+        val learningSummary = getLearningSummary(memberId, weekStart, weekEnd)
+
+        val reportAccepted = aiBatchClient.triggerWeeklyReport(
+            AiBatchWeeklyReportRequest(
+                memberId = memberId,
+                weekStart = weekStart,
+                weekEnd = weekEnd,
+                grade = member.grade,
+                learningSummary = learningSummary,
+            )
+        )
+        aiBatchClient.triggerWeeklySafety(
+            AiBatchWeeklySafetyRequest(
+                memberId = memberId,
+                weekStart = weekStart,
+                weekEnd = weekEnd,
+            )
+        )
+
+        return GenerateReportResponse(
+            accepted = reportAccepted,
+            message = if (!reportAccepted) "AI 서비스가 비활성화되어 있거나 일시적으로 사용할 수 없습니다." else null,
         )
     }
 

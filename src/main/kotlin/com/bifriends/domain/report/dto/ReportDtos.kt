@@ -1,8 +1,7 @@
 package com.bifriends.domain.report.dto
 
-import com.fasterxml.jackson.annotation.JsonProperty
 import com.bifriends.domain.report.model.SafetySignal
-// import com.bifriends.domain.report.model.WeeklyReport
+import com.fasterxml.jackson.annotation.JsonProperty
 import java.time.LocalDate
 
 // ── RPT-02 리포트 목록 ─────────────────────────────────────────────────────────
@@ -120,4 +119,16 @@ data class LearningConceptSummaryItem(
 data class TodoSummaryResponse(
     val assigned: Long,
     val completed: Long,
+)
+
+// ── 리포트 수동 생성 트리거 ──────────────────────────────────────────────────────
+
+data class GenerateReportRequest(
+    @JsonProperty("week_start")
+    val weekStart: LocalDate,
+)
+
+data class GenerateReportResponse(
+    val accepted: Boolean,
+    val message: String? = null,
 )

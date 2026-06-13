@@ -50,6 +50,17 @@ class ReportController(
         )
     }
 
+    /** 리포트 수동 생성 트리거 — 특정 주의 학습 데이터를 AI에 전송해 리포트 생성 요청 */
+    @PostMapping("/generate")
+    fun generateReport(
+        @RequestHeader("Authorization") token: String,
+        @RequestBody request: GenerateReportRequest,
+    ): ResponseEntity<GenerateReportResponse> {
+        return ResponseEntity.ok(
+            reportService.generateReport(extractMemberId(token), request.weekStart)
+        )
+    }
+
     private fun extractMemberId(token: String): Long =
         jwtProvider.getMemberId(token.removePrefix("Bearer "))
 }

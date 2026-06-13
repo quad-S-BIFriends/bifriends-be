@@ -42,14 +42,20 @@ class WeeklySafetyReport(
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 10)
-    val safetySignal: SafetySignal,
+    var safetySignal: SafetySignal,
 
     @Column(nullable = false)
-    val score: Int,
+    var score: Int,
 
     @Column(length = 255)
-    val reasonSummary: String? = null,
+    var reasonSummary: String? = null,
 
     @Column(nullable = false, updatable = false)
     val createdAt: LocalDateTime = LocalDateTime.now(),
-)
+) {
+    fun update(safetySignal: SafetySignal, score: Int, reasonSummary: String?) {
+        this.safetySignal = safetySignal
+        this.score = score
+        this.reasonSummary = reasonSummary
+    }
+}

@@ -47,9 +47,9 @@ class WeeklyReport(
     @Column(nullable = false, columnDefinition = "TEXT")
     var sectionsJson: String,
 
-    /** 부모가 '미션 받기'를 눌러 미션을 수령했는지 */
+    /** 미션 노출 여부 (AI 콜백 시 즉시 true로 저장) */
     @Column(nullable = false)
-    var missionRevealed: Boolean = false,
+    var missionRevealed: Boolean = true,
 
     @Column(nullable = false, updatable = false)
     val createdAt: LocalDateTime = LocalDateTime.now(),
@@ -59,7 +59,7 @@ class WeeklyReport(
 ) {
     fun updateSections(newSectionsJson: String) {
         this.sectionsJson = newSectionsJson
-        this.missionRevealed = false
+        this.missionRevealed = true
         this.updatedAt = LocalDateTime.now()
     }
 
