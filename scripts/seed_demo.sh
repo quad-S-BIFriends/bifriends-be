@@ -9,7 +9,7 @@
 set -euo pipefail
 
 EMAIL="${1:-}"
-CONTAINER="${BIFRIENDS_DB_CONTAINER:-bifriends-db-old}"
+CONTAINER="${BIFRIENDS_DB_CONTAINER:-bifriends-db}"
 DB_USER="${BIFRIENDS_DB_USER:-bifriends}"
 DB_NAME="${BIFRIENDS_DB_NAME:-bifriends}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
