@@ -9,7 +9,7 @@
 set -euo pipefail
 
 EMAIL="${1:-}"
-CONTAINER="${BIFRIENDS_DB_CONTAINER:-bifriends-db}"
+CONTAINER="${BIFRIENDS_DB_CONTAINER:-bifriends-db-old}"
 DB_USER="${BIFRIENDS_DB_USER:-bifriends}"
 DB_NAME="${BIFRIENDS_DB_NAME:-bifriends}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -45,4 +45,4 @@ echo ""
 echo "Done! Reopen the app to verify."
 echo "  Parent mode PIN: 1234"
 echo "  available_pool: 30"
-echo "  22 learning attempts, 2 weekly reports, 3 chat sessions"
+echo "  25 learning attempts, 3 chat sessions"
