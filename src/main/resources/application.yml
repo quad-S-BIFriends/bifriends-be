@@ -8,6 +8,9 @@ spring:
     password: ${DB_PASSWORD:bifriends}
     driver-class-name: org.postgresql.Driver
 
+  flyway:
+    enabled: false  # 로컬 개발: ddl-auto: update로 관리. 운영은 application-prod.yml에서 활성화
+
   jpa:
     hibernate:
       ddl-auto: update

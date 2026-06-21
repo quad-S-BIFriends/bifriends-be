@@ -3,13 +3,6 @@
 -- 온보딩 선물: GIFT_1(책), GIFT_2(리본), GIFT_3(꽃다발), GIFT_4(선글라스)
 -- ============================================================
 
--- 레거시 코스메틱 행 제거 (item_code NOT NULL 마이그레이션 차단 방지)
-DELETE FROM member_shop_items;
-DELETE FROM shop_items;
-
--- 구 CHECK(HAT/GLASSES/…) 제거 — OUTFIT 허용
-ALTER TABLE shop_items DROP CONSTRAINT IF EXISTS shop_items_category_check;
-
 INSERT INTO shop_items (item_code, name, category, price, image_key, is_active)
 VALUES
   ('OUTFIT_DEFAULT',  '기본',         'OUTFIT', 0,  'outfit_default',   true),

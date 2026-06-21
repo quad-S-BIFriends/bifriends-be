@@ -1,0 +1,23 @@
+spring:
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: false
+
+  sql:
+    init:
+      mode: never
+
+logging:
+  level:
+    root: INFO
+    com.bifriends: INFO
+    org.hibernate.SQL: WARN
+    org.springframework.security: WARN
