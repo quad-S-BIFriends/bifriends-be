@@ -12,7 +12,7 @@
 | Swagger UI | `https://api.bifriends.study/swagger-ui/index.html` |
 | 헬스체크 | `https://api.bifriends.study/actuator/health` |
 
-> Swagger에서 모든 엔드포인트 스펙, 요청/응답 형식을 직접 확인할 수 있습니다.
+> Swagger에서 모든 엔드포인트의 요청/응답 스펙을 직접 확인할 수 있습니다.
 
 ---
 
@@ -81,7 +81,7 @@ Authorization: Bearer {accessToken}
 
 **POST** `/api/v1/members/auth/logout`
 
-서버는 Stateless이므로 실제 폐기는 Flutter에서 토큰을 삭제하면 됩니다.
+서버는 Stateless이므로 Flutter에서 저장된 토큰을 삭제하면 됩니다.
 
 ---
 
@@ -90,7 +90,7 @@ Authorization: Bearer {accessToken}
 | HTTP 상태 | 의미 |
 |---|---|
 | `401` | 인증 실패 (토큰 없음 / 만료) |
-| `403` | 권한 없음 |
+| `403` | 권한 없음 (부모 PIN 불일치 등) |
 | `400` | 잘못된 요청 |
 
 인증 실패 응답:
@@ -102,7 +102,10 @@ Authorization: Bearer {accessToken}
 
 ## 주요 API 목록
 
-> 상세 요청/응답 스펙은 Swagger(`https://api.bifriends.study/swagger-ui/index.html`) 참고
+> 하단의 API 중 **"AI 내부"** 표시 항목은 서버 내부에서 AI(Leo)가 호출하는 전용 엔드포인트입니다.
+> Flutter 클라이언트는 호출하지 않습니다.
+
+---
 
 ### 회원
 
@@ -111,109 +114,135 @@ Authorization: Bearer {accessToken}
 | POST | `/members/auth/google` | 구글 로그인 / 회원가입 | 불필요 |
 | POST | `/members/auth/logout` | 로그아웃 | 불필요 |
 | GET | `/members/me` | 내 프로필 조회 | 필요 |
-| PATCH | `/members/me` | 내 정보 수정 | 필요 |
-| PATCH | `/members/profile` | 프로필 이미지 수정 | 필요 |
-| PATCH | `/members/me/settings` | 앱 설정 변경 | 필요 |
+| PATCH | `/members/me/settings` | 이름·학년·관심사 한 번에 저장 | 필요 |
 | PATCH | `/members/me/representative-item` | 대표 아이템 변경 | 필요 |
-| DELETE | `/members/me` | 회원 탈퇴 | 필요 |
+| DELETE | `/members/me` | 회원 탈퇴 (부모 PIN 필요) | 필요 |
+
+---
 
 ### 온보딩
 
 | Method | URL | 설명 | 인증 |
 |---|---|---|---|
-| POST | `/onboarding/terms` | 약관 동의 | 필요 |
-| PUT | `/onboarding/interests` | 관심사 설정 | 필요 |
-| POST | `/onboarding/parent-password` | 부모 비밀번호 설정 | 필요 |
-| POST | `/onboarding/complete` | 온보딩 완료 | 필요 |
+| POST | `/onboarding/terms` | 약관 동의 (ONB-02) | 필요 |
+| POST | `/onboarding/parent-password` | 부모 PIN 설정 (ONB-02-01) | 필요 |
+| PATCH | `/onboarding/profile` | 이름·학년 입력 (ONB-04/06) | 필요 |
+| PUT | `/onboarding/interests` | 관심사 선택 (ONB-07) | 필요 |
+| POST | `/onboarding/gift` | 선물 아이템 선택 (ONB-08) | 필요 |
+| PATCH | `/onboarding/permissions` | 알림·마이크 권한 설정 (ONB-10) | 필요 |
+| POST | `/onboarding/complete` | 온보딩 완료 (ONB-11) | 필요 |
 
-### 홈 / 투두
+---
 
-| Method | URL | 설명 | 인증 |
-|---|---|---|---|
-| GET | `/home` | 홈 화면 데이터 | 필요 |
-| GET | `/todos` | 투두 목록 | 필요 |
-| POST | `/todos` | 투두 생성 | 필요 |
-| PATCH | `/todos/{todoId}` | 투두 수정 | 필요 |
-| PATCH | `/todos/{todoId}/complete` | 투두 완료 | 필요 |
-| DELETE | `/todos/{todoId}` | 투두 삭제 | 필요 |
-
-### 학습 - 수학
+### 홈
 
 | Method | URL | 설명 | 인증 |
 |---|---|---|---|
-| GET | `/learning/math/roadmap` | 학습 로드맵 | 필요 |
-| GET | `/learning/math/steps` | 단계 목록 | 필요 |
-| GET | `/learning/math/steps/{stepId}/content` | 단계 콘텐츠 | 필요 |
-| POST | `/learning/math/steps/{stepId}/complete` | 단계 완료 | 필요 |
-| POST | `/learning/math/steps/{stepId}/cycles/{cycleNumber}/complete` | 사이클 완료 | 필요 |
-| POST | `/learning/math/steps/{stepId}/cycles/{cycleNumber}/questions/{questionIndex}/validate` | 문제 정답 검증 | 필요 |
+| GET | `/home` | 홈 화면 전체 데이터 (인사 메시지, 레벨, 풀, streak, 할 일 목록) | 필요 |
 
-### 학습 - 국어
+> 앱 오픈 및 홈 탭 진입 시 호출. 출석 체크(streak 갱신·보상 지급)가 멱등 처리로 포함됩니다.
+
+---
+
+### 할 일 (Todo)
 
 | Method | URL | 설명 | 인증 |
 |---|---|---|---|
-| GET | `/learning/korean/roadmap` | 학습 로드맵 | 필요 |
-| GET | `/learning/korean/steps` | 단계 목록 | 필요 |
-| GET | `/learning/korean/steps/{stepId}/content` | 단계 콘텐츠 | 필요 |
-| POST | `/learning/korean/steps/{stepId}/complete` | 단계 완료 | 필요 |
-| POST | `/learning/korean/steps/{stepId}/cycles/{cycleNumber}/complete` | 사이클 완료 | 필요 |
-| POST | `/learning/korean/steps/{stepId}/cycles/{cycleNumber}/questions/{questionIndex}/validate` | 문제 정답 검증 | 필요 |
+| PATCH | `/todos/{todoId}/complete` | 할 일 완료 처리 (+1풀, 전체 완료 시 +3풀 보너스) | 필요 |
+
+> 나머지 투두 CRUD(생성·수정·삭제)는 AI(Leo) 내부 전용 API입니다. Flutter에서 호출하지 않습니다.
+
+---
+
+### 학습 — 수학
+
+| Method | URL | 설명 | 인증 |
+|---|---|---|---|
+| GET | `/learning/math/roadmap` | 수학 학습 로드맵 | 필요 |
+| GET | `/learning/math/progress` | 수학 학습 진도 조회 | 필요 |
+| GET | `/learning/math/steps/{stepId}/content` | 스텝 콘텐츠 조회 | 필요 |
+| POST | `/learning/math/steps/{stepId}/cycles/{cycleNumber}/questions/{questionIndex}/validate` | 문제 답안 검증 | 필요 |
+| POST | `/learning/math/steps/{stepId}/cycles/{cycleNumber}/complete` | 사이클 완료 처리 | 필요 |
+| POST | `/learning/math/steps/{stepId}/complete` | 스텝 완료 처리 | 필요 |
+
+---
+
+### 학습 — 국어
+
+| Method | URL | 설명 | 인증 |
+|---|---|---|---|
+| GET | `/learning/korean/roadmap` | 국어 학습 로드맵 | 필요 |
+| GET | `/learning/korean/progress` | 국어 학습 진도 조회 | 필요 |
+| GET | `/learning/korean/steps/{stepId}/content` | 스텝 콘텐츠 조회 (지문 포함, 정답 제외) | 필요 |
+| POST | `/learning/korean/steps/{stepId}/cycles/{cycleNumber}/questions/{questionIndex}/validate` | 문제 답안 검증 (Cycle 2~5만 해당) | 필요 |
+| POST | `/learning/korean/steps/{stepId}/cycles/{cycleNumber}/complete` | 사이클 완료 처리 | 필요 |
+| POST | `/learning/korean/steps/{stepId}/complete` | 스텝 완료 처리 | 필요 |
+
+---
 
 ### AI 채팅
 
 | Method | URL | 설명 | 인증 |
 |---|---|---|---|
-| GET | `/chat/sessions` | 채팅 세션 목록 | 필요 |
-| POST | `/chat/sessions` | 채팅 세션 생성 | 필요 |
-| GET | `/chat/sessions/{sessionId}` | 세션 상세 | 필요 |
-| PATCH | `/chat/sessions/{sessionId}` | 세션 수정 | 필요 |
-| DELETE | `/chat/sessions/{sessionId}` | 세션 삭제 | 필요 |
-| GET | `/chat/sessions/{sessionId}/messages` | 메시지 목록 | 필요 |
 | POST | `/chat/messages` | 메시지 전송 (AI 응답 포함) | 필요 |
+| GET | `/chat/sessions` | 채팅 세션 목록 (최근 활동 순) | 필요 |
+| GET | `/chat/sessions/{sessionId}` | 세션 상세 (메시지 전체 포함, 오래된 순) | 필요 |
+| DELETE | `/chat/sessions/{sessionId}` | 세션 삭제 (메시지 포함 전체) | 필요 |
 
-### 감정 시나리오
+---
 
-| Method | URL | 설명 | 인증 |
-|---|---|---|---|
-| POST | `/emotion/scenario` | 감정 시나리오 생성 | 필요 |
-| POST | `/emotion/scenarios` | 시나리오 목록 요청 | 필요 |
-
-### 마음 (Mind)
+### 감정 학습 (친구랑 탭 — 감정 카드)
 
 | Method | URL | 설명 | 인증 |
 |---|---|---|---|
-| GET | `/mind/concepts` | 개념 목록 | 필요 |
-| GET | `/mind/concepts/lesson-status` | 레슨 상태 | 필요 |
-| GET | `/mind/learning-summary` | 학습 요약 | 필요 |
-| POST | `/mind/generate` | 콘텐츠 생성 | 필요 |
+| POST | `/emotion/scenarios` | 감정 학습 세트 생성 (AI 호출, 10~30초 소요) | 필요 |
+
+> AI 호출 + Firebase Storage 업로드로 응답이 **10~30초** 걸릴 수 있습니다. 로딩 화면을 반드시 표시하세요.
+
+---
+
+### 감정 학습 (친구랑 탭 — 마음 시나리오)
+
+| Method | URL | 설명 | 인증 |
+|---|---|---|---|
+| POST | `/mind/scenario` | 마음 시나리오 생성 (AI 호출, 10~30초 소요) | 필요 |
+| POST | `/mind/sessions` | 학습 완료 세션 저장 (+3풀 보상) | 필요 |
+| GET | `/mind/sessions` | 학습 히스토리 목록 (최신순) | 필요 |
+| GET | `/mind/sessions/{sessionId}` | 세션 상세 조회 | 필요 |
+
+> `/mind/scenario`도 AI 호출로 **10~30초** 소요. 로딩 화면 필요.
+
+---
 
 ### 상점
 
 | Method | URL | 설명 | 인증 |
 |---|---|---|---|
 | GET | `/shop/items` | 상점 아이템 목록 | 필요 |
+| GET | `/shop/my-items` | 보유 아이템 목록 | 필요 |
 | POST | `/shop/items/{itemCode}/purchase` | 아이템 구매 | 필요 |
 | PATCH | `/shop/items/{itemCode}/equip` | 아이템 장착 | 필요 |
 | DELETE | `/shop/items/equip` | 아이템 장착 해제 | 필요 |
-| GET | `/shop/my-items` | 보유 아이템 목록 | 필요 |
-| POST | `/shop/gift` | 선물 보내기 | 필요 |
 
-### 리포트
+---
 
-| Method | URL | 설명 | 인증 |
-|---|---|---|---|
-| GET | `/reports/{reportId}` | 리포트 상세 | 필요 |
-| GET | `/reports/progress` | 진행 리포트 | 필요 |
-| POST | `/reports/{reportId}/parent-mission` | 부모 미션 등록 | 필요 |
-| POST | `/reports/weekly-report` | 주간 리포트 생성 | 필요 |
-
-### 부모
+### 리포트 (부모 모드)
 
 | Method | URL | 설명 | 인증 |
 |---|---|---|---|
-| GET | `/parent/members/{memberId}/profile` | 자녀 프로필 | 필요 |
-| GET | `/parent/members/{memberId}/learning-progress` | 자녀 학습 현황 | 필요 |
-| PATCH | `/parent/permissions` | 부모 권한 설정 | 필요 |
-| PATCH | `/parent/password` | 부모 비밀번호 변경 | 필요 |
-| POST | `/parent/verify` | 부모 비밀번호 검증 | 필요 |
-| POST | `/parent/reset-password` | 비밀번호 초기화 | 필요 |
+| GET | `/reports` | 주간 리포트 목록 (최신순) | 필요 |
+| GET | `/reports/{reportId}` | 리포트 상세 (성장요약·학습패턴·챗안전신호 통합) | 필요 |
+| POST | `/reports/{reportId}/parent-mission` | 보호자 미션 받기 | 필요 |
+| POST | `/reports/generate` | 리포트 수동 생성 (특정 주 지정) | 필요 |
+
+> 부모 모드 PIN 확인은 클라이언트에서 처리합니다. PIN 검증 후 리포트 API를 호출하세요.
+
+---
+
+### 부모 모드
+
+| Method | URL | 설명 | 인증 |
+|---|---|---|---|
+| POST | `/parent/verify` | 부모 PIN 검증 | 필요 |
+| PATCH | `/parent/password` | 부모 PIN 변경 (현재 PIN 확인 필요) | 필요 |
+| POST | `/parent/reset-password` | 부모 PIN 초기화 | 필요 |
