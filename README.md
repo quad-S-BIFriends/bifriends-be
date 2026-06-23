@@ -3,6 +3,9 @@
 느린학습자(경계선 지능) 아동용 앱의 **Spring Boot 기반 백엔드 API 서버**입니다.
 
 > 팀 노션: https://gdg-sookmyung-25-26.notion.site/TEAM-5-BIFriend-33733fc61813816795abe94d93cef0ef?pvs=143
+
+
+
 > <img width="506" height="700" alt="bifriends-poster" src="https://github.com/user-attachments/assets/a7bf371b-f7ef-4976-bf0c-a2703a070e90" />
 
 
