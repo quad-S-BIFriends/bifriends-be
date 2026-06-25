@@ -4,7 +4,7 @@
 - **언어/런타임**: Kotlin 2.1 / JDK 21
 - **프레임워크**: Spring Boot 3.4
 - **DB**: PostgreSQL 17 (`localhost:15432` 개발, `localhost:15432` Docker)
-- **인증**: Firebase Admin SDK + Google OAuth2 + JWT
+- **인증**: Firebase Admin SDK (ID Token 검증) + JWT
 - **API 문서**: springdoc-openapi 2.8.6 (Swagger)
 
 ## 로컬 실행

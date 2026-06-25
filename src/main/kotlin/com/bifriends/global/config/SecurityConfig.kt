@@ -30,9 +30,9 @@ class SecurityConfig(
 
     /**
      * Spring Security 필터 체인 설정
-     * - CSRF 비활성화 (REST API이므로)
-     * - 세션 사용 안 함 (JWT 기반 Stateless)
-     * - OAuth2 로그인 설정 및 성공 핸들러 등록
+     * - CSRF 비활성화 (REST API)
+     * - 세션 없음 (JWT Stateless)
+     * - 인증: POST /api/v1/members/auth/google (Firebase ID Token → JWT)
      */
     @Bean
     fun securityFilterChain(http: HttpSecurity): SecurityFilterChain {
@@ -56,8 +56,6 @@ class SecurityConfig(
                         AntPathRequestMatcher("/actuator/health"),
                         AntPathRequestMatcher("/actuator/health/**"),
                         AntPathRequestMatcher("/api/v1/members/auth/**"),
-                        AntPathRequestMatcher("/oauth2/**"),
-                        AntPathRequestMatcher("/login/**"),
                     ).permitAll()
                     .requestMatchers(
                         AntPathRequestMatcher("/swagger-ui/**"),
