@@ -1,12 +1,8 @@
 package com.bifriends.domain.chat.service
 
 import com.bifriends.domain.chat.dto.*
-import com.bifriends.domain.chat.model.ChatMessage
-import com.bifriends.domain.chat.model.ChatSession
-import com.bifriends.domain.chat.model.MessageRole
 import com.bifriends.domain.chat.repository.ChatMessageRepository
 import com.bifriends.domain.chat.repository.ChatSessionRepository
-import com.bifriends.domain.member.repository.MemberRepository
 import com.bifriends.infrastructure.ai.AiChatClient
 import com.bifriends.infrastructure.ai.dto.AiChatRequest
 import org.springframework.http.HttpStatus
@@ -19,40 +15,20 @@ import java.time.LocalDateTime
 @Transactional(readOnly = true)
 class ChatService(
     private val aiChatClient: AiChatClient,
+    private val chatMessageWriteService: ChatMessageWriteService,
     private val chatSessionRepository: ChatSessionRepository,
     private val chatMessageRepository: ChatMessageRepository,
-    private val memberRepository: MemberRepository,
 ) {
 
     /**
      * FE 메시지 전송 — 세션 자동 생성 + 메시지 저장 + AI 중계
      * sessionKey(UUID)로 세션을 조회하고, 없으면 신규 생성한다.
      */
-    @Transactional
     fun sendMessage(memberId: Long, request: ChatMessageRequest): ChatMessageResponse {
-        // 1. sessionKey로 세션 조회 or 신규 생성
-        val session = chatSessionRepository.findBySessionKey(request.sessionId)
-            ?: run {
-                val member = memberRepository.findById(memberId)
-                    .orElseThrow { IllegalArgumentException("회원을 찾을 수 없습니다. id=$memberId") }
-                chatSessionRepository.save(
-                    ChatSession(sessionKey = request.sessionId, member = member)
-                )
-            }
+        // 1~2. sessionKey로 세션 조회/생성 + 사용자 메시지 저장 (트랜잭션 커밋 후 커넥션 반환)
+        chatMessageWriteService.saveUserMessage(memberId, request.sessionId, request.message)
 
-        check(session.member.id == memberId) { "본인의 세션에만 메시지를 보낼 수 있습니다." }
-
-        // 2. 사용자 메시지 저장
-        chatMessageRepository.save(
-            ChatMessage(
-                session = session,
-                memberId = memberId,
-                role = MessageRole.USER,
-                content = request.message,
-            )
-        )
-
-        // 3. AI 호출
+        // 3. AI 호출 (트랜잭션 밖)
         val aiResponse = aiChatClient.sendChat(
             AiChatRequest(
                 memberId = memberId,
@@ -66,14 +42,7 @@ class ChatService(
 
         // 4. 어시스턴트 메시지 저장
         aiResponse.reply?.let {
-            chatMessageRepository.save(
-                ChatMessage(
-                    session = session,
-                    memberId = memberId,
-                    role = MessageRole.ASSISTANT,
-                    content = it,
-                )
-            )
+            chatMessageWriteService.saveAssistantMessage(memberId, request.sessionId, it)
         }
 
         return ChatMessageResponse(
