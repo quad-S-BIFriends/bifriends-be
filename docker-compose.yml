@@ -17,6 +17,7 @@ services:
       INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN}
       AI_SERVICE_ENABLED: ${AI_SERVICE_ENABLED:-true}
       AI_SERVICE_BASE_URL: ${AI_SERVICE_BASE_URL:-http://bifriends-ai:8001}
+      AI_CHAT_PATH: ${AI_CHAT_PATH:-/api/v1/ai/chat}
       FIREBASE_CONFIG_PATH: /app/config/firebase-service-account.json
       FIREBASE_STORAGE_BUCKET: ${FIREBASE_STORAGE_BUCKET:-bifriends-5df72.firebasestorage.app}
       FIRESTORE_DATABASE_ID: ${FIRESTORE_DATABASE_ID:-bifriends}

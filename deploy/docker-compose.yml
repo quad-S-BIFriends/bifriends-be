@@ -1,0 +1,99 @@
+services:
+  db:
+    image: postgres:17-alpine
+    container_name: bifriends-db
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  bifriends-be:
+    build:
+      context: ../
+      dockerfile: Dockerfile
+    container_name: bifriends-be
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: ${DB_NAME}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+      INTERNAL_SERVICE_AUTH_ENABLED: "true"
+      INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN}
+      AI_SERVICE_ENABLED: "true"
+      AI_SERVICE_BASE_URL: http://bifriends-ai:8001
+      AI_CHAT_PATH: /api/v1/ai/chat
+      FIREBASE_CONFIG_PATH: /app/config/firebase-service-account.json
+      FIREBASE_STORAGE_BUCKET: ${FIREBASE_STORAGE_BUCKET}
+      FALLBACK_TOKEN_GOMAEUM_STEP1: ${FALLBACK_TOKEN_GOMAEUM_STEP1}
+      FALLBACK_TOKEN_GOMAEUM_STEP2: ${FALLBACK_TOKEN_GOMAEUM_STEP2}
+      FALLBACK_TOKEN_GOMAEUM_STEP3_1: ${FALLBACK_TOKEN_GOMAEUM_STEP3_1}
+      FALLBACK_TOKEN_GOMAEUM_STEP3_2: ${FALLBACK_TOKEN_GOMAEUM_STEP3_2}
+      FALLBACK_TOKEN_GOMAEUM_STEP3_3: ${FALLBACK_TOKEN_GOMAEUM_STEP3_3}
+      FALLBACK_TOKEN_GIPPEUM_STEP1: ${FALLBACK_TOKEN_GIPPEUM_STEP1}
+      FALLBACK_TOKEN_GIPPEUM_STEP2: ${FALLBACK_TOKEN_GIPPEUM_STEP2}
+      FALLBACK_TOKEN_GIPPEUM_STEP3_1: ${FALLBACK_TOKEN_GIPPEUM_STEP3_1}
+      FALLBACK_TOKEN_GIPPEUM_STEP3_2: ${FALLBACK_TOKEN_GIPPEUM_STEP3_2}
+      FALLBACK_TOKEN_GIPPEUM_STEP3_3: ${FALLBACK_TOKEN_GIPPEUM_STEP3_3}
+      FALLBACK_TOKEN_BUKK_STEP1: ${FALLBACK_TOKEN_BUKK_STEP1}
+      FALLBACK_TOKEN_BUKK_STEP2: ${FALLBACK_TOKEN_BUKK_STEP2}
+      FALLBACK_TOKEN_BUKK_STEP3_1: ${FALLBACK_TOKEN_BUKK_STEP3_1}
+      FALLBACK_TOKEN_BUKK_STEP3_2: ${FALLBACK_TOKEN_BUKK_STEP3_2}
+      FALLBACK_TOKEN_BUKK_STEP3_3: ${FALLBACK_TOKEN_BUKK_STEP3_3}
+      FALLBACK_TOKEN_SOKSANGHOM_STEP1: ${FALLBACK_TOKEN_SOKSANGHOM_STEP1}
+      FALLBACK_TOKEN_SOKSANGHOM_STEP2: ${FALLBACK_TOKEN_SOKSANGHOM_STEP2}
+      FALLBACK_TOKEN_SOKSANGHOM_STEP3_1: ${FALLBACK_TOKEN_SOKSANGHOM_STEP3_1}
+      FALLBACK_TOKEN_SOKSANGHOM_STEP3_2: ${FALLBACK_TOKEN_SOKSANGHOM_STEP3_2}
+      FALLBACK_TOKEN_SOKSANGHOM_STEP3_3: ${FALLBACK_TOKEN_SOKSANGHOM_STEP3_3}
+      FALLBACK_TOKEN_SILMANG_STEP1: ${FALLBACK_TOKEN_SILMANG_STEP1}
+      FALLBACK_TOKEN_SILMANG_STEP2: ${FALLBACK_TOKEN_SILMANG_STEP2}
+      FALLBACK_TOKEN_SILMANG_STEP3_1: ${FALLBACK_TOKEN_SILMANG_STEP3_1}
+      FALLBACK_TOKEN_SILMANG_STEP3_2: ${FALLBACK_TOKEN_SILMANG_STEP3_2}
+      FALLBACK_TOKEN_SILMANG_STEP3_3: ${FALLBACK_TOKEN_SILMANG_STEP3_3}
+      FALLBACK_TOKEN_HWANAM_STEP1: ${FALLBACK_TOKEN_HWANAM_STEP1}
+      FALLBACK_TOKEN_HWANAM_STEP2: ${FALLBACK_TOKEN_HWANAM_STEP2}
+      FALLBACK_TOKEN_HWANAM_STEP3_1: ${FALLBACK_TOKEN_HWANAM_STEP3_1}
+      FALLBACK_TOKEN_HWANAM_STEP3_2: ${FALLBACK_TOKEN_HWANAM_STEP3_2}
+      FALLBACK_TOKEN_HWANAM_STEP3_3: ${FALLBACK_TOKEN_HWANAM_STEP3_3}
+    volumes:
+      - /etc/bifriends/firebase-service-account.json:/app/config/firebase-service-account.json:ro
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  bifriends-ai:
+    build:
+      context: ../../bifriends-ai
+      dockerfile: Dockerfile
+    container_name: bifriends-ai
+    environment:
+      GOOGLE_API_KEY: ${GOOGLE_API_KEY}
+      BE_BASE_URL: http://bifriends-be:8080
+      INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN}
+      SESSION_DB_URL: sqlite+aiosqlite:////data/sessions.db
+      APP_ENV: production
+      APP_PORT: 8001
+    volumes:
+      - ai_sessions:/data
+    depends_on:
+      - bifriends-be
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  ai_sessions:
