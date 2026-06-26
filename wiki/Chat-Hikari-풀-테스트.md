@@ -6,6 +6,7 @@
 | | |
 |---|---|
 | **관련 이슈** | [#5](https://github.com/quad-S-BIFriends/bifriends-be/issues/5), [#7](https://github.com/quad-S-BIFriends/bifriends-be/issues/7) |
+| **개요 문서** | [[채팅-트랜잭션-분리]] |
 | **레포 상세 문서** | [`doc/chat/hikari_pool_test.md`](https://github.com/quad-S-BIFriends/bifriends-be/blob/test/chat/doc/chat/hikari_pool_test.md) *(main 머지 전)* |
 | **테스트 코드** | `ChatHikariPoolComparisonTest.kt` |
 
