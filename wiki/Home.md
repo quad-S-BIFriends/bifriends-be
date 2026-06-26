@@ -20,7 +20,7 @@
 | 3 | [[팀-및-개발-기간]] | 팀원, 역할, 일정 *(작성 중)* |
 | 4 | [[나의-역할]] | 백엔드 담당 업무 범위 |
 | 5 | [[기술적-의사결정]] | 주요 설계 선택과 이유 |
-| 6 | [[트러블슈팅-및-이슈]] | 해결한 버그·운영 이슈 (GitHub Issues 연동) |
+| 6 | [[트러블슈팅-및-이슈]] | 해결한 버그·운영 이슈 (요약표 + 상세 링크) |
 | 7 | [[API-명세]] | Swagger UI, 내부 API 개요 |
 | 8 | [[환경-설정-및-규칙]] | 로컬/배포, 코딩 규칙, 문서 위치 |
 
@@ -43,4 +43,4 @@ bifriends/
 
 - 상세 API 스펙 (레포 내): [`doc/api-spec.md`](https://github.com/quad-S-BIFriends/bifriends-be/blob/main/doc/api-spec.md)
 - 배포: [`deploy/DEPLOY.md`](https://github.com/quad-S-BIFriends/bifriends-be/blob/main/deploy/DEPLOY.md)
-- Hikari 부하 테스트: [`doc/chat/hikari_pool_test.md`](https://github.com/quad-S-BIFriends/bifriends-be/blob/main/doc/chat/hikari_pool_test.md)
+- Hikari 부하 테스트: [[Chat-Hikari-풀-테스트]] · [`doc/chat/hikari_pool_test.md`](https://github.com/quad-S-BIFriends/bifriends-be/blob/test/chat/doc/chat/hikari_pool_test.md)
