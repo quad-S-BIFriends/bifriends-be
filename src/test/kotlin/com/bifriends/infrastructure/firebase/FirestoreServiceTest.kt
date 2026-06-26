@@ -20,6 +20,14 @@ class FirestoreServiceTest {
         assertThat(invokeIsIndexOrQueryError(IllegalStateException("permission denied"))).isFalse()
     }
 
+    @Test
+    fun `learnedExpressions 필드를 문자열 리스트로 파싱한다`() {
+        assertThat(service.parseLearnedExpressionsField(listOf("기뻐", "속상해")))
+            .containsExactly("기뻐", "속상해")
+        assertThat(service.parseLearnedExpressionsField(emptyList<String>())).isEmpty()
+        assertThat(service.parseLearnedExpressionsField(null)).isEmpty()
+    }
+
     private fun invokeIsIndexOrQueryError(e: Exception): Boolean {
         val method = FirestoreService::class.java.getDeclaredMethod(
             "isIndexOrQueryError",

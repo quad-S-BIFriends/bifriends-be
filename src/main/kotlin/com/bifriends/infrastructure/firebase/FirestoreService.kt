@@ -1,8 +1,10 @@
 package com.bifriends.infrastructure.firebase
 
 import com.google.cloud.firestore.DocumentReference
+import com.google.cloud.firestore.FieldValue
 import com.google.cloud.firestore.Firestore
 import com.google.cloud.firestore.Query
+import com.google.cloud.firestore.SetOptions
 import com.google.firebase.FirebaseApp
 import com.google.firebase.cloud.FirestoreClient
 import org.slf4j.LoggerFactory
@@ -51,21 +53,30 @@ class FirestoreService(
     ): DocumentReference = runFirestoreWrite("mindSession 저장") {
         val docRef = mindSessionsCollection(memberId).document(setId)
         docRef.set(sessionData).get()
+        sessionData["learnedExpression"]?.toString()
+            ?.takeIf { it.isNotBlank() }
+            ?.let { appendLearnedExpression(memberId, it) }
         log.info("[Firestore] mindSession 저장 완료 — memberId={}, setId={}", memberId, setId)
         docRef
     }
 
     /**
      * 시나리오 중복 방지용. 실패 시 빈 목록(학습 생성은 계속 가능).
+     *
+     * users/{memberId}.learnedExpressions 배열을 읽는다 (문서 1회).
+     * 필드가 없으면 기존 mindSessions에서 1회 backfill 후 저장한다.
      */
     fun getLearnedExpressions(memberId: Long): List<String> {
         return try {
-            mindSessionsCollection(memberId)
-                .get()
-                .get()
-                .documents
-                .mapNotNull { it.getString("learnedExpression") }
-                .distinct()
+            val userDoc = userDocument(memberId).get().get()
+            if (userDoc.exists() && userDoc.contains("learnedExpressions")) {
+                return parseLearnedExpressionsField(userDoc.get("learnedExpressions"))
+            }
+            val fromSessions = scanLearnedExpressionsFromSessions(memberId)
+            if (fromSessions.isNotEmpty()) {
+                backfillLearnedExpressions(memberId, fromSessions)
+            }
+            fromSessions
         } catch (e: Exception) {
             log.warn("[Firestore] learnedExpressions 조회 실패 — memberId={}: {}", memberId, e.message)
             emptyList()
@@ -104,6 +115,44 @@ class FirestoreService(
 
     private fun mindSessionsCollection(memberId: Long) =
         db.collection("users").document(memberId.toString()).collection("mindSessions")
+
+    private fun userDocument(memberId: Long) =
+        db.collection("users").document(memberId.toString())
+
+    private fun appendLearnedExpression(memberId: Long, expression: String) {
+        userDocument(memberId)
+            .set(
+                mapOf("learnedExpressions" to FieldValue.arrayUnion(expression)),
+                SetOptions.merge(),
+            )
+            .get()
+    }
+
+    private fun backfillLearnedExpressions(memberId: Long, expressions: List<String>) {
+        userDocument(memberId)
+            .set(mapOf("learnedExpressions" to expressions), SetOptions.merge())
+            .get()
+        log.info(
+            "[Firestore] learnedExpressions backfill — memberId={}, count={}",
+            memberId,
+            expressions.size,
+        )
+    }
+
+    private fun scanLearnedExpressionsFromSessions(memberId: Long): List<String> =
+        mindSessionsCollection(memberId)
+            .get()
+            .get()
+            .documents
+            .mapNotNull { it.getString("learnedExpression") }
+            .distinct()
+
+    internal fun parseLearnedExpressionsField(raw: Any?): List<String> =
+        when (raw) {
+            null -> emptyList()
+            is List<*> -> raw.filterIsInstance<String>().distinct()
+            else -> emptyList()
+        }
 
     private fun queryOrderedByCompletedAt(memberId: Long, limit: Int): List<Map<String, Any>> =
         mindSessionsCollection(memberId)
