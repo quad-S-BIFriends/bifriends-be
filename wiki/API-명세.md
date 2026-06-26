@@ -16,6 +16,8 @@ OpenAPI JSON: `/v3/api-docs`
 
 ## 인증
 
+상세 설계: **[[인증-JWT-및-Internal-Token]]**
+
 ### 앱 (Flutter)
 
 ```
