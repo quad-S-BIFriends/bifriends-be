@@ -42,6 +42,8 @@ jwt:
 firebase:
   config:
     path: ${FIREBASE_CONFIG_PATH:classpath:firebase-service-account.json}
+  firestore:
+    database-id: ${FIRESTORE_DATABASE_ID:(default)}
   storage:
     bucket: ${FIREBASE_STORAGE_BUCKET:bifriends-5df72.firebasestorage.app}
   # 친구랑 탭 폴백 이미지 다운로드 토큰
