@@ -7,6 +7,7 @@ import com.bifriends.infrastructure.ai.AiChatClient
 import com.bifriends.infrastructure.ai.dto.AiChatRequest
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Propagation
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.server.ResponseStatusException
 import java.time.LocalDateTime
@@ -24,6 +25,8 @@ class ChatService(
      * FE 메시지 전송 — 세션 자동 생성 + 메시지 저장 + AI 중계
      * sessionKey(UUID)로 세션을 조회하고, 없으면 신규 생성한다.
      */
+  // 클래스 기본 readOnly=true 트랜잭션에 묶이면 WriteService INSERT가 실패한다.
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     fun sendMessage(memberId: Long, request: ChatMessageRequest): ChatMessageResponse {
         // 1~2. sessionKey로 세션 조회/생성 + 사용자 메시지 저장 (트랜잭션 커밋 후 커넥션 반환)
         chatMessageWriteService.saveUserMessage(memberId, request.sessionId, request.message)
