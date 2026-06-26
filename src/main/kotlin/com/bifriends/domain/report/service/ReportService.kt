@@ -38,16 +38,19 @@ class ReportService(
     fun getReports(memberId: Long): ReportListResponse {
         val reports = weeklyReportRepository
             .findAllByMemberIdOrderByWeekStartDesc(memberId)
-            .map { report ->
-                ReportSummaryItem(
-                    reportId = report.id,
-                    weekStart = report.weekStart,
-                    weekEnd = report.weekEnd,
-                    safetySignal = findSafetySignal(memberId, report.weekStart),
-                    hasMission = report.missionRevealed,
-                )
-            }
-        return ReportListResponse(reports = reports)
+        val safetyByWeek = weeklySafetyReportRepository
+            .findAllByMemberIdOrderByWeekStartDesc(memberId)
+            .associateBy { it.weekStart }
+        val items = reports.map { report ->
+            ReportSummaryItem(
+                reportId = report.id,
+                weekStart = report.weekStart,
+                weekEnd = report.weekEnd,
+                safetySignal = safetyByWeek[report.weekStart]?.safetySignal ?: SafetySignal.GREEN,
+                hasMission = report.missionRevealed,
+            )
+        }
+        return ReportListResponse(reports = items)
     }
 
     // ── RPT-03~07/08 리포트 상세 ───────────────────────────────────────────
@@ -185,12 +188,6 @@ class ReportService(
             ?: missionNode.get("mission")?.asText()
             ?: return null
         return ParentMissionResponse(praise = praise, activity = activity)
-    }
-
-    private fun findSafetySignal(memberId: Long, weekStart: LocalDate): SafetySignal {
-        return weeklySafetyReportRepository.findByMemberIdAndWeekStart(memberId, weekStart)
-            ?.safetySignal
-            ?: SafetySignal.GREEN
     }
 
     private fun findChatSafety(memberId: Long, weekStart: LocalDate): ChatSafetyResponse {
