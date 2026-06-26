@@ -5,6 +5,7 @@ import com.bifriends.domain.chat.model.ChatSession
 import com.bifriends.domain.chat.model.MessageRole
 import com.bifriends.domain.chat.model.SessionStatus
 import com.bifriends.domain.onboarding.model.Interest
+import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.JsonNode
 import jakarta.validation.constraints.Max
 import jakarta.validation.constraints.Min
@@ -39,6 +40,13 @@ data class ChatSessionSummary(
 
 // ── FE ↔ BE ──────────────────────────────────────────────────────────────────
 
+/** Leo가 이번 응답에서 등록한 할 일 요약 (AI가 BE internal API로 이미 생성한 뒤 전달) */
+data class ChatTodoCreated(
+    val title: String,
+    @JsonProperty("assigned_date")
+    val assignedDate: String,
+)
+
 /** FE → BE 채팅 메시지 전송 (프로필은 FE가 /members/me 등에서 이미 보유한 값) */
 data class ChatMessageRequest(
     @field:NotBlank
@@ -64,11 +72,8 @@ data class ChatMessageResponse(
      * 예) { "type": "NAVIGATE", "target": "MATH_STUDY", "stepId": 3 }
      */
     val cta: JsonNode? = null,
-    /**
-     * 이번 응답에서 Leo가 생성한 Todo ID 목록.
-     * FE는 이 값을 받으면 홈 화면 할 일 목록을 갱신한다.
-     */
-    val todosCreated: List<Long>? = null,
+    /** 이번 응답에서 Leo가 등록한 할 일 요약 (스낵바 등 FE 표시용) */
+    val todosCreated: List<ChatTodoCreated>? = null,
 )
 
 // ── Leo 내부 API — 세션 메시지 목록 (3.5) ──────────────────────────────────────
