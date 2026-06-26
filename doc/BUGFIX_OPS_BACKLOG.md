@@ -181,6 +181,7 @@ setReadTimeout(Duration.ofMinutes(3))
 
 - 동시 채팅 부하 테스트 시 Hikari `threads awaiting connection` 증가 여부
 - AI 500 시 user 메시지 DB 잔존 여부 (의도한 동작인지 확인)
+- **정량 비교 테스트·STAR 결과:** `doc/chat/hikari_pool_test.md`
 
 ---
 

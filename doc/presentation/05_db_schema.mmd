@@ -1,0 +1,185 @@
+erDiagram
+    members {
+        bigint id PK
+        string email UK
+        string provider_id UK
+        string nickname
+        int grade
+        string equipped_outfit_code
+        string parent_password
+        boolean onboarding_completed
+        boolean notification_enabled
+        timestamp created_at
+        timestamp last_login_at
+    }
+
+    user_stats {
+        bigint id PK
+        bigint member_id FK
+        int level
+        int total_pool_earned
+        int available_pool
+        int streak_days
+        date last_attendance_date
+    }
+
+    todos {
+        bigint id PK
+        bigint member_id FK
+        string type
+        string title
+        string status
+        string source
+        string learning_type
+        date assigned_date
+        timestamp completed_at
+    }
+
+    reward_history {
+        bigint id PK
+        bigint member_id FK
+        string source
+        int amount
+        bigint ref_id
+        timestamp created_at
+    }
+
+    chat_sessions {
+        bigint id PK
+        string session_key UK
+        bigint member_id FK
+        string title
+        string status
+    }
+
+    chat_messages {
+        bigint id PK
+        bigint session_id FK
+        bigint member_id
+        string role
+        text content
+        timestamp created_at
+    }
+
+    math_step {
+        bigint id PK
+        int grade
+        int step_number
+        string step_title
+        string concept
+        text content_json
+    }
+
+    korean_step {
+        bigint id PK
+        int grade
+        int step_number
+        string step_title
+        string concept
+        text content_json
+    }
+
+    user_math_progress {
+        bigint id PK
+        bigint member_id FK
+        bigint math_step_id FK
+        boolean is_step_completed
+        timestamp last_accessed_at
+    }
+
+    user_math_progress_cycles {
+        bigint progress_id FK
+        int cycle_number
+    }
+
+    user_korean_progress {
+        bigint id PK
+        bigint member_id FK
+        bigint korean_step_id FK
+        boolean is_step_completed
+        timestamp last_accessed_at
+    }
+
+    user_korean_progress_cycles {
+        bigint progress_id FK
+        int cycle_number
+    }
+
+    learning_attempt {
+        bigint id PK
+        bigint member_id FK
+        string subject
+        bigint step_id
+        int cycle_number
+        int question_index
+        int attempts
+        int hints_used
+        boolean solved
+    }
+
+    shop_items {
+        bigint id PK
+        string item_code UK
+        string name
+        string category
+        int price
+        string image_key
+    }
+
+    member_shop_items {
+        bigint id PK
+        bigint member_id FK
+        bigint shop_item_id FK
+        timestamp acquired_at
+    }
+
+    member_interests {
+        bigint id PK
+        bigint member_id FK
+        string interest
+    }
+
+    member_items {
+        bigint id PK
+        bigint member_id FK
+        string item_type
+        timestamp acquired_at
+    }
+
+    weekly_report {
+        bigint id PK
+        bigint member_id FK
+        date week_start
+        date week_end
+        text sections_json
+        boolean mission_revealed
+    }
+
+    weekly_safety_report {
+        bigint id PK
+        bigint member_id FK
+        date week_start
+        date week_end
+        string safety_signal
+        int score
+        string reason_summary
+    }
+
+    members ||--o| user_stats : "1:1"
+    members ||--o{ todos : "has"
+    members ||--o{ reward_history : "has"
+    members ||--o{ chat_sessions : "has"
+    chat_sessions ||--o{ chat_messages : "contains"
+    members ||--o{ user_math_progress : "tracks"
+    math_step ||--o{ user_math_progress : "for_step"
+    user_math_progress ||--o{ user_math_progress_cycles : "cycles"
+    members ||--o{ user_korean_progress : "tracks"
+    korean_step ||--o{ user_korean_progress : "for_step"
+    user_korean_progress ||--o{ user_korean_progress_cycles : "cycles"
+    members ||--o{ learning_attempt : "attempts"
+    members ||--o{ member_interests : "interests"
+    members ||--o{ member_items : "onboarding_gift"
+    members ||--o{ member_shop_items : "purchased"
+    shop_items ||--o{ member_shop_items : "catalog"
+    members ||--o{ weekly_report : "growth"
+    members ||--o{ weekly_safety_report : "safety"

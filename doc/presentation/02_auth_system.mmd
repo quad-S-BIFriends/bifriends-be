@@ -1,0 +1,36 @@
+sequenceDiagram
+    autonumber
+    actor User as 👤 사용자 (Flutter)
+    participant FB_AUTH as 🔥 Firebase Auth
+    participant BE as ⚙️ Spring Boot BE
+    participant DB as 🗄️ PostgreSQL
+
+    Note over User,DB: ① Google OAuth 로그인 흐름
+
+    User->>FB_AUTH: Google Sign-In<br/>(구글 계정 선택)
+    FB_AUTH-->>User: Firebase ID Token 발급
+
+    User->>BE: POST /api/v1/members/auth/google<br/>{ idToken: "eyJ..." }
+    BE->>FB_AUTH: FirebaseTokenVerifier.verifyIdToken(idToken)
+    FB_AUTH-->>BE: FirebaseToken { uid, email, picture }
+
+    BE->>DB: SELECT members WHERE provider_id = uid
+    alt 신규 회원
+        BE->>DB: INSERT members (email, provider_id, ...)
+        BE-->>BE: publishEvent(MemberRegisteredEvent)<br/>→ 오늘 할 일 3개 자동 생성 (AFTER_COMMIT)
+    end
+
+    BE-->>User: 200 OK<br/>{ accessToken: JWT, refreshToken: JWT,<br/>  onboardingCompleted: bool }
+
+    Note over User,DB: ② 이후 모든 API 요청 (FE → BE)
+
+    User->>BE: GET /api/v1/home<br/>Authorization: Bearer {accessToken}
+    BE->>BE: JwtAuthenticationFilter<br/>→ JwtProvider.validateToken()<br/>→ SecurityContext에 memberId 설정
+    BE-->>User: 200 OK (홈 데이터)
+
+    Note over User,DB: ③ AI 서비스 내부 인증 (AI → BE)
+
+    participant AI as 🤖 bifriends-ai
+    AI->>BE: POST /api/v1/weekly-safety-report<br/>X-Internal-Service: bifriends-ai
+    BE->>BE: InternalServiceAuthenticationFilter<br/>→ 헤더값 == INTERNAL_SERVICE_TOKEN 검증<br/>→ ROLE_INTERNAL_SERVICE 부여
+    BE-->>AI: 200 OK { received: true }

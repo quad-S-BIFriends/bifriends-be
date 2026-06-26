@@ -55,6 +55,8 @@ dependencies {
     testImplementation("org.springframework.security:spring-security-test")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+    testImplementation("org.mockito.kotlin:mockito-kotlin:5.4.0")
+    testRuntimeOnly("com.h2database:h2")
 
     implementation(platform("com.google.cloud:libraries-bom:26.59.0"))
     implementation("com.google.firebase:firebase-admin:9.2.0")

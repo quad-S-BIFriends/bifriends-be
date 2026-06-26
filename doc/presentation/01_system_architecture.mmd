@@ -1,0 +1,63 @@
+graph TB
+    subgraph CLIENT["📱 Flutter App (클라이언트)"]
+        direction TB
+        FE_AUTH["Google Sign-In"]
+        FE_HOME["홈 · 할 일"]
+        FE_CHAT["채팅 (레오)"]
+        FE_LEARN["학습 (수학 · 국어)"]
+        FE_MIND["마음챙김 (감정)"]
+        FE_REPORT["부모 리포트"]
+        FE_SHOP["상점"]
+    end
+
+    subgraph BE["⚙️ Spring Boot BE (Kotlin 2.1 / JDK 21)"]
+        direction TB
+        subgraph DOMAINS["도메인 레이어"]
+            D_MEMBER["member\n(회원·인증)"]
+            D_HOME["home\n(홈·보상)"]
+            D_CHAT["chat\n(레오 채팅)"]
+            D_LEARN["learning\n(학습)"]
+            D_MIND["mind\n(감정 학습)"]
+            D_REPORT["report\n(리포트)"]
+            D_SHOP["shop\n(상점)"]
+        end
+        subgraph INFRA["인프라 레이어"]
+            INFRA_SEC["security\n(JWT · Firebase Auth)"]
+            INFRA_AI["ai\n(AI 클라이언트)"]
+            INFRA_FB["firebase\n(Firestore · Storage)"]
+        end
+        SCHED["⏰ Scheduler\n(매일 00:00 할 일 생성\n매주 월 01:00 배치)"]
+    end
+
+    subgraph AI["🤖 bifriends-ai (Python)"]
+        AI_CHAT["채팅 엔진 (Leo)"]
+        AI_SCENARIO["감정 시나리오 생성"]
+        AI_BATCH["주간 분석 배치\n(안전 · 성장 리포트)"]
+    end
+
+    subgraph FIREBASE["🔥 Firebase"]
+        FB_AUTH["Firebase Auth\n(Google OAuth)"]
+        FB_FS["Firestore\n(마음챙김 세션)"]
+        FB_ST["Firebase Storage\n(감정 이미지)"]
+    end
+
+    subgraph DB["🗄️ PostgreSQL 17"]
+        PG["19개 테이블\n회원 · 학습 · 채팅\n할 일 · 보상 · 리포트\n상점"]
+    end
+
+    CLIENT -->|"Bearer JWT\n/api/v1/**"| BE
+    FE_AUTH -->|"Firebase ID Token"| FB_AUTH
+    FB_AUTH -->|"ID Token 발급"| FE_AUTH
+
+    BE -->|"Firebase Admin SDK"| FB_AUTH
+    BE -->|"Firebase Admin SDK"| FB_FS
+    BE -->|"Firebase Admin SDK"| FB_ST
+    BE <-->|"JPA / Flyway"| PG
+    BE -->|"HTTP REST"| AI
+    AI -->|"X-Internal-Service\n콜백 API"| BE
+
+    style CLIENT fill:#E3F2FD,stroke:#1565C0,color:#000
+    style BE fill:#E8F5E9,stroke:#2E7D32,color:#000
+    style AI fill:#FFF3E0,stroke:#E65100,color:#000
+    style FIREBASE fill:#FCE4EC,stroke:#AD1457,color:#000
+    style DB fill:#F3E5F5,stroke:#6A1B9A,color:#000

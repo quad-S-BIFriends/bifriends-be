@@ -1,0 +1,51 @@
+sequenceDiagram
+    autonumber
+    participant SCHED as ⏰ BE Scheduler<br/>(매주 월 01:00 KST)
+    participant BE as ⚙️ Spring Boot BE
+    participant AI as 🤖 bifriends-ai
+    participant DB as 🗄️ PostgreSQL
+
+    Note over SCHED,DB: 🔐 모든 AI→BE 요청: X-Internal-Service 헤더 인증
+
+    rect rgb(255, 237, 213)
+        Note over SCHED,DB: ① 주간 안전 신호 배치 (채팅 분석)
+        SCHED->>BE: WeeklySafetyScheduler 실행
+        BE->>DB: 온보딩 완료 회원 목록 조회
+        loop 회원별 1회
+            BE->>AI: POST /api/v1/ai/batch/weekly-safety<br/>{ member_id, week_start, week_end }
+            AI->>BE: GET /api/v1/chat/messages<br/>?member_id=&from=&to=<br/>[X-Internal-Service]
+            BE-->>AI: 해당 주 채팅 메시지 전체
+            Note over AI: Gemini로 채팅 안전 분석<br/>GREEN / YELLOW / RED 판정
+            AI->>BE: POST /api/v1/weekly-safety-report<br/>{ safety_signal, score, reason_summary }<br/>[X-Internal-Service]
+            BE->>DB: weekly_safety_report 저장 (UK: member_id × week_start)
+            BE-->>AI: { received: true }
+        end
+    end
+
+    rect rgb(220, 252, 231)
+        Note over SCHED,DB: ② 주간 성장 리포트 배치 (부모용)
+        SCHED->>BE: WeeklyReportScheduler 실행
+        loop 회원별 1회
+            BE->>AI: POST /api/v1/ai/report/weekly<br/>{ member_id, week_start, week_end }
+            AI->>BE: GET /api/v1/report/learning-summary<br/>?memberId=&from=&to=<br/>[X-Internal-Service]
+            BE-->>AI: 학습 집계 { math[], korean[], todos }
+            Note over AI: 4섹션 리포트 생성<br/>growth_summary / math / korean<br/>parent_mission (칭찬 + 활동)
+            AI->>BE: POST /api/v1/weekly-report<br/>{ sections_json }<br/>[X-Internal-Service]
+            BE->>DB: weekly_report 저장 (mission_revealed=false)
+            BE-->>AI: { received: true }
+        end
+    end
+
+    rect rgb(219, 234, 254)
+        Note over SCHED,DB: ③ 할 일 자동 생성 (매일 자정)
+        SCHED->>BE: TodoScheduler 실행 (00:00 KST)
+        BE->>DB: SYSTEM 할 일 3개 생성<br/>(CHAT / LEARNING / EMOTION)
+        Note over BE,DB: 멱등 처리: 오늘 이미 있으면 스킵
+    end
+
+    rect rgb(243, 232, 255)
+        Note over SCHED,DB: ④ AI Agent — 할 일 추가 (채팅 중)
+        AI->>BE: POST /api/v1/todos<br/>{ memberId, title, assignedDate }<br/>[X-Internal-Service]
+        BE->>DB: todos 저장 (source=AGENT, 최대 2개)
+        BE-->>AI: { id, title, status: PENDING }
+    end

@@ -1,0 +1,81 @@
+sequenceDiagram
+    autonumber
+    actor U as 👤 Flutter App
+    participant BE as ⚙️ Spring Boot BE
+    participant AI as 🤖 bifriends-ai
+    participant FS as 🔥 Firestore
+    participant ST as 🔥 Storage
+    participant DB as 🗄️ PostgreSQL
+
+    rect rgb(219, 234, 254)
+        Note over U,DB: 🏠 홈 진입 (출석 체크 포함)
+        U->>BE: GET /api/v1/home [JWT]
+        BE->>DB: 출석 체크 → streak/보상 갱신
+        BE->>DB: 오늘 할 일 조회 (assigned_date = 오늘)
+        BE-->>U: 인사 메시지 + 레벨/풀/streak + 할 일 목록
+    end
+
+    rect rgb(220, 252, 231)
+        Note over U,DB: 💬 채팅 - 레오와 대화
+        U->>BE: POST /api/v1/chat/messages [JWT]<br/>{ sessionId, message, nickname, grade, interests }
+        BE->>DB: chat_messages 저장 (role=USER)
+        BE->>AI: POST /v1/ai/chat<br/>{ member_id, nickname, grade, interests, session_id, message }
+        AI-->>BE: { reply: "레오 응답 텍스트" }
+        BE->>DB: chat_messages 저장 (role=ASSISTANT)
+        BE-->>U: { sessionId, reply }
+    end
+
+    rect rgb(255, 243, 224)
+        Note over U,DB: 📚 학습 - 수학/국어 문제 풀기
+        U->>BE: GET /api/v1/learning/math/roadmap [JWT]
+        BE->>DB: math_step + user_math_progress 조회
+        BE-->>U: 스텝 로드맵 + 진도 현황
+
+        U->>BE: GET /api/v1/learning/math/steps/{id}/content [JWT]
+        BE->>DB: math_step.content_json 조회
+        BE-->>U: 스텝 문제 콘텐츠
+
+        U->>BE: POST /api/v1/learning/math/steps/{id}/cycles/{n}/questions/{i}/validate [JWT]<br/>{ answer }
+        BE->>DB: learning_attempt 저장 (attempts, solved, hints_used)
+        BE-->>U: { correct, hint } (오답 시 힌트 포함)
+
+        U->>BE: POST /api/v1/learning/math/steps/{id}/cycles/{n}/complete [JWT]
+        BE->>DB: user_math_progress 업데이트 + reward_history 적립
+        BE-->>U: { poolEarned, levelUp }
+    end
+
+    rect rgb(252, 228, 236)
+        Note over U,DB: 💙 마음챙김 - 감정 시나리오
+        U->>BE: POST /api/v1/mind/scenario [JWT]<br/>{ emotion, situation }
+        BE->>AI: POST /api/v1/ai/content/scenario<br/>{ memberId, emotion, learnedExpressions[] }
+        AI-->>BE: 4단계 세트 { step1~4, image_b64 (step3) }
+        BE->>ST: 이미지 업로드 → Storage URL
+        BE-->>U: 시나리오 세트 (step3 = image_url)
+
+        U->>BE: POST /api/v1/mind/sessions [JWT]<br/>{ setId, 완료 세션 전체 }
+        BE->>FS: users/{memberId}/mindSessions/{setId} 저장
+        BE->>DB: reward_history +3풀 적립
+        BE-->>U: { poolEarned: 3 }
+    end
+
+    rect rgb(243, 232, 255)
+        Note over U,DB: 📊 부모 리포트 조회
+        U->>BE: GET /api/v1/reports [JWT]
+        BE->>DB: weekly_report + weekly_safety_report 조회
+        BE-->>U: 리포트 목록 (최신순)
+
+        U->>BE: POST /api/v1/reports/{id}/parent-mission [JWT]
+        BE->>DB: weekly_report.mission_revealed = true
+        BE-->>U: { praise, activity } (AI가 미리 생성해둔 미션)
+    end
+
+    rect rgb(254, 249, 195)
+        Note over U,DB: 🛒 상점 - 의상 구매
+        U->>BE: GET /api/v1/shop/items [JWT]
+        BE->>DB: shop_items + member_shop_items 조회
+        BE-->>U: 아이템 목록 (보유 여부 포함)
+
+        U->>BE: POST /api/v1/shop/items/{id}/purchase [JWT]
+        BE->>DB: available_pool 차감 + member_shop_items 추가
+        BE-->>U: { remainingPool }
+    end

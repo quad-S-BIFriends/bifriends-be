@@ -1,0 +1,36 @@
+graph TB
+    subgraph PG["🗄️ PostgreSQL"]
+        M["members\n(id, email, ...)"]
+    end
+
+    subgraph FS["🔥 Firestore (Database: bifriends)"]
+        direction TB
+        subgraph USERS["users / {memberId}"]
+            USER_DOC["📄 users/{memberId}\n─────────────────────\nlearnedExpressions: string[]\n(중복 방지 캐시 배열)"]
+            subgraph SESSIONS["mindSessions / {setId}"]
+                SESSION_DOC["📄 mindSessions/{setId}\n─────────────────────\nsetId: string\nemotion: string\nsituation: string\nlearnedExpression: string\nisFallback: boolean\ncompletedAt: string (ISO)\n\nstep1: {\n  description: string\n  imageUrl: string\n}\nstep2: {\n  expression: string\n  meaning: string\n}\nstep3: {\n  imageUrl: string  ← Storage URL\n  comicScript: string\n}\nstep4: {\n  quiz: object\n  answer: string\n}"]
+            end
+        end
+        USER_DOC --> SESSIONS
+    end
+
+    subgraph ST["🔥 Firebase Storage\n(Bucket: bifriends-5df72.firebasestorage.app)"]
+        direction TB
+        FALLBACK["📁 fallback/{감정명}/\n  step1.png\n  step2.png\n  step3.png\n  step4.png\n─────────────────\n⚠️ AI 비활성화 시 사용\n사전 업로드된 폴백 이미지"]
+        MIND["📁 mindSessions/{setId}/\n  comic/{uuid}.png\n─────────────────\n✅ AI 생성 만화 이미지\nBE가 POST /mind/scenario\n시점에 업로드"]
+        PROFILE["📁 (members.profile_image_url)\n─────────────────\n주로 Google OAuth URL\nPostgreSQL에만 저장"]
+    end
+
+    M -->|"id 문자열 공유\nmembers.id == users/{memberId}"| USER_DOC
+    SESSION_DOC -.->|"step3.imageUrl 참조"| MIND
+    MIND -.->|"폴백 시 대체"| FALLBACK
+
+    subgraph AUTH["🔥 Firebase Auth"]
+        G["Google OAuth\nProvider"]
+        G -->|"Firebase ID Token\n(uid, email, picture)"| BE_AUTH["⚙️ BE\nFirebaseTokenVerifier"]
+    end
+
+    style PG fill:#F3E5F5,stroke:#6A1B9A,color:#000
+    style FS fill:#FCE4EC,stroke:#B71C1C,color:#000
+    style ST fill:#FFF3E0,stroke:#E65100,color:#000
+    style AUTH fill:#E8EAF6,stroke:#283593,color:#000
