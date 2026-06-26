@@ -16,7 +16,8 @@ OpenAPI JSON: `/v3/api-docs`
 
 ## 인증
 
-상세 설계: **[[인증-JWT-및-Internal-Token]]**
+- **[[인증-JWT-및-Internal-Token]]** — JWT · Internal Token · 필터
+- **[[서비스-간-통신-아키텍처]]** — FE/BE/AI 통신 · 배포 · 개발
 
 ### 앱 (Flutter)
 
