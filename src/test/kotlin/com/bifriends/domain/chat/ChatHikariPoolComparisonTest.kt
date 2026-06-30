@@ -13,6 +13,7 @@ import com.bifriends.infrastructure.firebase.FirestoreService
 import com.zaxxer.hikari.HikariDataSource
 import com.zaxxer.hikari.HikariPoolMXBean
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
@@ -73,15 +74,21 @@ class ChatHikariPoolComparisonTest {
             AiChatResponse(reply = "테스트 응답")
         }
 
+        val uid = UUID.randomUUID()
         member = memberRepository.save(
             Member(
-                email = "chat-pool-test@bifriends.test",
-                providerId = "chat-pool-test-${UUID.randomUUID()}",
+                email = "chat-pool-test-$uid@bifriends.test",
+                providerId = "chat-pool-test-$uid",
                 onboardingCompleted = true,
                 nickname = "테스트",
                 grade = 4,
             ),
         )
+    }
+
+    @AfterEach
+    fun tearDown() {
+        memberRepository.deleteById(member.id)
     }
 
     @Test
