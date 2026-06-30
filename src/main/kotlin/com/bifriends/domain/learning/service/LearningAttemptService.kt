@@ -7,6 +7,7 @@ import com.bifriends.domain.member.repository.MemberRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDateTime
+import java.time.ZoneId
 
 /**
  * 문제별 풀이 시도 기록 (주간 리포트 집계·학습 현황용)
@@ -64,7 +65,7 @@ class LearningAttemptService(
                     attempts = 1,
                     hintsUsed = hintsUsed,
                     solved = true,
-                    solvedAt = LocalDateTime.now(),
+                    solvedAt = LocalDateTime.now(ZoneId.of("Asia/Seoul")),
                 )
             )
         } else {

@@ -99,6 +99,6 @@ class Member(
     var lastLoginAt: LocalDateTime = LocalDateTime.now()
 ) {
     fun updateLastLogin() {
-        this.lastLoginAt = LocalDateTime.now()
+        this.lastLoginAt = LocalDateTime.now(ZoneId.of("Asia/Seoul"))
     }
 }

@@ -4,6 +4,7 @@ import com.bifriends.domain.member.model.Member
 import jakarta.persistence.*
 import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.ZoneId
 
 /**
  * 오늘의 할 일
@@ -102,8 +103,8 @@ class Todo(
     fun complete() {
         check(status == TodoStatus.PENDING) { "이미 완료된 할 일입니다. id=$id" }
         status = TodoStatus.COMPLETED
-        completedAt = LocalDateTime.now()
-        updatedAt = LocalDateTime.now()
+        completedAt = LocalDateTime.now(ZoneId.of("Asia/Seoul"))
+        updatedAt = LocalDateTime.now(ZoneId.of("Asia/Seoul"))
     }
 
     /**

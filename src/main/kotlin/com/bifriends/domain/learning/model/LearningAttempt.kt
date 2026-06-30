@@ -3,6 +3,7 @@ package com.bifriends.domain.learning.model
 import com.bifriends.domain.member.model.Member
 import jakarta.persistence.*
 import java.time.LocalDateTime
+import java.time.ZoneId
 
 /**
  * 문제 풀이 시도 기록
@@ -78,7 +79,7 @@ class LearningAttempt(
     fun markSolved(hintsUsed: Int) {
         this.solved = true
         this.hintsUsed = hintsUsed
-        this.solvedAt = LocalDateTime.now()
-        this.updatedAt = LocalDateTime.now()
+        this.solvedAt = LocalDateTime.now(ZoneId.of("Asia/Seoul"))
+        this.updatedAt = LocalDateTime.now(ZoneId.of("Asia/Seoul"))
     }
 }
