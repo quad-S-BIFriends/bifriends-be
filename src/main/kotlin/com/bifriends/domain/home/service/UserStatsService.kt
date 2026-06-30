@@ -28,6 +28,7 @@ class UserStatsService(
 
     // ── 조회 ────────────────────────────────────────────────────────────────
 
+    @Transactional
     fun getUserStats(memberId: Long): UserStatsResponse {
         val stats = getOrCreate(memberId)
         return UserStatsResponse.from(stats)
