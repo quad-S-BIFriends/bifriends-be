@@ -8,13 +8,12 @@ import com.bifriends.domain.mind.dto.MindSessionSaveRequest
 import com.bifriends.domain.mind.dto.MindSessionSaveResponse
 import com.bifriends.domain.mind.service.MindScenarioService
 import com.bifriends.domain.mind.service.MindSessionService
-import com.bifriends.infrastructure.security.JwtProvider
 import org.springframework.http.ResponseEntity
+import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
-import org.springframework.web.bind.annotation.RequestHeader
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 
@@ -23,7 +22,6 @@ import org.springframework.web.bind.annotation.RestController
 class MindController(
     private val mindScenarioService: MindScenarioService,
     private val mindSessionService: MindSessionService,
-    private val jwtProvider: JwtProvider,
 ) {
 
     /**
@@ -37,10 +35,9 @@ class MindController(
      */
     @PostMapping("/scenario")
     fun generateScenario(
-        @RequestHeader("Authorization") token: String,
+        @AuthenticationPrincipal memberId: Long,
         @RequestBody request: MindScenarioRequest,
     ): ResponseEntity<EmotionScenarioResponse> {
-        val memberId = jwtProvider.getMemberId(token.removePrefix("Bearer "))
         return ResponseEntity.ok(mindScenarioService.generateScenario(memberId, request))
     }
 
@@ -52,10 +49,9 @@ class MindController(
      */
     @PostMapping("/sessions")
     fun saveSession(
-        @RequestHeader("Authorization") token: String,
+        @AuthenticationPrincipal memberId: Long,
         @RequestBody request: MindSessionSaveRequest,
     ): ResponseEntity<MindSessionSaveResponse> {
-        val memberId = jwtProvider.getMemberId(token.removePrefix("Bearer "))
         return ResponseEntity.ok(mindSessionService.saveSession(memberId, request))
     }
 
@@ -66,9 +62,8 @@ class MindController(
      */
     @GetMapping("/sessions")
     fun getSessionList(
-        @RequestHeader("Authorization") token: String,
+        @AuthenticationPrincipal memberId: Long,
     ): ResponseEntity<MindSessionListResponse> {
-        val memberId = jwtProvider.getMemberId(token.removePrefix("Bearer "))
         return ResponseEntity.ok(mindSessionService.getSessionList(memberId))
     }
 
@@ -79,10 +74,9 @@ class MindController(
      */
     @GetMapping("/sessions/{sessionId}")
     fun getSession(
-        @RequestHeader("Authorization") token: String,
+        @AuthenticationPrincipal memberId: Long,
         @PathVariable sessionId: String,
     ): ResponseEntity<MindSessionDetailResponse> {
-        val memberId = jwtProvider.getMemberId(token.removePrefix("Bearer "))
         return ResponseEntity.ok(mindSessionService.getSession(memberId, sessionId))
     }
 }

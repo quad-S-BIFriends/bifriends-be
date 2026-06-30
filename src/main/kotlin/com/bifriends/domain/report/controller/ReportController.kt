@@ -2,8 +2,8 @@ package com.bifriends.domain.report.controller
 
 import com.bifriends.domain.report.dto.*
 import com.bifriends.domain.report.service.ReportService
-import com.bifriends.infrastructure.security.JwtProvider
 import org.springframework.http.ResponseEntity
+import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.*
 
 /**
@@ -14,25 +14,24 @@ import org.springframework.web.bind.annotation.*
 @RequestMapping("/api/v1/reports")
 class ReportController(
     private val reportService: ReportService,
-    private val jwtProvider: JwtProvider,
 ) {
 
     /** RPT-02 — 주간 리포트 목록 (최신순) */
     @GetMapping
     fun getReports(
-        @RequestHeader("Authorization") token: String,
+        @AuthenticationPrincipal memberId: Long,
     ): ResponseEntity<ReportListResponse> {
-        return ResponseEntity.ok(reportService.getReports(extractMemberId(token)))
+        return ResponseEntity.ok(reportService.getReports(memberId))
     }
 
     /** RPT-03~07 — 리포트 상세 (성장요약·학습패턴·학습현황·챗안전신호 통합) */
     @GetMapping("/{reportId}")
     fun getReportDetail(
-        @RequestHeader("Authorization") token: String,
+        @AuthenticationPrincipal memberId: Long,
         @PathVariable reportId: Long,
     ): ResponseEntity<ReportDetailResponse> {
         return ResponseEntity.ok(
-            reportService.getReportDetail(extractMemberId(token), reportId)
+            reportService.getReportDetail(memberId, reportId)
         )
     }
 
@@ -42,25 +41,23 @@ class ReportController(
      */
     @PostMapping("/{reportId}/parent-mission")
     fun revealParentMission(
-        @RequestHeader("Authorization") token: String,
+        @AuthenticationPrincipal memberId: Long,
         @PathVariable reportId: Long,
     ): ResponseEntity<ParentMissionResponse> {
         return ResponseEntity.ok(
-            reportService.getOrGenerateParentMission(extractMemberId(token), reportId)
+            reportService.getOrGenerateParentMission(memberId, reportId)
         )
     }
 
     /** 리포트 수동 생성 트리거 — 특정 주의 학습 데이터를 AI에 전송해 리포트 생성 요청 */
     @PostMapping("/generate")
     fun generateReport(
-        @RequestHeader("Authorization") token: String,
+        @AuthenticationPrincipal memberId: Long,
         @RequestBody request: GenerateReportRequest,
     ): ResponseEntity<GenerateReportResponse> {
         return ResponseEntity.ok(
-            reportService.generateReport(extractMemberId(token), request.weekStart)
+            reportService.generateReport(memberId, request.weekStart)
         )
     }
 
-    private fun extractMemberId(token: String): Long =
-        jwtProvider.getMemberId(token.removePrefix("Bearer "))
 }

@@ -2,10 +2,9 @@ package com.bifriends.domain.home.controller
 
 import com.bifriends.domain.home.dto.HomeResponse
 import com.bifriends.domain.home.service.HomeService
-import com.bifriends.infrastructure.security.JwtProvider
 import org.springframework.http.ResponseEntity
+import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.RequestHeader
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 
@@ -13,7 +12,6 @@ import org.springframework.web.bind.annotation.RestController
 @RequestMapping("/api/v1/home")
 class HomeController(
     private val homeService: HomeService,
-    private val jwtProvider: JwtProvider,
 ) {
 
     /**
@@ -44,9 +42,8 @@ class HomeController(
      */
     @GetMapping
     fun getHome(
-        @RequestHeader("Authorization") token: String,
+        @AuthenticationPrincipal memberId: Long,
     ): ResponseEntity<HomeResponse> {
-        val memberId = jwtProvider.getMemberId(token.removePrefix("Bearer "))
         return ResponseEntity.ok(homeService.getHome(memberId))
     }
 }

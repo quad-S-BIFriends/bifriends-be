@@ -3,11 +3,10 @@ package com.bifriends.domain.emotion.controller
 import com.bifriends.domain.emotion.dto.EmotionScenarioRequest
 import com.bifriends.domain.emotion.dto.EmotionScenarioResponse
 import com.bifriends.domain.emotion.service.EmotionScenarioService
-import com.bifriends.infrastructure.security.JwtProvider
 import org.springframework.http.ResponseEntity
+import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
-import org.springframework.web.bind.annotation.RequestHeader
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 
@@ -15,7 +14,6 @@ import org.springframework.web.bind.annotation.RestController
 @RequestMapping("/api/v1/emotion")
 class EmotionScenarioController(
     private val emotionScenarioService: EmotionScenarioService,
-    private val jwtProvider: JwtProvider,
 ) {
 
     /**
@@ -32,10 +30,9 @@ class EmotionScenarioController(
      */
     @PostMapping("/scenarios")
     fun generateScenario(
-        @RequestHeader("Authorization") token: String,
+        @AuthenticationPrincipal memberId: Long,
         @RequestBody request: EmotionScenarioRequest,
     ): ResponseEntity<EmotionScenarioResponse> {
-        val memberId = jwtProvider.getMemberId(token.removePrefix("Bearer "))
         return ResponseEntity.ok(emotionScenarioService.generateScenario(memberId, request))
     }
 }
