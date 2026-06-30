@@ -62,8 +62,17 @@ class SecurityConfig(
                         AntPathRequestMatcher("/v3/api-docs/**"),
                         AntPathRequestMatcher("/swagger-ui.html"),
                     ).permitAll()
-                    // JWT API는 anyRequest 한 곳에서만 authenticated() — 경로별 MVC matcher는 JWT가 401로 막히는 경우가 있음
-                    .anyRequest().authenticated()
+
+                // AI 서버 전용 내부 경로 — ROLE_INTERNAL_SERVICE 필요
+                // JWT 사용자는 X-Internal-Service 헤더가 없어 이 역할을 받지 못하므로 403 반환
+                InternalServicePaths.securityRules().forEach { (methods, pattern) ->
+                    methods.forEach { method ->
+                        auth.requestMatchers(AntPathRequestMatcher(pattern, method.name()))
+                            .hasRole(InternalServicePaths.ROLE)
+                    }
+                }
+
+                auth.anyRequest().authenticated()
             }
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter::class.java)
             .addFilterBefore(internalServiceAuthenticationFilter, JwtAuthenticationFilter::class.java)
