@@ -127,7 +127,7 @@ class OnboardingServiceTest {
         @Test
         @DisplayName("PIN 불일치 시 예외 발생")
         fun `부모 PIN 불일치 예외`() {
-            givenMemberExists()
+            // require() 검증이 memberRepository 조회보다 먼저 실행되므로 stub 불필요
             val request = SetParentPasswordRequest(
                 password = "1234",
                 passwordConfirm = "5678",

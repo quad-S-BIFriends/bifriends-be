@@ -13,7 +13,7 @@ import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.mockito.Mock
-import org.mockito.Mockito.`when`
+import org.mockito.Mockito.lenient
 import org.mockito.junit.jupiter.MockitoExtension
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import java.util.Optional
@@ -38,7 +38,8 @@ class ParentServiceTest {
         ).apply {
             parentPassword = passwordEncoder.encode("1234")
         }
-        `when`(memberRepository.findById(1L)).thenReturn(Optional.of(testMember))
+        // 일부 테스트(새 PIN 불일치 등)는 require() 검증이 조회보다 먼저 실행되어 이 stub을 쓰지 않으므로 lenient
+        lenient().`when`(memberRepository.findById(1L)).thenReturn(Optional.of(testMember))
     }
 
     // ── RPT-01. 부모 모드 PIN 확인 ─────────────────────────────────────
