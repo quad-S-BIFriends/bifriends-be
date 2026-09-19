@@ -17,12 +17,12 @@ import org.springframework.http.client.SimpleClientHttpRequestFactory
 class AiEmotionScenarioClientHttpTest {
 
     @Test
-    fun `generateScenario sends Content-Type application/json and non-empty JSON body`() {
-        val restClient = RestClient.builder()
+    fun `generateScenario sends Content-Type application-json and non-empty JSON body`() {
+        val restClientBuilder = RestClient.builder()
             .baseUrl("http://ai-test")
             .requestFactory(SimpleClientHttpRequestFactory())
-            .build()
-        val mockServer = MockRestServiceServer.bindTo(restClient).build()
+        val mockServer = MockRestServiceServer.bindTo(restClientBuilder).build()
+        val restClient = restClientBuilder.build()
 
         val properties = AiServiceProperties(
             enabled = true,
