@@ -69,4 +69,10 @@ kotlin {
 
 tasks.withType<Test> {
     useJUnitPlatform()
+
+    // CI 러너에는 firebase-service-account.json이 없어(커밋 금지 규칙) @SpringBootTest 컨텍스트
+    // 로딩이 실패하므로, GitHub Actions(CI=true) 환경에서만 해당 테스트를 제외한다.
+    if (System.getenv("CI") == "true") {
+        exclude("**/BiFriendsApplicationTests.class")
+    }
 }
