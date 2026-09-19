@@ -19,11 +19,9 @@ jobs:
 
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
-        working-directory: bifriends-be
 
       - name: Run tests
         run: ./gradlew test
-        working-directory: bifriends-be
 
   deploy:
     needs: test
